@@ -1,0 +1,34 @@
+import express from "express";
+import {
+  createService,
+  getServices,
+  deleteService
+} from "../dataAccess/ServiceDA.js";
+
+const serviceRouter = express.Router();
+
+/* CREATE */
+serviceRouter.post("/", async (req, res) => {
+  try {
+    const service = await createService(req.body);
+    res.status(201).json(service);
+  } catch (err) {
+    console.error("❌ Service create error:", err.message);
+    res.status(400).json({ message: err.message });
+  }
+});
+
+/* READ ALL */
+serviceRouter.get("/", async (req, res) => {
+  const services = await getServices();
+  res.json(services);
+});
+
+/* DELETE */
+serviceRouter.delete("/:id", async (req, res) => {
+  const deleted = await deleteService(req.params.id);
+  if (!deleted) return res.status(404).json({ message: "Not found" });
+  res.json({ message: "deleted" });
+});
+
+export default serviceRouter;

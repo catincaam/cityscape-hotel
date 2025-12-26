@@ -1,0 +1,432 @@
+:root {
+  --primary: #0f172a;
+  --primary-hover: #1e293b;
+  --border: #e2e8f0;
+  --muted: #64748b;
+  --bg: #f8fafc;
+}
+
+/* =========================
+   LAYOUT
+========================= */
+
+.booking-page {
+  padding-top: 120px;
+  background: var(--bg);
+  min-height: 100vh;
+}
+
+.rooms-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr 320px;
+  gap: 28px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px 200px;
+  background: var(--bg);
+  align-items: start;
+}
+
+/* =========================
+   FILTRE
+========================= */
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 220px;
+}
+
+.filters-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 24px;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100%;
+  max-width: 100%;
+}
+
+.filters-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  width: 100%;
+}
+
+.filters-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.reset-btn {
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.reset-btn:hover {
+  color: #2563eb;
+}
+
+.filter-section {
+  margin-bottom: 22px;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100%;
+}
+
+.filter-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  display: block;
+  color: #111827;
+}
+
+.filter-title span {
+  font-weight: 400;
+  color: #6b7280;
+}
+
+.budget-inputs {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px;
+  width: 100%;
+}
+
+.budget-inputs input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  font-size: 13px;
+}
+
+.budget-inputs span {
+  color: #9ca3af;
+  text-align: center;
+  font-size: 12px;
+}
+
+.amenities-filter {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px;
+  width: 100%;
+}
+
+.theme-filter {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  gap: 8px;
+  width: 100%;
+}
+
+.amenity-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  user-select: none;
+}
+
+.amenity-checkbox input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: #2563eb;
+  cursor: pointer;
+}
+
+.amenity-checkbox:hover {
+  color: #1d4ed8;
+}
+
+.apply-filters-btn {
+  width: 100%;
+  margin-top: 10px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.apply-filters-btn:hover {
+  background: #1d4ed8;
+}
+
+/* =========================
+   LISTA CAMERE
+========================= */
+
+.rooms-list {
+  min-width: 0;
+}
+
+.rooms-list h2 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: var(--muted);
+  margin-bottom: 0;
+  margin-top: -10px;
+}
+
+/* =========================
+   CARD CAMERĂ - NOU DESIGN
+========================= */
+
+.room-card {
+  display: grid;
+  grid-template-columns: 40% 60%;
+  display: grid;
+  grid-template-columns: 40% 60%;
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  min-height: 300px;
+}
+
+.room-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.room-image {
+  width: 100%;
+  height: 220px;
+  min-height: 300px;
+}
+
+.room-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.room-details {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Header: Titlu + Preț */
+.room-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.room-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #2563eb;
+  margin: 0;
+  font-family: 'Georgia', serif;
+  flex: 1;
+}
+
+.room-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.price-amount {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #111827;
+  line-height: 1;
+}
+
+.price-label {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+/* Meta info: Continent + Etaje */
+.room-meta {
+  display: flex;
+  gap: 20px;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.room-continent {
+  font-weight: 600;
+}
+
+.room-floors {
+  color: #6b7280;
+}
+
+/* Descriere */
+.room-description {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #4b5563;
+  margin: 0;
+}
+
+/* Facilități */
+.room-amenities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.amenity-tag {
+  background: #f3f4f6;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #374151;
+}
+
+/* Actions: Buton + Link */
+.room-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.select-room-btn {
+  background: #111827;
+  color: white;
+  border: none;
+  padding: 14px 40px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.select-room-btn:hover {
+  background: #1f2937;
+  transform: scale(1.02);
+}
+
+.details-link {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.details-link:hover {
+  color: #1d4ed8;
+}
+
+/* =========================
+   SUMAR
+========================= */
+
+.rooms-summary {
+  position: sticky;
+  top: 24px;
+  background: white;
+  border-radius: 28px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+  height: fit-content;
+}
+
+.rooms-summary .summary-header {
+  background: var(--primary);
+  color: white;
+  padding: 20px;
+  font-weight: 700;
+  text-align: center;
+  border-radius: 28px 28px 0 0;
+}
+
+.rooms-summary .summary-body {
+  padding: 24px;
+}
+
+.rooms-summary .summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+
+.rooms-summary .summary-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 18px 0;
+}
+
+.rooms-summary .summary-total {
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.rooms-summary .summary-total .total-price {
+  font-size: 24px;
+  color: #2563eb;
+  font-weight: 800;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 1200px) {
+  .rooms-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .filters,
+  .rooms-summary {
+    position: relative;
+    top: unset;
+    max-width: 100%;
+  }
+
+  .rooms-list {
+    order: 2;
+  }
+}

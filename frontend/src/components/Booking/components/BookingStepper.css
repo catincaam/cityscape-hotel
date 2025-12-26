@@ -1,0 +1,59 @@
+.booking-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 40px;
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #94a3b8;
+  transition: all 0.2s ease;
+}
+
+.step-item:hover {
+  color: #2563eb;
+  transform: scale(1.05);
+}
+
+.step-item.active {
+  color: #2563eb;
+}
+
+.step-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.step-item:hover .step-circle {
+  background: #dbeafe;
+  transform: scale(1.1);
+}
+
+.step-circle.done {
+  background: #22c55e;
+  color: white;
+}
+
+.step-item.active .step-circle {
+  background: #2563eb;
+  color: white;
+}
+
+.step-line {
+  width: 40px;
+  height: 2px;
+  background: #e5e7eb;
+}

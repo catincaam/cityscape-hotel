@@ -1,0 +1,153 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap");
+
+.presentation-page {
+  font-family: "Manrope", sans-serif;
+  background: #f6f7f8;
+  min-height: 100vh;
+}
+
+/* =========================
+   HERO
+========================= */
+.hero {
+  position: relative;
+  height: 460px;
+  background-image: url("../../assets/world-map.jpg");
+  background-size: cover;
+  background-position: center;
+  border-radius: 22px;
+  margin: 32px auto;
+  max-width: 1200px;
+  overflow: hidden;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    rgba(0, 0, 0, 0.35),
+    rgba(0, 0, 0, 0.6)
+  );
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  color: white;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 40px;
+}
+
+.hero-content h1 {
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+
+.hero-content p {
+  max-width: 620px;
+  font-size: 1.1rem;
+  opacity: 0.95;
+  margin-bottom: 28px;
+}
+
+.hero-btn {
+  padding: 14px 36px;
+  border-radius: 16px;
+  border: none;
+  background: #127ae2;
+  color: white;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hero-btn:hover {
+  background: #0f66c3;
+}
+
+/* =========================
+   FILTERS
+========================= */
+.filters {
+  max-width: 1200px;
+  margin: 20px auto 10px;
+  display: flex;
+  gap: 12px;
+  padding: 0 12px;
+}
+
+.filters button {
+  padding: 10px 22px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.filters button.active {
+  background: #111827;
+  color: white;
+  border-color: #111827;
+}
+
+/* =========================
+   GRID
+========================= */
+.cities-grid {
+  max-width: 1200px;
+  margin: 30px auto 80px;
+  padding: 0 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+}
+
+/* =========================
+   CITY CARD
+========================= */
+.city-card {
+  position: relative;
+  height: 360px;
+  border-radius: 22px;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+}
+
+.city-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+
+.city-card:hover img {
+  transform: scale(1.08);
+}
+
+.city-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0,0,0,0.8),
+    rgba(0,0,0,0.2),
+    transparent
+  );
+  display: flex;
+  align-items: flex-end;
+  padding: 24px;
+}
+
+.city-overlay h3 {
+  color: white;
+  font-size: 1.6rem;
+  font-weight: 800;
+}
