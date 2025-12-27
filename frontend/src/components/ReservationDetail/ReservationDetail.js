@@ -3,6 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../Dashboard/Navbar';
 import './ReservationDetail.css';
 
+/**
+ * TODO:
+ * Extract API calls into a dedicated service layer
+ * (ReservationService) to improve maintainability and readability.
+ */
+
 const ReservationDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -22,6 +28,8 @@ const ReservationDetail = () => {
       if (!resResponse.ok) throw new Error('Reservation not found');
       const resData = await resResponse.json();
       console.log('Reservation data:', resData);
+      // Log all keys and values for reservation
+      Object.entries(resData).forEach(([k,v]) => console.log('reservation field', k, v));
       
       // Fetch room theme to get room images
       const themeResponse = await fetch(`http://localhost:9001/api/room-themes/${resData.RoomThemeId}`);
@@ -38,14 +46,23 @@ const ReservationDetail = () => {
       const invoiceResponse = await fetch(`http://localhost:9001/api/invoices`);
       const allInvoices = await invoiceResponse.json();
       const reservationInvoice = allInvoices.find(inv => inv.ReservationId === parseInt(id));
-      
+      if (reservationInvoice) {
+        Object.entries(reservationInvoice).forEach(([k,v]) => console.log('invoice field', k, v));
+      }
+      console.log('All invoices:', allInvoices);
+      console.log('Reservation invoice:', reservationInvoice);
+
       // Fetch consumed services if invoice exists
       let services = [];
       if (reservationInvoice) {
         const servicesResponse = await fetch(`http://localhost:9001/api/consumed-services`);
         const allConsumed = await servicesResponse.json();
-        services = allConsumed.filter(cs => cs.InvoiceId === reservationInvoice.invoiceId);
-        
+        console.log('All consumed services:', allConsumed);
+        allConsumed.forEach(cs => console.log('Consumed service InvoiceId:', cs.InvoiceId, typeof cs.InvoiceId));
+        console.log('Reservation invoice InvoiceId:', reservationInvoice.InvoiceId, typeof reservationInvoice.InvoiceId);
+        services = allConsumed.filter(cs => cs.InvoiceId == reservationInvoice.InvoiceId);
+        console.log('Filtered services for invoiceId', reservationInvoice.InvoiceId, services);
+
         // Fetch service details for each consumed service
         const servicesWithDetails = await Promise.all(
           services.map(async (cs) => {
