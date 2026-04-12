@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from "../Dashboard/Navbar";
 import "./Rewards.css";
 import { getUserActivePoints, getUserPendingPoints, getUserPoints, getAllRewards } from "../../services/rewardService";
@@ -9,6 +9,7 @@ const USER_ID = parseInt(localStorage.getItem("userId")) || 1;
 
 export default function Rewards() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [activePoints, setActivePoints] = useState(0);
   const [pendingPoints, setPendingPoints] = useState(0);
   const [history, setHistory] = useState([]);
@@ -28,57 +29,40 @@ export default function Rewards() {
     }
   }, []);
 
-  useEffect(() => {
-    async function fetchData() {
+  // Function to fetch data - can be called multiple times
+  const fetchData = async () => {
+    try {
+      const active = await getUserActivePoints(USER_ID);
+      const pending = await getUserPendingPoints(USER_ID);
+      const all = await getUserPoints(USER_ID);
+      const rewardsData = await getAllRewards();
+
+      setActivePoints(active.activePoints);
+      setPendingPoints(pending.pendingPoints);
+      setHistory(
+        all.map((p) => ({
+          id: p.RewardPointId,
+          label: p.description || "Reward",
+          date: new Date(p.createdAt).toLocaleDateString(),
+          status: p.status.charAt(0).toUpperCase() + p.status.slice(1),
+          amount: (p.amount > 0 ? "+" : "") + p.amount + "p",
+          icon: p.status === "redeemed" ? "shopping_bag" : "workspace_premium"
+        }))
+      );
+
+      // Filter only active rewards
+      const activeRewards = Array.isArray(rewardsData) 
+        ? rewardsData.filter(r => r.active !== false)
+        : [];
+      setRewards(activeRewards);
+
+      // Fetch upcoming stay
       try {
-        const active = await getUserActivePoints(USER_ID);
-        const pending = await getUserPendingPoints(USER_ID);
-        const all = await getUserPoints(USER_ID);
-        const rewardsData = await getAllRewards();
-
-        setActivePoints(active.activePoints);
-        setPendingPoints(pending.pendingPoints);
-        setHistory(
-          all.map((p) => ({
-            id: p.RewardPointId,
-            label: p.description || "Reward",
-            date: new Date(p.createdAt).toLocaleDateString(),
-            status: p.status.charAt(0).toUpperCase() + p.status.slice(1),
-            amount: (p.amount > 0 ? "+" : "") + p.amount + "p",
-            icon: p.status === "redeemed" ? "shopping_bag" : "workspace_premium"
-          }))
-        );
-
-        // Filter only active rewards
-        const activeRewards = Array.isArray(rewardsData) 
-          ? rewardsData.filter(r => r.active !== false)
-          : [];
-        setRewards(activeRewards);
-
-        // Fetch upcoming stay
-        try {
-          const res = await fetch(`http://localhost:9001/api/reservations/upcoming/${USER_ID}`);
-          if (res.ok) {
-            const stay = await res.json();
-            setUpcomingStay(stay);
-          } else {
-            // Mock upcoming stay for testing
-            const mockStay = {
-              ReservationId: 999,
-              requestedCheckin: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-              requestedCheckout: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
-              room: {
-                RoomThemeId: 1,
-                name: "The Azure Suite",
-                city: "Santorini, Greece",
-                theme: "Ocean View",
-                image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&h=300&fit=crop"
-              }
-            };
-            setUpcomingStay(mockStay);
-          }
-        } catch (err) {
-          console.log("Using mock upcoming stay for demo");
+        const res = await fetch(`http://localhost:9001/api/reservations/upcoming/${USER_ID}`);
+        if (res.ok) {
+          const stay = await res.json();
+          setUpcomingStay(stay);
+        } else {
           // Mock upcoming stay for testing
           const mockStay = {
             ReservationId: 999,
@@ -95,13 +79,38 @@ export default function Rewards() {
           setUpcomingStay(mockStay);
         }
       } catch (err) {
-        console.error("Error fetching data:", err);
-      } finally {
-        setLoading(false);
+        console.log("Using mock upcoming stay for demo");
+        // Mock upcoming stay for testing
+        const mockStay = {
+          ReservationId: 999,
+          requestedCheckin: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          requestedCheckout: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
+          room: {
+            RoomThemeId: 1,
+            name: "The Azure Suite",
+            city: "Santorini, Greece",
+            theme: "Ocean View",
+            image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&h=300&fit=crop"
+          }
+        };
+        setUpcomingStay(mockStay);
       }
+    } catch (err) {
+      console.error("Error fetching data:", err);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  // Initial fetch on mount
+  useEffect(() => {
     fetchData();
   }, []);
+
+  // Refetch data whenever returning to this page
+  useEffect(() => {
+    fetchData();
+  }, [location]);
 
   const handlePrevCarousel = () => {
     setCarouselIndex((prev) => (prev - 1 + rewards.length) % rewards.length);
