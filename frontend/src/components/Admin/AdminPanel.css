@@ -1,8 +1,8 @@
 @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
 
 :root {
-  --primary: #127ae2;
-  --primary-dark: #0f66c3;
+  --primary: #c6a969;
+  --primary-dark: #8b7a52;
   --bg: #f6f7f8;
   --card: #ffffff;
   --border: #e2e8f0;
@@ -20,7 +20,7 @@
 /* SIDEBAR */
 .admin-sidebar {
   width: 280px;
-  background: linear-gradient(135deg, #1e3a8a, #127ae2);
+  background: linear-gradient(135deg, #1f2937, #111827);
   color: white;
   padding: 30px 20px;
   display: flex;
@@ -195,7 +195,7 @@
 .add-btn {
   grid-column: span 3;
   margin-top: 8px;
-  background: #127ae2;
+  background: #1f2937;
   color: white;
   border: none;
   border-radius: 10px;
@@ -207,7 +207,7 @@
 }
 
 .add-btn:hover {
-  background: #0f66c3;
+  background: #111827;
 }
 
 /* TABLE STYLES */

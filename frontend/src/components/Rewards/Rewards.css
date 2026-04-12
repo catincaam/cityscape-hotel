@@ -1,0 +1,462 @@
+/* ================================
+   LUXE REWARDS PAGE STYLES
+================================ */
+
+.rewards-luxury-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 60px 24px 80px;
+  background: #f8f6f2;
+  min-height: 100vh;
+}
+
+/* ================================
+   PERSONAL SANCTUARY SECTION
+================================ */
+
+.luxury-sanctuary {
+  margin-bottom: 64px;
+  text-align: center;
+}
+
+.sanctuary-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #c6a969;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.sanctuary-greeting {
+  font-size: 48px;
+  font-weight: 800;
+  color: #1f2937;
+  margin-bottom: 16px;
+  line-height: 1.2;
+}
+
+.sanctuary-subtitle {
+  font-size: 16px;
+  color: #666;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* ================================
+   POINTS & STAY SECTION
+================================ */
+
+.luxury-points-section {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 48px;
+  margin-bottom: 80px;
+}
+
+@media (max-width: 968px) {
+  .luxury-points-section {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+}
+
+/* POINTS BALANCE CARD */
+.points-balance {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.section-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #c6a969;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+
+.points-amount {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.points-number {
+  font-size: 56px;
+  font-weight: 800;
+  color: #b8956e;
+}
+
+.points-unit {
+  font-size: 16px;
+  font-weight: 600;
+  color: #999;
+}
+
+.pending-info {
+  font-size: 14px;
+  color: #999;
+  margin-bottom: 32px;
+}
+
+.luxury-btn {
+  background: #b8956e;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 28px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.luxury-btn:hover {
+  background: #a37d5a;
+  box-shadow: 0 4px 16px rgba(184, 149, 110, 0.3);
+}
+
+/* UPCOMING STAY SECTION */
+.upcoming-stay {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+}
+
+.upcoming-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 28px;
+}
+
+.view-all-stays {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #1f2937;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: color 0.3s ease;
+}
+
+.view-all-stays:hover {
+  color: #c6a969;
+}
+
+.stay-card {
+  display: flex;
+  gap: 24px;
+}
+
+.stay-card-image {
+  width: 160px;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.stay-card-content {
+  flex: 1;
+}
+
+.stay-card-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.stay-card-dates {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 16px;
+}
+
+.stay-card-tags {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.tag {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #e8e8e8;
+  color: #1f2937;
+}
+
+.tag.ocean-view {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.tag.king-bed {
+  background: #f3e5f5;
+  color: #6a1b9a;
+}
+
+.stay-manage-btn {
+  background: transparent;
+  border: 1px solid #c6a969;
+  color: #c6a969;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.stay-manage-btn:hover {
+  background: #c6a969;
+  color: #ffffff;
+}
+
+/* ================================
+   REWARDS CAROUSEL SECTION
+================================ */
+
+.luxury-rewards-section {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 48px 40px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+  margin-bottom: 80px;
+}
+
+.rewards-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 40px;
+}
+
+.section-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-top: 8px;
+}
+
+.carousel-controls {
+  display: flex;
+  gap: 12px;
+}
+
+.carousel-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #1f2937;
+  font-size: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.carousel-btn:hover {
+  background: #1f2937;
+  color: #ffffff;
+  border-color: #1f2937;
+}
+
+.rewards-carousel {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+
+@media (max-width: 1024px) {
+  .rewards-carousel {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .rewards-carousel {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* LUXURY REWARD CARD */
+.luxury-reward-card {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.luxury-reward-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.reward-card-image {
+  aspect-ratio: 16 / 10;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.reward-card-cost {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #c6a969;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.luxury-reward-content {
+  padding: 24px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+
+.reward-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.reward-desc {
+  font-size: 13px;
+  color: #999;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  flex: 1;
+}
+
+.luxury-redeem-btn {
+  background: #b8956e;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.luxury-redeem-btn:hover:not(.disabled) {
+  background: #a37d5a;
+  box-shadow: 0 4px 12px rgba(184, 149, 110, 0.3);
+}
+
+.luxury-redeem-btn.disabled {
+  background: #e5e5e5;
+  color: #999;
+  cursor: not-allowed;
+}
+
+/* ================================
+   HISTORY SECTION
+================================ */
+
+.luxury-history-section {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 48px 40px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+}
+
+.history-table-wrapper {
+  overflow-x: auto;
+}
+
+.luxury-history-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.luxury-history-table th {
+  background: #f6f7f8;
+  padding: 16px 20px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #666;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.luxury-history-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.luxury-history-table tr:hover {
+  background: #f9f8f6;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.status-badge.active {
+  background: #e6f9e6;
+  color: #1a7f37;
+}
+
+.status-badge.pending {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.status-badge.redeemed {
+  background: #f0f0f0;
+  color: #999;
+}
+
+.amount.positive {
+  color: #1a7f37;
+  font-weight: 700;
+}
+
+.amount.negative {
+  color: #c41c3b;
+  font-weight: 700;
+}
+
+.text-right {
+  text-align: right;
+}

@@ -15,6 +15,12 @@ const RoomTheme = db.define(
       allowNull: false
     },
 
+    continent: {
+      type: Sequelize.STRING(100),
+      allowNull: true,
+      comment: "Asia, Europa, Africa, America, etc"
+    },
+
     theme: {
       type: Sequelize.STRING(100),
       allowNull: false
@@ -64,6 +70,12 @@ const RoomTheme = db.define(
       type: Sequelize.STRING(100),
       allowNull: true,
       comment: "ex: King, Queen, Twin, etc"
+    },
+
+    showcaseImage: {
+      type: Sequelize.STRING(255),
+      allowNull: true,
+      comment: "Imaginea de showcase pentru homepage (o singură poză din acel oraș)"
     }
   },
   {

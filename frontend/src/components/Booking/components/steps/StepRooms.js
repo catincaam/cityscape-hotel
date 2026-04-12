@@ -5,56 +5,77 @@ import "./StepRooms.css";
 export default function StepRooms({ bookingData, onSelectRoom, onBack }) {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedRoomId, setSelectedRoomId] = useState(bookingData.room?.id || null);
   const navigate = useNavigate();
 
   const [filters, setFilters] = useState({
     amenities: [],
-    theme: "Toate"
+    theme: "All",
+    minPrice: 50,
+    maxPrice: 300
   });
 
   useEffect(() => {
     async function fetchRooms() {
       try {
-        const res = await fetch("http://localhost:9001/api/room-themes");
+        // Calculez total oaspeți
+        const totalGuests = bookingData.adults + bookingData.children;
+
+        // Apelez /available/search cu date și numărul de oaspeți
+        const url = new URL("http://localhost:9001/api/rooms/available/search");
+        url.searchParams.append("checkIn", bookingData.checkIn);
+        url.searchParams.append("checkOut", bookingData.checkOut);
+        url.searchParams.append("adults", bookingData.adults);
+        url.searchParams.append("children", bookingData.children);
+
+        const res = await fetch(url.toString());
         const data = await res.json();
 
-        const mapped = data.map((r) => ({
-          id: r.RoomThemeId,
-          name: r.name,
-          description: r.description,
-          image: r.images && r.images.length > 0 ? `http://localhost:9001${r.images[0]}` : `http://localhost:9001${r.image}`,
-          images: r.images ? r.images.map(img => `http://localhost:9001${img}`) : [r.image ? `http://localhost:9001${r.image}` : null].filter(Boolean),
-          amenities: r.amenities ? JSON.parse(r.amenities) : [],
-          basePrice: r.basePrice,
-          city: r.city,
-          theme: r.theme,
-          availableCount: r.availableCount || 0,
-          floors: r.floors || []
-        }));
+        const mapped = data.map((r) => {
+          // Ia prima imagine (cea cu isPrimary=true sau prima din array)
+          const primaryImage = r.RoomTheme?.images?.[0];
+          const imageUrl = primaryImage?.imageUrl || r.RoomTheme?.image;
+
+          return {
+            id: r.RoomTheme?.RoomThemeId || r.RoomThemeId,
+            roomId: r.RoomId,
+            name: r.RoomTheme?.name || 'Unknown Room',
+            description: r.RoomTheme?.description || '',
+            image: imageUrl 
+              ? `http://localhost:9001${imageUrl}` 
+              : 'https://via.placeholder.com/220?text=No+Image',
+            amenities: r.RoomTheme?.amenities ? (Array.isArray(r.RoomTheme.amenities) ? r.RoomTheme.amenities : JSON.parse(r.RoomTheme.amenities)) : [],
+            basePrice: r.RoomTheme?.basePrice || 0,
+            city: r.RoomTheme?.city || '',
+            theme: r.RoomTheme?.theme || '',
+            maxGuests: r.RoomTheme?.maxGuests || 2,
+            availableCount: r.availableCount || 1
+          };
+        });
 
         setRooms(mapped);
       } catch (e) {
-        console.error(e);
+        console.error("Error fetching available rooms:", e);
       } finally {
         setLoading(false);
       }
     }
 
     fetchRooms();
-  }, []);
+  }, [bookingData]);
 
   // Mapare orașe -> continente
   const cityToContinent = {
-    "Paris": "Europa",
-    "Rome": "Europa",
-    "London": "Europa",
-    "Barcelona": "Europa",
-    "Berlin": "Europa",
-    "Amsterdam": "Europa",
-    "Prague": "Europa",
-    "Vienna": "Europa",
-    "Budapest": "Europa",
-    "Athens": "Europa",
+    "Paris": "Europe",
+    "Rome": "Europe",
+    "London": "Europe",
+    "Barcelona": "Europe",
+    "Berlin": "Europe",
+    "Amsterdam": "Europe",
+    "Prague": "Europe",
+    "Vienna": "Europe",
+    "Budapest": "Europe",
+    "Athens": "Europe",
     "Tokyo": "Asia",
     "Bangkok": "Asia",
     "Dubai": "Asia",
@@ -84,8 +105,8 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack }) {
       return false;
     
     // Filtrare după tematică (continent)
-    if (filters.theme !== "Toate") {
-      const continent = cityToContinent[r.city] || "Necunoscut";
+    if (filters.theme !== "All") {
+      const continent = cityToContinent[r.city] || "Unknown";
       if (continent !== filters.theme)
         return false;
     }
@@ -125,104 +146,139 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack }) {
   return (
     <div className="booking-page">
       <div className="rooms-layout">
-      {/* ================= FILTRE ================= */}
+      {/* ================= FILTRE PREMIUM ================= */}
       <aside className="filters">
         <div className="filters-card">
           <div className="filters-header">
-            <h3>🔍 Filtre</h3>
-            <button className="reset-btn" onClick={() => setFilters({ amenities: [], theme: "Toate" })}>
-              Resetează
+            <h3 className="filters-title">Refine your stay</h3>
+            <button className="reset-btn" onClick={() => setFilters({ amenities: [], theme: "All", minPrice: 50, maxPrice: 300 })}>
+              Reset
             </button>
           </div>
 
-          {/* ================= BUGET ================= */}
+          {/* ================= PRICE SLIDER ================= */}
           <div className="filter-section">
-            <label className="filter-title">Buget <span>(pe noapte)</span></label>
-
-            <div className="budget-inputs">
-              <input type="number" placeholder="RON Min" />
-              <span>—</span>
-              <input type="number" placeholder="RON Max" />
+            <div className="price-header">
+              <label className="filter-label">Price range</label>
+              <span className="price-display">€{filters.minPrice} – €{filters.maxPrice}</span>
+            </div>
+            <div className="slider-container">
+              <input
+                type="range"
+                min="50"
+                max="300"
+                value={filters.minPrice}
+                onChange={(e) => setFilters({ ...filters, minPrice: Math.min(+e.target.value, filters.maxPrice) })}
+                className="slider slider-min"
+              />
+              <input
+                type="range"
+                min="50"
+                max="300"
+                value={filters.maxPrice}
+                onChange={(e) => setFilters({ ...filters, maxPrice: Math.max(+e.target.value, filters.minPrice) })}
+                className="slider slider-max"
+              />
             </div>
           </div>
 
-          {/* ================= FACILITĂȚI ================= */}
+          {/* ================= AMENITIES PILLS ================= */}
           <div className="filter-section">
-            <label className="filter-title">Facilități Premium</label>
-
-            <div className="amenities-filter">
+            <label className="filter-label">Popular features</label>
+            <div className="amenities-pills">
               {[
-                "Mic dejun inclus",
-                "Vedere panoramică",
-                "Jacuzzi privat",
-                "Balcon / Terasă"
+                "Breakfast included",
+                "Panoramic view",
+                "Private jacuzzi",
+                "Balcony / Terrace"
               ].map((a) => (
-                <label key={a} className="amenity-checkbox">
-                  <input
-                    type="checkbox"
-                    checked={filters.amenities.includes(a)}
-                    onChange={() => toggleAmenity(a)}
-                  />
+                <button
+                  key={a}
+                  className={`amenity-pill ${filters.amenities.includes(a) ? 'active' : ''}`}
+                  onClick={() => toggleAmenity(a)}
+                >
                   {a}
-                </label>
+                </button>
               ))}
             </div>
           </div>
 
-          {/* ================= TEMATICĂ ================= */}
+          {/* ================= THEME SEGMENTED ================= */}
           <div className="filter-section">
-            <label className="filter-title">Tematică</label>
-
-            <div className="theme-filter">
-              {["Toate", "Asia", "Europa", "America"].map((t) => (
-                <label key={t} className="amenity-checkbox">
-                  <input 
-                    type="radio" 
-                    name="theme"
-                    checked={filters.theme === t}
-                    onChange={() => selectTheme(t)}
-                  />
+            <label className="filter-label">Theme</label>
+            <div className="theme-segmented">
+              {["All", "Europe", "Asia", "America"].map((t) => (
+                <button
+                  key={t}
+                  className={`theme-option ${filters.theme === t ? 'active' : ''}`}
+                  onClick={() => selectTheme(t)}
+                >
                   {t}
-                </label>
+                </button>
               ))}
             </div>
           </div>
-
-          <button className="apply-filters-btn">✔ Aplică Filtre</button>
         </div>
       </aside>
 
       {/* ================= LISTA CAMERE ================= */}
       <section className="rooms-list">
-        <h2>Alege Camera Perfectă</h2>
+        <h2>Choose the Perfect Room</h2>
         <p className="subtitle">
-          {bookingData.checkIn} – {bookingData.checkOut} ·{" "}
-          {bookingData.adults} adulți
+          {bookingData.checkIn} – {bookingData.checkOut} · {bookingData.adults + bookingData.children} {bookingData.adults + bookingData.children === 1 ? 'guest' : 'guests'}
         </p>
 
-        {loading && <p>Se încarcă camerele...</p>}
+        {loading && <p>Loading available rooms...</p>}
+
+        {!loading && filteredRooms.length === 0 && (
+          <div className="no-rooms-message">
+            <p>No rooms available for this combination.</p>
+            <p>Try different dates or a different guest configuration.</p>
+          </div>
+        )}
+
+        {!loading && filteredRooms.length > 0 && (
+          <p className="rooms-count">
+            {filteredRooms.length} {filteredRooms.length === 1 ? 'room' : 'rooms'} available
+          </p>
+        )}
 
         {!loading &&
           filteredRooms.map((room) => (
-            <div key={room.id} className="room-card">
+            <div 
+              key={room.id} 
+              className={`room-card ${selectedRoomId === room.id ? 'selected' : ''}`}
+            >
+              {selectedRoomId === room.id && (
+                <div className="selected-badge">Selected</div>
+              )}
+              
               <div className="room-image">
                 <img src={room.image} alt={room.name} />
               </div>
 
               <div className="room-details">
                 <div className="room-header">
-                  <h3 className="room-title">{room.name}</h3>
+                  <div>
+                    <h3 className="room-title">{room.name}</h3>
+                    <div className="room-badges">
+                      {room.maxGuests === bookingData.adults + bookingData.children && (
+                        <span className="recommended-badge">Perfect fit</span>
+                      )}
+                      <span className="available-badge">
+                        {room.availableCount} {room.availableCount === 1 ? 'available' : 'available'}
+                      </span>
+                    </div>
+                  </div>
                   <div className="room-price">
                     <span className="price-amount">{room.basePrice}</span>
-                    <span className="price-label">RON/noapte</span>
+                    <span className="price-label">EUR/night</span>
                   </div>
                 </div>
 
                 <div className="room-meta">
-                  <span className="room-continent">📍 {room.theme}</span>
-                  <span className="room-floors">
-                    Etaj: {room.floors.length > 0 ? room.floors.join(", ") : "—"}
-                  </span>
+                  <span className="room-theme">{room.theme}</span>
+                  <span className="room-city">{room.city}</span>
                 </div>
 
                 <p className="room-description">{room.description}</p>
@@ -238,15 +294,18 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack }) {
                 <div className="room-actions">
                   <button
                     className="select-room-btn"
-                    onClick={() => onSelectRoom(room)}
+                    onClick={() => {
+                      setSelectedRoomId(room.id);
+                      onSelectRoom(room);
+                    }}
                   >
-                    Selectează
+                    {selectedRoomId === room.id ? 'Selected Room' : 'Select Room'}
                   </button>
                   <button 
                     className="details-link"
-                    onClick={() => navigate(`/room/${room.id}`)}
+                    onClick={() => navigate(`/room/${room.id}`, { state: { bookingData } })}
                   >
-                    Vezi detalii
+                    View details
                   </button>
                 </div>
               </div>
@@ -256,7 +315,7 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack }) {
 
       {/* ================= SUMAR ================= */}
       <aside className="rooms-summary">
-        <div className="summary-header">Sumar Rezervare</div>
+        <div className="summary-header">Booking Summary</div>
 
         <div className="summary-body">
           <div className="summary-row">
@@ -270,19 +329,19 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack }) {
           </div>
 
           <div className="summary-row">
-            <span>Oaspeți</span>
-            <strong>{bookingData.adults} Adulți</strong>
+            <span>Guests</span>
+            <strong>{bookingData.adults} {bookingData.adults === 1 ? 'Adult' : 'Adults'}</strong>
           </div>
 
           <div className="summary-row">
-            <span>Nopți</span>
-            <strong>{nights} {nights === 1 ? 'noapte' : 'nopți'}</strong>
+            <span>Nights</span>
+            <strong>{nights} {nights === 1 ? 'night' : 'nights'}</strong>
           </div>
 
           <div className="summary-divider" />
 
           <div className="summary-row">
-            <span>Cameră selectată</span>
+            <span>Selected room</span>
             <strong>
               {bookingData.room ? bookingData.room.name : "—"}
             </strong>
@@ -291,7 +350,7 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack }) {
           {bookingData.room && (
             <>
               <div className="summary-row">
-                <span>Preț/noapte</span>
+                <span>Price/night</span>
                 <strong>{bookingData.room.basePrice} RON</strong>
               </div>
 

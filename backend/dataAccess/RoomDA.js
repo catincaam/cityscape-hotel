@@ -1,6 +1,7 @@
 import { Op } from "sequelize";
 import Room from "../entities/Room.js";
 import RoomTheme from "../entities/RoomTheme.js";
+import RoomImage from "../entities/RoomImage.js";
 import Reservation from "../entities/Reservation.js";
 
 /* CRUD EXISTENT */
@@ -36,9 +37,10 @@ async function deleteRoom(id) {
 /* ⭐ LOGICĂ BUSINESS – CAMERE DISPONIBILE ⭐ */
 
 async function getAvailableRooms({ checkIn, checkOut, guests }) {
-  // 1. Rezervări care se suprapun cu perioada cerută
+  // 1. Rezervări CONFIRMATE care se suprapun cu perioada cerută
   const reservations = await Reservation.findAll({
     where: {
+      status: { [Op.in]: ['paid', 'completed', 'active'] }, // Doar rezervări confirmate/active
       [Op.or]: [
         {
           requestedCheckin: { [Op.between]: [checkIn, checkOut] }
@@ -63,15 +65,46 @@ async function getAvailableRooms({ checkIn, checkOut, guests }) {
     r.Rooms.map(room => room.RoomId)
   );
 
-  // 3. Camere libere + tema
-  return await Room.findAll({
+  // 3. Camere libere + tema (cu toți detaii) + capacitate
+  const rooms = await Room.findAll({
     where: {
       RoomId: occupiedRoomIds.length
         ? { [Op.notIn]: occupiedRoomIds }
         : { [Op.ne]: null }
     },
-    include: RoomTheme
+    include: [{
+      model: RoomTheme,
+      include: [{
+        model: RoomImage,
+        as: 'images',
+        required: false
+      }]
+    }]
   });
+
+  console.log("DEBUG Available Rooms:", JSON.stringify(rooms, null, 2).substring(0, 500));
+
+  // 4. Filtrare după capacitate maximă
+  const filtered = rooms.filter(room => {
+    const maxGuests = room.RoomTheme?.maxGuests || 2;
+    return maxGuests >= guests;
+  });
+
+  // 5. Grupare după RoomThemeId
+  const grouped = {};
+  filtered.forEach(room => {
+    const themeId = room.RoomTheme?.RoomThemeId;
+    if (!grouped[themeId]) {
+      grouped[themeId] = {
+        ...room.toJSON(),
+        availableCount: 0
+      };
+    }
+    grouped[themeId].availableCount += 1;
+  });
+
+  // Returnez array de teme cu count
+  return Object.values(grouped);
 }
 
 export {

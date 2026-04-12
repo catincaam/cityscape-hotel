@@ -2,7 +2,7 @@
   max-width: 1400px;
   margin: 0 auto;
   padding: 40px 32px;
-  background: #f8fafc;
+  background: #f8f6f2;
   min-height: 100vh;
 }
 
@@ -76,7 +76,7 @@
 
 .booking-search button {
   padding: 12px 24px;
-  background: #1d4ed8;
+  background: #1f2937;
   color: white;
   border: none;
   border-radius: 12px;
@@ -86,7 +86,7 @@
 }
 
 .booking-search button:hover {
-  background: #1e40af;
+  background: #111827;
   transform: translateY(-1px);
 }
 
@@ -151,9 +151,9 @@
 }
 
 .service-tabs .active {
-  background: #1d4ed8;
+  background: #1f2937;
   color: white;
-  border-color: #1d4ed8;
+  border-color: #1f2937;
 }
 
 /* GRID */
@@ -191,8 +191,8 @@
   display: inline-block;
   font-size: 12px;
   font-weight: 700;
-  color: #1d4ed8;
-  background: #dbeafe;
+  color: #c6a969;
+  background: #fffbf3;
   padding: 4px 12px;
   border-radius: 999px;
   margin-bottom: 12px;
@@ -263,7 +263,7 @@
 }
 
 .qty-control button:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: #c6a969;
   color: white;
 }
 
@@ -281,7 +281,7 @@
 
 /* CART SUMMARY */
 .cart-summary {
-  background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
+  background: linear-gradient(135deg, #1f2937, #111827);
   color: white;
   padding: 32px;
   border-radius: 20px;
@@ -313,7 +313,7 @@
   width: 100%;
   padding: 16px;
   background: white;
-  color: #1d4ed8;
+  color: #c6a969;
   border: none;
   border-radius: 12px;
   font-weight: 700;

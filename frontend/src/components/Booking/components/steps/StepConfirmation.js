@@ -3,7 +3,7 @@ import "./StepConfirmation.css";
 import { jwtDecode } from "jwt-decode";
 
 export default function StepConfirmation({ bookingData, onBack, onComplete }) {
-  const [paymentType, setPaymentType] = useState("full"); // "partial" sau "full"
+  const [paymentType, setPaymentType] = useState("full"); // "partial" or "full"
   const [cardNumber, setCardNumber] = useState("");
   const [cardName, setCardName] = useState("");
   const [expiry, setExpiry] = useState("");
@@ -22,7 +22,7 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
         const data = await res.json();
         setServices(data);
       } catch (err) {
-        console.error("Eroare la încărcarea serviciilor:", err);
+        console.error("Error loading services:", err);
       }
     }
     loadServices();
@@ -37,7 +37,7 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
         setClientId(decoded.id);
       }
     } catch (err) {
-      console.error("Eroare la decodarea token-ului:", err);
+      console.error("Error decoding token:", err);
     }
   }, []);
 
@@ -51,9 +51,9 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
       const formatted = onlyDigits.match(/.{1,4}/g)?.join(' ') || onlyDigits;
       setCardNumber(formatted);
       
-      // Validare
+      // Validation
       if (onlyDigits.length > 0 && onlyDigits.length < 16) {
-        setErrors(prev => ({ ...prev, cardNumber: 'Numărul cardului trebuie să aibă 16 cifre' }));
+        setErrors(prev => ({ ...prev, cardNumber: 'Card number must be 16 digits' }));
       } else {
         setErrors(prev => ({ ...prev, cardNumber: '' }));
       }
@@ -68,7 +68,7 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
     setCardName(onlyLetters);
     
     if (onlyLetters.length > 0 && onlyLetters.length < 3) {
-      setErrors(prev => ({ ...prev, cardName: 'Numele trebuie să aibă cel puțin 3 caractere' }));
+      setErrors(prev => ({ ...prev, cardName: 'Name must be at least 3 characters' }));
     } else {
       setErrors(prev => ({ ...prev, cardName: '' }));
     }
@@ -94,9 +94,9 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
         const currentMonth = new Date().getMonth() + 1;
         
         if (month < 1 || month > 12) {
-          setErrors(prev => ({ ...prev, expiry: 'Luna invalidă (01-12)' }));
+          setErrors(prev => ({ ...prev, expiry: 'Invalid month (01-12)' }));
         } else if (year < currentYear || (year === currentYear && month < currentMonth)) {
-          setErrors(prev => ({ ...prev, expiry: 'Cardul este expirat' }));
+          setErrors(prev => ({ ...prev, expiry: 'Card is expired' }));
         } else {
           setErrors(prev => ({ ...prev, expiry: '' }));
         }
@@ -117,7 +117,7 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
       setCvc(onlyDigits);
       
       if (onlyDigits.length > 0 && onlyDigits.length < 3) {
-        setErrors(prev => ({ ...prev, cvc: 'CVC trebuie să aibă 3 cifre' }));
+        setErrors(prev => ({ ...prev, cvc: 'CVC must be 3 digits' }));
       } else {
         setErrors(prev => ({ ...prev, cvc: '' }));
       }
@@ -144,8 +144,21 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
   }, 0);
 
   const totalAmount = roomTotal + servicesTotal;
+
   const partialAmount = (totalAmount * 0.2).toFixed(2);
   const amountToPay = paymentType === "partial" ? partialAmount : totalAmount.toFixed(2);
+
+  // Disable partial payment if check-in is today or tomorrow
+  let partialDisabled = false;
+  if (bookingData.checkIn) {
+    const checkInDate = new Date(bookingData.checkIn);
+    const now = new Date();
+    const diffTime = checkInDate.setHours(0,0,0,0) - now.setHours(0,0,0,0);
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    if (diffDays < 2) partialDisabled = true;
+  }
+  // If partial is disabled and selected, force full
+  if (partialDisabled && paymentType === "partial") setPaymentType("full");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -157,15 +170,15 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
     const validationErrors = {};
     
     if (cardNumberDigits.length !== 16) {
-      validationErrors.cardNumber = 'Numărul cardului trebuie să aibă 16 cifre';
+      validationErrors.cardNumber = 'Card number must be 16 digits';
     }
     
     if (cardName.length < 3) {
-      validationErrors.cardName = 'Numele titularului este obligatoriu';
+      validationErrors.cardName = 'Cardholder name is required';
     }
     
     if (expiryDigits.length !== 4) {
-      validationErrors.expiry = 'Data expirării este invalidă';
+      validationErrors.expiry = 'Expiry date is invalid';
     } else {
       const month = parseInt(expiryDigits.slice(0, 2));
       const year = parseInt('20' + expiryDigits.slice(2));
@@ -173,14 +186,14 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
       const currentMonth = new Date().getMonth() + 1;
       
       if (month < 1 || month > 12) {
-        validationErrors.expiry = 'Luna invalidă';
+        validationErrors.expiry = 'Invalid month';
       } else if (year < currentYear || (year === currentYear && month < currentMonth)) {
-        validationErrors.expiry = 'Cardul este expirat';
+        validationErrors.expiry = 'Card is expired';
       }
     }
     
     if (cvc.length !== 3) {
-      validationErrors.cvc = 'CVC trebuie să aibă 3 cifre';
+      validationErrors.cvc = 'CVC must be 3 digits';
     }
     
     if (Object.keys(validationErrors).length > 0) {
@@ -216,11 +229,11 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
       if (response.ok) {
         onComplete(data);
       } else {
-        alert("Eroare la procesarea plății: " + (data.message || "Necunoscut"));
+        alert("Payment processing error: " + (data.message || "Unknown"));
       }
     } catch (err) {
       console.error(err);
-      alert("Eroare de conexiune. Vă rugăm încercați din nou.");
+      alert("Connection error. Please try again.");
     } finally {
       setIsProcessing(false);
     }
@@ -232,40 +245,40 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
         {/* LEFT SIDE - MAIN CONTENT */}
         <div className="confirmation-main">
           <div className="confirmation-header">
-            <h1>Confirmare & Plată</h1>
-            <p className="subtitle">Verifică detaliile finale și alege modalitatea de plată.</p>
+            <h1>Confirmation & Payment</h1>
+            <p className="subtitle">Check the final details and choose your payment method.</p>
           </div>
 
           {/* SUMAR REZERVARE */}
           <div className="confirmation-card">
             <h2>
               <span className="icon">📋</span>
-              Sumar Final Rezervare
+              Final Reservation Summary
             </h2>
             
             <div className="summary-grid">
               <div className="summary-item">
-                <span className="label">Cameră</span>
+                <span className="label">Room</span>
                 <div className="value">{bookingData.room?.name || "—"}</div>
                 <div className="meta">{bookingData.room?.theme || ""}</div>
               </div>
               
               <div className="summary-item">
-                <span className="label">Oaspeți</span>
-                <div className="value">{bookingData.adults} Adulți</div>
+                <span className="label">Guests</span>
+                <div className="value">{bookingData.adults} {bookingData.adults === 1 ? 'Adult' : 'Adults'}</div>
                 <div className="meta">Check-in: {bookingData.checkIn}</div>
               </div>
             </div>
 
             {Object.keys(bookingData.services || {}).length > 0 && (
               <div className="services-included">
-                <h3>Servicii Extra Incluse</h3>
+                <h3>Included Extra Services</h3>
                 <ul>
                   {Object.entries(bookingData.services).map(([id, qty]) => {
                     const service = services.find(s => s.ServiceId === Number(id));
                     return qty > 0 && (
                       <li key={id}>
-                        <span>{service?.name || `Serviciu #${id}`}</span>
+                        <span>{service?.name || `Service #${id}`}</span>
                         <span>x{qty} = {service ? (qty * Number(service.price)).toFixed(2) : 0} RON</span>
                       </li>
                     );
@@ -279,8 +292,8 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
           <div className="policy-card">
             <div className="policy-icon">🛡️</div>
             <div>
-              <h3>Politica de Anulare Flexibilă</h3>
-              <p>Anulare gratuită cu până la 48 de ore înainte de check-in. După acest termen, se va reține prima noapte de cazare.</p>
+              <h3>Flexible Cancellation Policy</h3>
+              <p>Free cancellation up to 48 hours before check-in. After this period, the first night will be charged.</p>
             </div>
           </div>
 
@@ -288,23 +301,26 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
           <div className="confirmation-card">
             <h2>
               <span className="icon">💳</span>
-              Opțiuni de Plată
+              Payment Options
             </h2>
 
             <div className="payment-options">
-              <label className={`payment-option ${paymentType === "partial" ? "selected" : ""}`}>
+              <label className={`payment-option ${paymentType === "partial" ? "selected" : ""} ${partialDisabled ? "disabled" : ""}`}>
                 <input
                   type="radio"
                   name="payment-type"
                   value="partial"
                   checked={paymentType === "partial"}
                   onChange={(e) => setPaymentType(e.target.value)}
+                  disabled={partialDisabled}
                 />
                 <div className="option-content">
-                  <div className="option-title">Plătește 20% acum, restul mai târziu</div>
+                  <div className="option-title">Pay 20% now, the rest later</div>
                   <div className="option-desc">
-                    Achitați un avans de <strong>{partialAmount} RON</strong> astăzi. 
-                    Restul sumei va fi debitat automat cu 2 săptămâni înainte de sosire.
+                    Pay a deposit of <strong>{partialAmount} RON</strong> today. The rest will be charged automatically 24 hours before arrival.
+                    {partialDisabled && (
+                      <span style={{color: '#e11d48', fontWeight: 500, display: 'block', marginTop: 4}}>Partial payment is not available for check-in today or tomorrow.</span>
+                    )}
                   </div>
                 </div>
               </label>
@@ -318,10 +334,9 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
                   onChange={(e) => setPaymentType(e.target.value)}
                 />
                 <div className="option-content">
-                  <div className="option-title">Plătește suma integrală acum</div>
+                  <div className="option-title">Pay full amount now</div>
                   <div className="option-desc">
-                    Achitați totalul de <strong>{totalAmount.toFixed(2)} RON</strong> și 
-                    scăpați de griji. Primiți confirmarea instantaneu.
+                    Pay the total of <strong>{totalAmount.toFixed(2)} RON</strong> and relax. Receive instant confirmation.
                   </div>
                 </div>
               </label>
@@ -332,12 +347,12 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
           <div className="confirmation-card">
             <h2>
               <span className="icon">💳</span>
-              Detalii Card
+              Card Details
             </h2>
 
             <form onSubmit={handleSubmit} className="card-form">
               <div className="form-group">
-                <label>Număr Card</label>
+                <label>Card Number</label>
                 <input
                   type="text"
                   placeholder="0000 0000 0000 0000"
@@ -351,10 +366,10 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
               </div>
 
               <div className="form-group">
-                <label>Nume Titular</label>
+                <label>Cardholder Name</label>
                 <input
                   type="text"
-                  placeholder="ex. POPESCU ANDREI"
+                  placeholder="e.g. JOHN DOE"
                   value={cardName}
                   onChange={handleCardNameChange}
                   required
@@ -365,7 +380,7 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>Data Expirării</label>
+                  <label>Expiry Date</label>
                   <input
                     type="text"
                     placeholder="MM / YY"
@@ -401,7 +416,7 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
                   onChange={(e) => setSaveCard(e.target.checked)}
                 />
                 <label htmlFor="save-card">
-                  Salvează cardul pentru plăți viitoare sigure.
+                  Save card for secure future payments.
                 </label>
               </div>
             </form>
@@ -409,37 +424,37 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
 
           <div className="confirmation-actions">
             <button type="button" onClick={onBack} className="btn-back">
-              Înapoi
+              Back
             </button>
           </div>
         </div>
 
         {/* RIGHT SIDE - PAYMENT SUMMARY */}
         <aside className="payment-summary">
-          <div className="summary-header">Total de plată</div>
+          <div className="summary-header">Total to Pay</div>
           
           <div className="summary-body">
             <div className="total-amount">{amountToPay} RON</div>
-            <p className="total-note">Include toate taxele și serviciile</p>
+            <p className="total-note">Includes all taxes and services</p>
 
             <div className="summary-details">
               <div className="detail-row">
                 <span className="label-small">Check-in</span>
                 <div className="value-main">{bookingData.checkIn}</div>
-                <div className="value-sub">după ora 14:00</div>
+                <div className="value-sub">after 2:00 PM</div>
               </div>
 
               <div className="detail-row">
                 <span className="label-small">Check-out</span>
                 <div className="value-main">{bookingData.checkOut}</div>
-                <div className="value-sub">până la ora 12:00</div>
+                <div className="value-sub">until 12:00 PM</div>
               </div>
 
               <div className="divider"></div>
 
               <div className="calc-row">
-                <span>Durată</span>
-                <span>{nights} nopți</span>
+                <span>Duration</span>
+                <span>{nights} {nights === 1 ? 'night' : 'nights'}</span>
               </div>
 
               <div className="calc-row">
@@ -449,7 +464,7 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
 
               {servicesTotal > 0 && (
                 <div className="calc-row">
-                  <span>Servicii Extra</span>
+                  <span>Extra Services</span>
                   <span>{servicesTotal.toFixed(2)} RON</span>
                 </div>
               )}
@@ -467,13 +482,13 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
               disabled={isProcessing}
               className="btn-pay"
             >
-              {isProcessing ? "Se procesează..." : `Plătește ${amountToPay} RON`}
+              {isProcessing ? "Processing..." : `Pay ${amountToPay} RON`}
               <span className="lock-icon">🔒</span>
             </button>
 
             <div className="secure-note">
               <span className="lock-small">🔒</span>
-              Plată securizată prin SSL
+              Secure payment via SSL
             </div>
           </div>
         </aside>

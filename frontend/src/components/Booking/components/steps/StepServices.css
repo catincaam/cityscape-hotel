@@ -29,33 +29,37 @@
 }
 
 .service-tabs button {
-  padding: 10px 18px;
-  border-radius: 999px;
-  border: 1px solid #e5e7eb;
+  padding: 11px 20px;
+  border-radius: 10px;
+  border: 1.5px solid #e5e7eb;
   background: white;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  color: #475569;
-  transition: all 0.2s ease;
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+  transition: all 0.3s ease;
+  letter-spacing: 0.2px;
 }
 
 .service-tabs button:hover {
-  border-color: #cbd5e1;
-  background: #f8fafc;
+  border-color: #c6a969;
+  background: #fffbf3;
+  color: #c6a969;
+  transform: translateY(-1px);
 }
 
 .service-tabs .active {
-  background: #1d4ed8;
+  background: #1f2937;
   color: white;
-  border-color: #1d4ed8;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(31, 41, 55, 0.2);
 }
 
 /* SERVICE LIST */
 .service-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 
 .no-services {
@@ -67,19 +71,21 @@
 
 .service-card {
   background: white;
-  border-radius: 16px;
-  padding: 20px;
+  border-radius: 14px;
+  padding: 22px;
   display: flex;
-  gap: 16px;
+  gap: 18px;
   align-items: flex-start;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid #f0f4f8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   min-height: 120px;
 }
 
 .service-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 28px rgba(31, 41, 55, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+  border-color: #e5e7eb;
 }
 
 .service-image {
@@ -126,7 +132,7 @@
 
 .price {
   font-weight: 700;
-  color: #1d4ed8;
+  color: #c6a969;
   font-size: 16px;
 }
 
@@ -188,14 +194,15 @@
 }
 
 .services-summary h3 {
-  background: #2563eb;
-  color: white;
+  background: #f8f6f2;
+  color: #1f2937;
   padding: 20px;
   border-radius: 28px 28px 0 0;
   margin: 0;
   font-size: 16px;
   font-weight: 700;
   text-align: center;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .services-summary > div {
@@ -273,7 +280,7 @@
 }
 
 .room-calc strong {
-  color: #1d4ed8;
+  color: #c6a969;
   font-weight: 700;
   font-size: 15px;
 }
@@ -312,7 +319,7 @@
 
 .summary-total strong {
   font-size: 24px;
-  color: #2563eb;
+  color: #c6a969;
   font-weight: 800;
 }
 
@@ -342,7 +349,7 @@
 }
 
 .summary-actions .next {
-  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  background: #1f2937;
   color: white;
   padding: 12px 20px;
   border-radius: 10px;
@@ -355,7 +362,7 @@
 
 .summary-actions .next:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(29, 78, 216, 0.3);
+  box-shadow: 0 8px 20px rgba(31, 41, 55, 0.3);
 }
 
 /* RESPONSIVE */

@@ -63,13 +63,14 @@ uploadRouter.post("/multiple", upload.array("images", 10), (req, res) => {
 
     // Returnăm URL-urile relative ale imaginilor
     const imageUrls = req.files.map(file => `/uploads/${file.filename}`);
+    console.log('✅ Multiple images uploaded:', imageUrls);
     res.status(200).json({
       message: `${imageUrls.length} imagini încărcate cu succes`,
       imageUrls
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Eroare la încărcarea imaginilor" });
+    console.error('❌ Error uploading multiple images:', err);
+    res.status(500).json({ message: err.message || "Eroare la încărcarea imaginilor" });
   }
 });
 

@@ -1,4 +1,67 @@
 /* =========================
+   PREMIUM HERO SECTION
+========================= */
+
+.booking-hero-premium {
+  position: relative;
+  height: 280px;
+  background: #f8f6f2;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.booking-hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: none;
+  pointer-events: none;
+}
+
+.booking-hero-content {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  color: #1f2937;
+  max-width: 800px;
+  padding: 0 24px;
+  animation: fadeInDown 0.8s ease-out;
+}
+
+.booking-hero-content h1 {
+  font-size: 3.5rem;
+  font-weight: 800;
+  margin: 0 0 16px;
+  letter-spacing: -1px;
+  line-height: 1.2;
+  color: #1f2937;
+}
+
+.booking-hero-content p {
+  font-size: 1.2rem;
+  font-weight: 300;
+  margin: 0;
+  color: #6b7280;
+  letter-spacing: 0.3px;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================
    LAYOUT GENERAL
 ========================= */
 
@@ -6,7 +69,7 @@
   max-width: 1280px;
   margin: 0 auto;
   padding: 40px 24px 140px;
-  background: #f8fafc;
+  background: #f8f6f2;
 }
 
 /* =========================
@@ -25,12 +88,12 @@
   font-size: 3rem;
   font-weight: 800;
   margin: 0 0 10px;
-  color: #0f172a;
+  color: #1f2937;
 }
 
 /* ❌ scoatem gradientul albastru */
 .booking-hero-text h1 span {
-  color: #0f172a;
+  color: #1f2937;
 }
 
 .booking-hero-text p {
@@ -40,28 +103,39 @@
 }
 
 /* =========================
-   SUMAR REZERVARE (HERO)
+   SUMAR REZERVARE (STICKY & PREMIUM)
 ========================= */
 
 .booking-summary {
   background: white;
-  padding: 26px;
-  border-radius: 24px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
-  min-width: 260px;
+  padding: 28px;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  min-width: 300px;
+  position: sticky;
+  top: 100px;
+  color: #1f2937;
+  transition: all 0.3s ease;
+}
+
+.booking-summary:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
 }
 
 .booking-summary h4 {
-  margin: 0 0 20px;
+  margin: 0 0 22px;
   font-size: 0.75rem;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-align: center;
-  padding: 12px;
-  background: #0f172a;
-  color: white;
-  border-radius: 14px;
+  padding: 14px;
+  background: #f8f6f2;
+  color: #1f2937;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
 }
 
 /* =========================
@@ -71,20 +145,24 @@
 .summary-grid {
   display: grid;
   grid-template-columns: 1fr auto;
-  row-gap: 14px;
+  row-gap: 16px;
   column-gap: 16px;
-  margin-bottom: 22px;
+  margin-bottom: 24px;
 }
 
 .summary-grid span {
-  font-size: 0.85rem;
-  color: #64748b;
+  font-size: 0.8rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 500;
 }
 
 .summary-grid strong {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  color: #0f172a;
+  color: #1f2937;
+  text-align: right;
 }
 
 /* =========================
@@ -93,24 +171,25 @@
 
 .summary-total {
   border-top: 1px solid #e5e7eb;
-  padding-top: 18px;
+  padding-top: 22px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .summary-total span {
-  font-size: 0.7rem;
-  color: #64748b;
+  font-size: 0.75rem;
+  color: #6b7280;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 700;
+  letter-spacing: 0.1em;
+  font-weight: 600;
 }
 
 .summary-total strong {
-  font-size: 1.4rem;
+  font-size: 1.6rem;
   font-weight: 800;
-  color: #0f172a; /* ❌ NU albastru */
+  color: #c6a969;
+  letter-spacing: -0.5px;
 }
 
 /* =========================

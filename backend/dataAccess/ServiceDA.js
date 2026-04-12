@@ -1,4 +1,5 @@
 import Service from "../entities/Service.js";
+import ReservationService from "../entities/ReservationService.js";
 
 async function createService(payload) {
   const {
@@ -44,7 +45,19 @@ async function getServiceById(id) {
 async function deleteService(id) {
   const service = await Service.findByPk(id);
   if (!service) return null;
-  return await service.destroy();
+  // Verificăm dacă există rezervări asociate
+  const count = await ReservationService.count({ where: { ServiceId: id } });
+  if (count > 0) {
+    const error = new Error("Nu poți șterge serviciul pentru că există rezervări asociate acestuia.");
+    error.code = 'HAS_RESERVATIONS';
+    throw error;
+  }
+  try {
+    return await service.destroy();
+  } catch (err) {
+    // Alte erori DB
+    throw new Error("Eroare la ștergere serviciu: " + err.message);
+  }
 }
 
 export { createService, getServices, getServiceById, deleteService };

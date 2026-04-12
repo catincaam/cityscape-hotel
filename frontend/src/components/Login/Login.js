@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import bgImage from "../../assets/landingpagePhoto.jpg";
 import { login, register } from "../../services/authService";
 import { useNavigate } from "react-router-dom";
+import { GoogleLogin } from '@react-oauth/google';
+import axios from 'axios';
 import "./Login.css";
 
 export default function Login() {
@@ -30,8 +32,8 @@ export default function Login() {
       if (mode === "login") {
         await login(form.email, form.parola);
 
-        // 🔥 AICI e magia:
-        // dacă login-ul a mers, schimbăm pagina
+        // 🔥 MAGIC HAPPENS HERE:
+        // if login succeeded, redirect to the appropriate page
         if (isAdminMode) {
           navigate("/admin");
         } else {
@@ -39,8 +41,9 @@ export default function Login() {
         }
       } 
       else {
+
         if (form.parola !== form.confirmParola) {
-          alert("Parolele nu coincid");
+          alert("Passwords do not match");
           return;
         }
 
@@ -52,12 +55,36 @@ export default function Login() {
           typeClientTip: "Standard",
         });
 
-        alert("Cont creat! Te poți autentifica.");
+        alert("Account created! You can now log in.");
         setMode("login");
       }
     } catch (err) {
       alert(err.message);
     }
+  }
+
+  async function handleGoogleSuccess(credentialResponse) {
+    try {
+      // Send token to backend for authentication
+      const res = await axios.post("http://localhost:9001/api/auth/google", {
+        token: credentialResponse.credential,
+      });
+      // Save JWT and user info (you can use localStorage/sessionStorage)
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("userId", res.data.client.ClientId);
+      // Redirect to dashboard or main page with a personalized message
+      if (res.data.client.TypeClientTip === "Admin") {
+        navigate("/admin");
+      } else {
+        navigate("/dashboard");
+      }
+    } catch (err) {
+      alert("Google login failed!");
+    }
+  }
+
+  function handleGoogleError() {
+    alert("Google login failed!");
   }
 
   return (
@@ -78,14 +105,15 @@ export default function Login() {
             <h1 className="hotel-name">Cityscape Hotel</h1>
           </div>
 
-          <h2 className="hero-title">
-            Descoperă lumea <br /> dintr-o singură cameră.
-          </h2>
 
-          <p className="hero-description">
-            De la liniștea templelor din Kyoto până la energia străzilor din New York. 
-            Rezervă camere tematice și trăiește experiența completă.
-          </p>
+            <h2 className="hero-title">
+              Discover the world <br /> in a single room.
+            </h2>
+
+            <p className="hero-description">
+              From the tranquility of Kyoto’s temples to the energy of New York’s streets.
+              Book themed rooms and enjoy the complete experience.
+            </p>
 
           {/* Social Proof - Avatars + Reviews */}
           <div className="social-proof">
@@ -118,7 +146,7 @@ export default function Login() {
                 <span className="star">⭐</span>
                 <span className="star">⭐</span>
               </div>
-              <p className="rating-text">Călători fericiți în toată lumea</p>
+              <p className="rating-text">Happy travelers worldwide</p>
             </div>
           </div>
         </div>
@@ -141,16 +169,16 @@ export default function Login() {
             className="admin-toggle-modern"
             onClick={() => setIsAdminMode(!isAdminMode)}
           >
-            {isAdminMode ? "👤 Utilizator" : "🔐 Admin"}
+            {isAdminMode ? "👤 User" : "🔐 Admin"}
           </button>
 
           {/* Header */}
           <div className="form-header">
-            <h2 className="form-title">Bine ați venit{isAdminMode ? " Admin" : ""}!</h2>
+            <h2 className="form-title">Welcome{isAdminMode ? " Admin" : ""}!</h2>
             <p className="form-subtitle">
               {mode === "login"
-                ? "Autentifică-te pentru a continua călătoria."
-                : "Completează detaliile pentru a crea contul."}
+                ? "Log in to continue your journey."
+                : "Fill in the details to create your account."}
             </p>
           </div>
 
@@ -161,14 +189,14 @@ export default function Login() {
               onClick={() => setMode("login")}
               type="button"
             >
-              Autentificare
+              Login
             </button>
             <button
               className={`tab ${mode === "register" ? "active" : ""}`}
               onClick={() => setMode("register")}
               type="button"
             >
-              Înregistrare
+              Register
             </button>
           </div>
 
@@ -177,22 +205,22 @@ export default function Login() {
             {mode === "register" && (
               <>
                 <div className="form-group">
-                  <label className="form-label">Nume</label>
+                  <label className="form-label">Last Name</label>
                   <input
                     className="form-input"
                     name="nume"
-                    placeholder="Popescu"
+                    placeholder="Doe"
                     onChange={handleChange}
                     required
                   />
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Prenume</label>
+                  <label className="form-label">First Name</label>
                   <input
                     className="form-input"
                     name="prenume"
-                    placeholder="Ion"
+                    placeholder="John"
                     onChange={handleChange}
                     required
                   />
@@ -206,7 +234,7 @@ export default function Login() {
                 className="form-input"
                 name="email"
                 type="email"
-                placeholder="nume@exemplu.com"
+                placeholder="name@example.com"
                 onChange={handleChange}
                 value={form.email}
                 required
@@ -215,10 +243,10 @@ export default function Login() {
 
             <div className="form-group">
               <div className="label-row">
-                <label className="form-label">Parolă</label>
+                <label className="form-label">Password</label>
                 {mode === "login" && (
-                  <button type="button" className="forgot-link" onClick={() => alert('Funcționalitate în lucru')}>
-                    Ai uitat parola?
+                  <button type="button" className="forgot-link" onClick={() => alert('Feature coming soon')}>
+                    Forgot your password?
                   </button>
                 )}
               </div>
@@ -244,12 +272,12 @@ export default function Login() {
 
             {mode === "register" && (
               <div className="form-group">
-                <label className="form-label">Confirmare parolă</label>
+                <label className="form-label">Confirm password</label>
                 <input
                   className="form-input"
                   name="confirmParola"
                   type="password"
-                  placeholder="Reintrodu parola"
+                  placeholder="Re-enter password"
                   onChange={handleChange}
                   value={form.confirmParola}
                   required
@@ -258,7 +286,7 @@ export default function Login() {
             )}
 
             <button type="submit" className="submit-btn">
-              {mode === "login" ? "Intră în cont" : "Creează cont"}
+              {mode === "login" ? "Log in" : "Sign up"}
             </button>
           </form>
 
@@ -267,16 +295,16 @@ export default function Login() {
             <p>
               {mode === "login" ? (
                 <>
-                  Nu ai cont?{" "}
-                  <span className="switch-link" onClick={() => setMode("register")}>
-                    Înregistrează-te
+                  Don’t have an account?{" "}
+                  <span className="switch-link" onClick={() => setMode("register")}> 
+                    Sign up
                   </span>
                 </>
               ) : (
                 <>
-                  Ai deja cont?{" "}
-                  <span className="switch-link" onClick={() => setMode("login")}>
-                    Intră în cont
+                  Already have an account?{" "}
+                  <span className="switch-link" onClick={() => setMode("login")}> 
+                    Log in
                   </span>
                 </>
               )}
@@ -286,32 +314,22 @@ export default function Login() {
           {/* Divider */}
           <div className="divider-section">
             <div className="divider-line" />
-            <span className="divider-text">SAU</span>
+            <span className="divider-text">OR</span>
             <div className="divider-line" />
           </div>
 
           {/* Social Login */}
           <div className="social-buttons">
-            <button type="button" className="social-btn">
-              <img 
-                src="https://www.google.com/favicon.ico" 
-                alt="Google" 
-                className="social-icon"
-              />
-            </button>
-            <button type="button" className="social-btn">
-              <img 
-                src="https://www.facebook.com/favicon.ico" 
-                alt="Facebook" 
-                className="social-icon"
-              />
-            </button>
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+            />
           </div>
         </div>
 
         {/* Footer */}
         <div className="footer-modern">
-          <p>© 2025 Cityscape Hotel. Toate drepturile rezervate.</p>
+          <p>© 2025 Cityscape Hotel. All rights reserved.</p>
         </div>
       </div>
     </div>

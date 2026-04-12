@@ -1,6 +1,23 @@
 import axios from "axios";
-
 const API = "http://localhost:9001/api/room-themes";
+
+export async function updateRoomTheme(id, themeData) {
+  const res = await axios.put(`${API}/${id}`, themeData, { withCredentials: true });
+  return res.data;
+}
+
+export async function deleteRoomTheme(id) {
+  try {
+    const res = await axios.delete(`${API}/${id}`, { withCredentials: true });
+    return res.data;
+  } catch (err) {
+    // Propagăm mesajul de eroare de la backend, dacă există
+    if (err.response && err.response.data && err.response.data.message) {
+      throw new Error(err.response.data.message);
+    }
+    throw err;
+  }
+}
 
 export async function getRoomThemes() {
   const res = await axios.get(API, { withCredentials: true });

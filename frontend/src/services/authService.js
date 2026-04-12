@@ -14,6 +14,14 @@ export async function login(email, password) {
 
   const data = await r.json();
   localStorage.setItem("token", data.token);
+  
+  // Store user info
+  if (data.client) {
+    const userName = `${data.client.FirstName} ${data.client.LastName}`.trim();
+    localStorage.setItem("userName", userName);
+    localStorage.setItem("userId", data.client.ClientId);
+  }
+  
   return data;
 }
 
@@ -34,4 +42,6 @@ export async function register(payload) {
 
 export function logout() {
   localStorage.removeItem("token");
+  localStorage.removeItem("userName");
+  localStorage.removeItem("userId");
 }

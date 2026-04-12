@@ -5,277 +5,199 @@ import "./Services.css";
 
 export default function Services() {
   const [services, setServices] = useState([]);
-  const [reservation, setReservation] = useState(null);
-  const [selectedServices, setSelectedServices] = useState({});
   const [activeFilter, setActiveFilter] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  async function loadData() {
-    try {
-      // Încarcă serviciile disponibile
-      const servicesRes = await fetch("http://localhost:9001/api/services", {
-        headers: {
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
-        }
-      });
-      const servicesData = await servicesRes.json();
-      setServices(servicesData);
-
-      // Încarcă rezervarea activă
-      const dashboardRes = await fetch("http://localhost:9001/api/dashboard", {
-        headers: {
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
-        }
-      });
-      const dashboardData = await dashboardRes.json();
-      setReservation(dashboardData.nextDestination);
-    } catch (err) {
-      console.error("Error loading data:", err);
+  // Helper: culoare badge categorie
+  function getCategoryColor(category) {
+    switch (category) {
+      case "Wellness & Spa": return "wellness";
+      case "Transport": return "transport";
+      case "Restaurant": return "restaurant";
+      case "Experiențe": return "experienta";
+      default: return "other";
     }
   }
 
-  const addService = (serviceId, price) => {
-    setSelectedServices(prev => ({
-      ...prev,
-      [serviceId]: { quantity: (prev[serviceId]?.quantity || 0) + 1, price }
-    }));
-  };
+  // Helper: etichetă categorie
+  function getCategoryLabel(category) {
+    switch (category) {
+      case "Wellness & Spa": return "Wellness & Spa";
+      case "Transport": return "Transport";
+      case "Restaurant": return "Restaurant";
+      case "Experiențe": return "Experiențe";
+      default: return category || "Alt serviciu";
+    }
+  }
 
-  const removeService = (serviceId) => {
-    setSelectedServices(prev => {
-      const updated = { ...prev };
-      delete updated[serviceId];
-      return updated;
-    });
-  };
 
-  const updateQuantity = (serviceId, delta, price) => {
-    setSelectedServices(prev => {
-      const currentQty = prev[serviceId]?.quantity || 0;
-      const newQty = Math.max(0, currentQty + delta);
-      if (newQty === 0) {
-        const updated = { ...prev };
-        delete updated[serviceId];
-        return updated;
-      }
-      return {
-        ...prev,
-        [serviceId]: { quantity: newQty, price }
-      };
-    });
-  };
 
-  const getTotal = () => {
-    return Object.entries(selectedServices).reduce((sum, [id, data]) => {
-      return sum + (data.quantity * data.price);
-    }, 0);
-  };
-
-  const getCategoryLabel = (category) => {
-    const labels = {
-      spa: "SPA & WELLNESS",
-      dining: "DINING",
-      transport: "TRANSPORT",
-      experience: "EXPERIENȚE"
-    };
-    return labels[category] || category.toUpperCase();
-  };
-
-  const getCategoryColor = (category) => {
-    const colors = {
-      spa: "bg-blue-100 text-blue-600",
-      dining: "bg-orange-100 text-orange-600",
-      transport: "bg-purple-100 text-purple-600",
-      experience: "bg-green-100 text-green-600"
-    };
-    return colors[category] || "bg-gray-100 text-gray-600";
-  };
+  useEffect(() => {
+    setLoading(true);
+    fetch("http://localhost:9001/api/services")
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        setServices(Array.isArray(data) ? data : []);
+        setError(null);
+      })
+      .catch(err => {
+        console.error("Error loading services:", err);
+        setError("Nu s-au putut încărca serviciile. Încearcă din nou mai târziu.");
+        setServices([]);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   const filteredServices = activeFilter === "all" 
     ? services 
     : services.filter(s => s.category === activeFilter);
 
-  const selectedCount = Object.keys(selectedServices).length;
-
   return (
     <>
       <Navbar />
       <main className="services-page">
+        {/* Header Section */}
+        <div className="services-header">
+          <div className="services-header-content">
+            <h1>Servicii Premium</h1>
+            <p>Descoperă ofertele noastre exclusive de servicii pentru o ședere de neuitat</p>
+          </div>
+        </div>
+
         <div className="services-container">
           {/* LEFT SIDE - Services */}
           <div className="services-left">
-            {/* Reservation Info */}
-            {reservation && (
-              <section className="reservation-banner">
-                <div className="reservation-header">
-                  <span className="status-badge active">Activă</span>
-                  <h2>Rezervarea Ta</h2>
-                </div>
-                <div className="reservation-details">
-                  <div className="detail-box">
-                    <p className="detail-label">ID Rezervare</p>
-                    <p className="detail-value">#{reservation.reservationId}</p>
-                  </div>
-                  <div className="detail-box">
-                    <p className="detail-label">Check-in / Out</p>
-                    <p className="detail-value">
-                      {new Date(reservation.checkIn).toLocaleDateString("ro-RO", { day: 'numeric', month: 'short' })} - 
-                      {new Date(reservation.checkOut).toLocaleDateString("ro-RO", { day: 'numeric', month: 'short' })}
-                    </p>
-                  </div>
-                  <div className="detail-box">
-                    <p className="detail-label">Cameră</p>
-                    <p className="detail-value">{reservation.room}</p>
-                  </div>
-                  <div className="detail-box">
-                    <p className="detail-label">Oaspeți</p>
-                    <p className="detail-value">{reservation.guests} {reservation.guests === 1 ? 'Persoană' : 'Persoane'}</p>
-                  </div>
-                </div>
-              </section>
+            {/* Error Message */}
+            {error && (
+              <div style={{
+                background: '#FEE2E2',
+                color: '#991B1B',
+                padding: '1rem',
+                borderRadius: '8px',
+                marginBottom: '1rem',
+                border: '1px solid #FECACA'
+              }}>
+                {error}
+              </div>
             )}
 
-            {/* Filters */}
-            <div className="service-filters">
-              <button 
+            {/* Loading State */}
+            {loading ? (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: '400px',
+                color: '#64748B'
+              }}>
+                <div>Se încarcă serviciile...</div>
+              </div>
+            ) : (
+              <>
+                {/* Filters */}
+                <div className="service-filters">
+              <button
                 className={`filter-btn ${activeFilter === 'all' ? 'active' : ''}`}
                 onClick={() => setActiveFilter('all')}
               >
                 Toate
               </button>
-              <button 
-                className={`filter-btn ${activeFilter === 'spa' ? 'active' : ''}`}
-                onClick={() => setActiveFilter('spa')}
+              <button
+                className={`filter-btn ${activeFilter === 'Wellness & Spa' ? 'active' : ''}`}
+                onClick={() => setActiveFilter('Wellness & Spa')}
               >
                 Wellness & Spa
               </button>
-              <button 
-                className={`filter-btn ${activeFilter === 'dining' ? 'active' : ''}`}
-                onClick={() => setActiveFilter('dining')}
+              <button
+                className={`filter-btn ${activeFilter === 'Transport' ? 'active' : ''}`}
+                onClick={() => setActiveFilter('Transport')}
               >
-                Dining
+                Transport
               </button>
-              <button 
-                className={`filter-btn ${activeFilter === 'experience' ? 'active' : ''}`}
-                onClick={() => setActiveFilter('experience')}
+              <button
+                className={`filter-btn ${activeFilter === 'Restaurant' ? 'active' : ''}`}
+                onClick={() => setActiveFilter('Restaurant')}
+              >
+                Restaurant
+              </button>
+              <button
+                className={`filter-btn ${activeFilter === 'Experiențe' ? 'active' : ''}`}
+                onClick={() => setActiveFilter('Experiențe')}
               >
                 Experiențe
               </button>
             </div>
-
-            {/* Services Grid */}
-            <div className="services-grid">
-              {filteredServices.map(service => {
-                const isSelected = selectedServices[service.ServiceId];
-                return (
-                  <div key={service.ServiceId} className={`service-card ${isSelected ? 'selected' : ''}`}>
-                    <div className="service-image">
-                      <span className={`category-badge ${getCategoryColor(service.category)}`}>
-                        {getCategoryLabel(service.category)}
-                      </span>
-                    </div>
-                    <div className="service-content">
-                      <h3 className="service-title">{service.serviceName}</h3>
-                      <p className="service-description">{service.description}</p>
-                      <div className="service-price">
-                        <span className="price-amount">{service.price}</span>
-                        <span className="price-currency">RON</span>
-                      </div>
-                    </div>
-                    {isSelected ? (
-                      <div className="quantity-control">
-                        <button onClick={() => updateQuantity(service.ServiceId, -1, service.price)}>−</button>
-                        <span>{selectedServices[service.ServiceId].quantity}</span>
-                        <button onClick={() => updateQuantity(service.ServiceId, 1, service.price)}>+</button>
-                      </div>
-                    ) : (
-                      <button 
-                        className="add-service-btn"
-                        onClick={() => addService(service.ServiceId, service.price)}
-                      >
-                        + Adaugă
-                      </button>
-                    )}
+                {/* Empty State */}
+                {filteredServices.length === 0 ? (
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '3rem 1rem',
+                    color: '#94A3B8'
+                  }}>
+                    <p style={{fontSize: '1rem', marginBottom: '0.5rem'}}>Nu sunt servicii disponibile</p>
+                    <p style={{fontSize: '0.875rem'}}>Încearcă o altă categorie</p>
                   </div>
-                );
-              })}
-            </div>
+                ) : (
+                  <div className="services-grid">
+                    {filteredServices.map(service => {
+                      const image = service.image
+                        ? (service.image.startsWith('/uploads')
+                            ? `http://localhost:9001${service.image}`
+                            : service.image)
+                        : null;
+                      return (
+                        <div key={service.ServiceId} className="service-card">
+                          {/* Image Section */}
+                          <div className="service-image-container">
+                            {image ? (
+                              <img 
+                                src={image} 
+                                alt={service.serviceName || service.name}
+                                className="service-image-img"
+                              />
+                            ) : (
+                              <div className="service-image-placeholder">
+                                <div style={{fontSize: '2rem'}}>📋</div>
+                              </div>
+                            )}
+                            <span className={`category-badge ${getCategoryColor(service.category)}`}>
+                              {getCategoryLabel(service.category)}
+                            </span>
+                          </div>
+
+                          {/* Content Section */}
+                          <div className="service-content">
+                            <h3 className="service-title">{service.serviceName || service.name}</h3>
+                            <p className="service-description">{service.description}</p>
+                            
+                            {/* Price */}
+                            <div className="service-price">
+                              <span className="price-amount">{service.price}</span>
+                              <span className="price-currency">EUR</span>
+                            </div>
+
+                            {/* Action Button */}
+                            <button className="service-action-btn">
+                              Adauga la cos
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
-          {/* RIGHT SIDE - Cart */}
-          <aside className="services-cart">
-            <div className="cart-header">
-              <h3>Servicii Selectate</h3>
-              <span className="cart-count">{selectedCount}</span>
-            </div>
-
-            <div className="cart-items">
-              {selectedCount === 0 ? (
-                <div className="cart-empty">
-                  <p>Nu ai selectat încă niciun serviciu</p>
-                </div>
-              ) : (
-                Object.entries(selectedServices).map(([serviceId, data]) => {
-                  const service = services.find(s => s.ServiceId === parseInt(serviceId));
-                  if (!service) return null;
-                  return (
-                    <div key={serviceId} className="cart-item">
-                      <div className="cart-item-info">
-                        <h4>{service.serviceName}</h4>
-                        <p className="cart-item-price">{data.quantity} x {data.price} RON</p>
-                      </div>
-                      <div className="cart-item-actions">
-                        <div className="quantity-mini">
-                          <button onClick={() => updateQuantity(parseInt(serviceId), -1, data.price)}>−</button>
-                          <span>{data.quantity}</span>
-                          <button onClick={() => updateQuantity(parseInt(serviceId), 1, data.price)}>+</button>
-                        </div>
-                        <button className="remove-btn" onClick={() => removeService(serviceId)}>×</button>
-                      </div>
-                      <div className="cart-item-total">{(data.quantity * data.price).toFixed(2)} RON</div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            <div className="cart-footer">
-              <div className="cart-summary">
-                <div className="summary-row">
-                  <span>Subtotal</span>
-                  <span>{getTotal().toFixed(2)} RON</span>
-                </div>
-                <div className="summary-row">
-                  <span>Taxe</span>
-                  <span>Inclus</span>
-                </div>
-                <div className="summary-total">
-                  <span>Total de Plată</span>
-                  <span>{getTotal().toFixed(2)} RON</span>
-                </div>
-              </div>
-
-              <button 
-                className="finalize-btn"
-                disabled={selectedCount === 0}
-                onClick={() => {
-                  // TODO: Implement finalize logic
-                  alert("Funcționalitatea de finalizare va fi implementată!");
-                }}
-              >
-                Finalizează →
-              </button>
-              <button className="cancel-btn" onClick={() => navigate("/dashboard")}>
-                Înapoi la Dashboard
-              </button>
-            </div>
-          </aside>
         </div>
       </main>
     </>
   );
 }
+

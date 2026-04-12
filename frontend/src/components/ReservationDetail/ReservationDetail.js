@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../Dashboard/Navbar';
 import './ReservationDetail.css';
@@ -122,27 +123,27 @@ const ReservationDetail = () => {
   };
 
   const handleCancelReservation = async () => {
-    if (!window.confirm('Ești sigur că vrei să anulezi această rezervare?')) return;
-    
+    if (!window.confirm('Are you sure you want to cancel this reservation?')) return;
     try {
-      const response = await fetch(`http://localhost:9001/api/reservations/${id}`, {
-        method: 'DELETE'
+      const response = await fetch(`http://localhost:9001/api/reservations/${id}/cancel`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' }
       });
-      
       if (response.ok) {
-        alert('Rezervarea a fost anulată cu succes!');
+        alert('Reservation cancelled successfully!');
         navigate('/dashboard');
       } else {
-        alert('Eroare la anularea rezervării');
+        const data = await response.json();
+        alert(data.message || 'Error cancelling reservation');
       }
     } catch (err) {
       console.error('Error cancelling reservation:', err);
-      alert('Eroare la anularea rezervării');
+      alert('Error cancelling reservation');
     }
   };
 
   const handlePayRemaining = () => {
-    alert(`Procesare plată pentru ${calculateRemaining().toFixed(2)} RON`);
+    alert(`Procesare plătă pentru ${calculateRemaining().toFixed(2)} EUR`);
     // Aici poți implementa integrarea cu un payment gateway
   };
 
@@ -162,7 +163,7 @@ const ReservationDetail = () => {
         <Navbar />
         <div className="loading-container">
           <div className="spinner"></div>
-          <p>Se încarcă detaliile rezervării...</p>
+          <p>Loading reservation details...</p>
         </div>
       </div>
     );
@@ -173,10 +174,10 @@ const ReservationDetail = () => {
       <div className="reservation-detail-page">
         <Navbar />
         <div className="error-container">
-          <h2>⚠️ Rezervare negăsită</h2>
-          <p>{error || 'Nu am putut găsi această rezervare'}</p>
+          <h2>⚠️ Reservation not found</h2>
+          <p>{error || 'Could not find this reservation'}</p>
           <button onClick={() => navigate('/dashboard')} className="back-btn">
-            Înapoi la Dashboard
+            Back to Dashboard
           </button>
         </div>
       </div>
@@ -199,39 +200,47 @@ const ReservationDetail = () => {
     : 0;
   const roomTotal = pricePerNight * nights;
   
+  // Reservation status logic
+  const reservationStatus = reservation.status || 'pending';
+  const statusLabels = {
+    pending: 'Unpaid',
+    partial: 'Partial',
+    paid: 'Paid',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
+    upcoming: 'Upcoming',
+    active: 'Active',
+    past: 'Past'
+  };
+
   return (
     <div className="reservation-detail-page">
       <Navbar />
-      
       <main className="detail-container">
         <div className="detail-header">
           <button onClick={() => navigate('/dashboard')} className="back-link">
-            ← Înapoi la Dashboard
+            ← Back to Dashboard
           </button>
-          
           <div className="header-content">
             <div className="header-left">
-              <h1>Detalii Rezervare <span className="res-id-header">#{reservation.reservationId}</span></h1>
+              <h1>Reservation Details <span className="res-id-header">#{reservation.reservationId}</span></h1>
               <p className="booking-date">
-                📅 Rezervat pe: {new Date(reservation.createdAt || Date.now()).toLocaleDateString('ro-RO', { 
+                📅 Booked on: {new Date(reservation.createdAt || Date.now()).toLocaleDateString('en-GB', { 
                   day: 'numeric', 
                   month: 'long', 
                   year: 'numeric' 
                 })}
               </p>
+              <div className={`reservation-status-badge status-${reservationStatus}`} style={{marginTop: 8}}>
+                Status: <strong>{statusLabels[reservationStatus]}</strong>
+              </div>
             </div>
-            
             <div className="header-actions">
-              <button className="action-btn secondary">
-                🖨️ Print
-              </button>
-              <button className="action-btn secondary">
-                📤 Share
-              </button>
+              <button className="action-btn secondary">🖨️ Print</button>
+              <button className="action-btn secondary">📤 Share</button>
             </div>
           </div>
         </div>
-
         <div className="detail-grid">
           <div className="detail-main">
             {/* Room Card + Services Card */}
@@ -261,8 +270,8 @@ const ReservationDetail = () => {
               <div className="room-info">
                 <div className="room-header">
                   <div>
-                    <h2>{roomDetails?.RoomTheme?.roomName || 'Camera Deluxe'}</h2>
-                    <p className="room-theme">Tematică: {roomDetails?.RoomTheme?.themeName || 'Modern'}</p>
+                    <h2>{roomDetails?.RoomTheme?.roomName || 'Deluxe Room'}</h2>
+                    <p className="room-theme">Theme: {roomDetails?.RoomTheme?.themeName || 'Modern'}</p>
                   </div>
                   <div className="rating">
                     {'⭐'.repeat(5)}
@@ -274,13 +283,13 @@ const ReservationDetail = () => {
                     <div>
                       <p className="check-label">Check-in</p>
                       <p className="check-date">
-                        {new Date(reservation.requestedCheckin).toLocaleDateString('ro-RO', { 
+                        {new Date(reservation.requestedCheckin).toLocaleDateString('en-GB', { 
                           day: 'numeric', 
                           month: 'long', 
                           year: 'numeric' 
                         })}
                       </p>
-                      <p className="check-time">După 14:00</p>
+                      <p className="check-time">After 2:00 PM</p>
                     </div>
                   </div>
                   <div className="check-item check-out">
@@ -288,32 +297,32 @@ const ReservationDetail = () => {
                     <div>
                       <p className="check-label">Check-out</p>
                       <p className="check-date">
-                        {new Date(reservation.requestedCheckout).toLocaleDateString('ro-RO', { 
+                        {new Date(reservation.requestedCheckout).toLocaleDateString('en-GB', { 
                           day: 'numeric', 
                           month: 'long', 
                           year: 'numeric' 
                         })}
                       </p>
-                      <p className="check-time">Până la 11:00</p>
+                      <p className="check-time">Until 11:00 AM</p>
                     </div>
                   </div>
                 </div>
                 <div className="room-features">
                   <div className="feature-tag">
-                    👥 {reservation.nrPeople || 2} {reservation.nrPeople === 1 ? 'Persoană' : 'Persoane'}
+                    👥 {reservation.nrPeople || 2} {reservation.nrPeople === 1 ? 'Person' : 'People'}
                   </div>
                   <div className="feature-tag">
-                    🌙 {nights} {nights === 1 ? 'Noapte' : 'Nopți'}
+                    🌙 {nights} {nights === 1 ? 'Night' : 'Nights'}
                   </div>
                   <div className="feature-tag">
-                    📶 Wi-Fi Gratuit
+                    📶 Free Wi-Fi
                   </div>
                 </div>
               </div>
-              {/* Services Card sub camera */}
+              {/* Services Card under room */}
               {consumedServices.length > 0 && (
                 <div className="services-card" style={{marginTop: 32}}>
-                  <h3>🛎️ Servicii Suplimentare Incluse</h3>
+                  <h3>🛎️ Included Extra Services</h3>
                   <div className="services-list">
                     {consumedServices.map((service, index) => (
                       <div key={index} className="service-item">
@@ -323,11 +332,11 @@ const ReservationDetail = () => {
                           </div>
                           <div>
                             <p className="service-name">{service.serviceName}</p>
-                            <p className="service-quantity">Cantitate: {service.quantity}</p>
+                            <p className="service-quantity">Quantity: {service.quantity}</p>
                           </div>
                         </div>
                         <span className="service-price">
-                          {(parseFloat(service.price) * service.quantity).toFixed(2)} RON
+                          {(parseFloat(service.price) * service.quantity).toFixed(2)} EUR
                         </span>
                       </div>
                     ))}
@@ -340,40 +349,37 @@ const ReservationDetail = () => {
           {/* Sidebar */}
           <div className="detail-sidebar">
             <div className="payment-summary-card">
-              <h3>Sumar Plată</h3>
-              
+              <h3>Payment Summary</h3>
               <div className="summary-items">
                 <div className="summary-row nights">
-                  <span>Cazare ({nights} {nights === 1 ? 'noapte' : 'nopți'} x {pricePerNight.toFixed(2)} RON)</span>
-                  <span>{roomTotal.toFixed(2)} RON</span>
+                  <span>Accommodation ({nights} {nights === 1 ? 'night' : 'nights'} x {pricePerNight.toFixed(2)} EUR)</span>
+                  <span>{roomTotal.toFixed(2)} EUR</span>
                 </div>
                 {servicesTotal > 0 && (
                   <div className="summary-row services">
-                    <span>Servicii Suplimentare</span>
-                    <span>{servicesTotal.toFixed(2)} RON</span>
+                    <span>Extra Services</span>
+                    <span>{servicesTotal.toFixed(2)} EUR</span>
                   </div>
                 )}
                 <div className="summary-divider"></div>
                 <div className="summary-row total">
-                  <span>Total General</span>
+                  <span>Total</span>
                   <span className="total-amount">
                     {invoice ? parseFloat(invoice.totalAmount).toFixed(2) : roomTotal.toFixed(2)} RON
                   </span>
                 </div>
               </div>
-
               {/* Payment Status */}
               <div className={`payment-status-card ${paymentStatus}`}>
                 <div className="status-header">
                   <span className="status-label">
-                    Status Plată: {paymentStatus === 'paid' ? 'Finalizată' : paymentStatus === 'partial' ? 'Parțială' : 'Neplătită'}
+                    Payment Status: {paymentStatus === 'paid' ? 'Paid' : paymentStatus === 'partial' ? 'Partial' : 'Unpaid'}
                   </span>
                   <span className={`status-badge ${paymentStatus}`}>
                     {paymentStatus === 'paid' ? '✅ Paid' : '⏳ Pending'}
                   </span>
                 </div>
-                
-                {paymentStatus !== 'paid' && (
+                {paymentStatus !== 'paid' && reservationStatus !== 'cancelled' && reservationStatus !== 'completed' && (
                   <>
                     <div className="payment-progress">
                       <div 
@@ -381,53 +387,94 @@ const ReservationDetail = () => {
                         style={{ width: `${(totalPaid / parseFloat(invoice?.totalAmount || 1)) * 100}%` }}
                       ></div>
                     </div>
-                    
                     <div className="payment-amounts">
-                      <span className="paid-amount">✅ Achitat: {totalPaid.toFixed(2)} RON</span>
-                      <span className="remaining-amount">⏳ Rest: {remaining.toFixed(2)} RON</span>
+                      <span className="paid-amount">✅ Paid: {totalPaid.toFixed(2)} RON</span>
+                      <span className="remaining-amount">⏳ Remaining: {remaining.toFixed(2)} RON</span>
                     </div>
-                    
                     <button onClick={handlePayRemaining} className="pay-now-btn">
-                      💳 Plătește restul acum
+                      💳 Pay remaining now
                     </button>
                   </>
                 )}
-                
                 {paymentStatus === 'paid' && (
                   <div className="paid-message">
-                    <p>✅ Plata a fost finalizată cu succes!</p>
+                    <p>✅ Payment completed successfully!</p>
+                  </div>
+                )}
+                {(reservationStatus === 'cancelled') && (
+                  <div className="cancelled-message">
+                    <p>❌ This reservation has been cancelled.</p>
+                  </div>
+                )}
+                {(reservationStatus === 'completed') && (
+                  <div className="completed-message">
+                    <p>🏁 This reservation is completed.</p>
                   </div>
                 )}
               </div>
-
               {/* Cancellation Policy */}
               <div className="cancellation-policy">
-                <h4>Politica de Anulare</h4>
+                <h4>Cancellation Policy</h4>
                 <div className="policy-info">
                   <span className="check-icon">✅</span>
                   <p>
-                    Anulare gratuită până la{' '}
+                    Free cancellation until{' '}
                     <strong>
                       {new Date(new Date(reservation.requestedCheckin).getTime() - 2 * 24 * 60 * 60 * 1000)
-                        .toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        .toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
                     </strong>
-                    {' '}(cu 48h înainte de check-in).
+                    {' '} (48h before check-in).
                   </p>
                 </div>
-                
-                <button onClick={handleCancelReservation} className="cancel-reservation-btn">
-                  ❌ Anulează Rezervarea
-                </button>
+                {/* Show cancel button only if not already cancelled or completed */}
+                {(reservationStatus !== 'cancelled' && reservationStatus !== 'completed') && (
+                  <button onClick={handleCancelReservation} className="cancel-reservation-btn">
+                    ❌ Cancel Reservation
+                  </button>
+                )}
               </div>
             </div>
 
+            {/* Feedback Button */}
+            <div className="feedback-card" style={{marginTop: 32, marginBottom: 24, textAlign: 'center'}}>
+              <button
+                className="feedback-btn"
+                style={{
+                  background: reservationStatus === 'completed' ? '#1f2937' : '#bdbdbd',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '12px 32px',
+                  fontWeight: 700,
+                  fontSize: 18,
+                  cursor: reservationStatus === 'completed' ? 'pointer' : 'not-allowed',
+                  opacity: reservationStatus === 'completed' ? 1 : 0.7
+                }}
+                onClick={e => {
+                  if (reservationStatus === 'completed') {
+                    navigate(`/feedback/${reservation.reservationId}`);
+                  } else {
+                    e.preventDefault();
+                    alert('You can only leave feedback after your stay is completed.');
+                  }
+                }}
+                disabled={false}
+              >
+                Leave Feedback
+              </button>
+              <div style={{fontSize: 13, color: '#617589', marginTop: 8}}>
+                {reservationStatus === 'completed'
+                  ? 'Share your experience with us!'
+                  : 'Feedback is available after your stay is completed.'}
+              </div>
+            </div>
             {/* Support Card */}
             <div className="support-card">
               <div className="support-icon">💬</div>
               <div>
-                <p className="support-title">Ai nevoie de ajutor?</p>
+                <p className="support-title">Need help?</p>
                 <a href="mailto:support@cityscapehotel.com" className="support-link">
-                  Contactează suportul
+                  Contact support
                 </a>
               </div>
             </div>

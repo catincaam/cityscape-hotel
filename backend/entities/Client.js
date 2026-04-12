@@ -7,7 +7,8 @@ const Client = db.define('Client', {
   LastName: { type: Sequelize.STRING(50), allowNull: false },
   Email: { type: Sequelize.STRING(100), allowNull: false, unique: true },
   Password: { type: Sequelize.STRING(255), allowNull: false },
-  TypeClientTip: { type: Sequelize.STRING(50) } // FK legat în DB_Init
+  TypeClientTip: { type: Sequelize.STRING(50) }, // FK legat în DB_Init
+  profilePicture: { type: Sequelize.STRING(255), allowNull: true, defaultValue: "/assets/profilePicture.jpg" }
 }, { timestamps: true });
 
 export default Client;

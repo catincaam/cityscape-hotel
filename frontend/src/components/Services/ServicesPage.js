@@ -132,7 +132,7 @@ export default function ServicesPage() {
                   <div className="service-footer">
                     <div className="price-tag">
                       <strong>{service.price}</strong>
-                      <span>RON / persoană</span>
+                      <span>EUR / persoană</span>
                     </div>
                   </div>
                 </div>

@@ -23,7 +23,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
   opacity: 0.05;
 }
 
@@ -68,7 +68,7 @@
 }
 
 .header-content .highlight {
-  color: #2563EB;
+  color: #c6a969;
 }
 
 .header-content p {
@@ -194,8 +194,8 @@
 .filter-group input:focus,
 .filter-group select:focus {
   outline: none;
-  border-color: #2563EB;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+  border-color: #c6a969;
+  box-shadow: 0 0 0 2px rgba(198, 169, 105, 0.2);
 }
 
 /* Category Filters */
@@ -230,10 +230,10 @@
 }
 
 .category-btn.active {
-  background: #2563EB;
+  background: #1f2937;
   color: white;
-  border-color: #2563EB;
-  box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
+  border-color: #1f2937;
+  box-shadow: 0 4px 6px rgba(31, 41, 55, 0.3);
 }
 
 /* Experiences Grid */
@@ -314,7 +314,7 @@
 }
 
 .badge-primary {
-  color: #2563EB;
+  color: #c6a969;
 }
 
 .badge-green {
@@ -388,11 +388,11 @@
 .price-value {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #2563EB;
+  color: #c6a969;
 }
 
 .add-btn {
-  background: #2563EB;
+  background: #1f2937;
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
@@ -407,7 +407,7 @@
 }
 
 .add-btn:hover {
-  background: #1D4ED8;
+  background: #111827;
   transform: translateY(-1px);
 }
 
@@ -465,8 +465,8 @@
   font-size: 0.75rem;
   font-weight: 500;
   padding: 0.25rem 0.5rem;
-  background: rgba(37, 99, 235, 0.1);
-  color: #2563EB;
+  background: rgba(198, 169, 105, 0.1);
+  color: #c6a969;
   border-radius: 9999px;
 }
 
@@ -625,7 +625,7 @@
 
 .checkout-btn {
   width: 100%;
-  background: #2563EB;
+  background: #1f2937;
   color: white;
   font-weight: 700;
   padding: 0.75rem 1rem;
@@ -633,14 +633,14 @@
   border: none;
   cursor: pointer;
   font-size: 1rem;
-  box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 4px 6px rgba(31, 41, 55, 0.3);
   transition: all 0.3s;
 }
 
 .checkout-btn:hover {
-  background: #1D4ED8;
+  background: #111827;
   transform: translateY(-1px);
-  box-shadow: 0 6px 8px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 6px 8px rgba(31, 41, 55, 0.4);
 }
 
 .checkout-btn:active {
@@ -657,8 +657,8 @@
 /* Info Card */
 .info-card {
   margin-top: 1.5rem;
-  background: rgba(37, 99, 235, 0.05);
-  border: 1px solid rgba(37, 99, 235, 0.1);
+  background: rgba(198, 169, 105, 0.05);
+  border: 1px solid rgba(198, 169, 105, 0.1);
   border-radius: 0.75rem;
   padding: 1rem;
   display: flex;
@@ -668,20 +668,20 @@
 
 .info-icon {
   font-size: 1.25rem;
-  color: #2563EB;
+  color: #c6a969;
   flex-shrink: 0;
 }
 
 .info-card h5 {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #2563EB;
+  color: #c6a969;
   margin-bottom: 0.25rem;
 }
 
 .info-card p {
   font-size: 0.75rem;
-  color: #1E40AF;
+  color: #1f2937;
   line-height: 1.5;
 }
 

@@ -1,5 +1,6 @@
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { Wifi, Wind, Tv, Wine, Lock, UtensilsCrossed, Coffee, Bath, Armchair, Lightbulb } from "lucide-react";
 import Navbar from "../Dashboard/Navbar";
 import "./RoomDetailsNew.css";
 
@@ -7,11 +8,13 @@ export default function RoomDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const bookingData = location.state?.bookingData;
+  const bookingData = location.state?.bookingData || {};
 
   const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [showGalleryModal, setShowGalleryModal] = useState(false);
+  const [modalImage, setModalImage] = useState(0);
 
   useEffect(() => {
     async function loadRoom() {
@@ -20,7 +23,7 @@ export default function RoomDetails() {
         const data = await res.json();
         setRoom(data);
       } catch (err) {
-        console.error("Eroare la încărcarea camerei:", err);
+        console.error("Error loading room:", err);
       } finally {
         setLoading(false);
       }
@@ -33,7 +36,7 @@ export default function RoomDetails() {
       <>
         <Navbar />
         <div className="loading-container">
-          <p>Se încarcă detaliile camerei...</p>
+          <p>Loading room details...</p>
         </div>
       </>
     );
@@ -44,18 +47,28 @@ export default function RoomDetails() {
       <>
         <Navbar />
         <div className="error-container">
-          <h2>Camera nu a fost găsită</h2>
-          <button onClick={() => navigate("/booking")}>Înapoi la Rezervare</button>
+          <h2>Room not found</h2>
+          <button onClick={() => navigate("/booking")}>Back to Booking</button>
         </div>
       </>
     );
   }
 
+  const handleImageClick = (index) => {
+    setModalImage(index);
+    setShowGalleryModal(true);
+  };
+
+  const handleNextImage = () => {
+    setModalImage((prev) => (prev + 1) % images.length);
+  };
+
+  const handlePrevImage = () => {
+    setModalImage((prev) => (prev - 1 + images.length) % images.length);
+  };
+
   function handleReserve() {
-    console.log("🔍 bookingData in RoomDetails:", bookingData);
-    
     if (bookingData) {
-      // Mergem la lista de camere cu camera selectată
       const stateToSend = {
         checkIn: bookingData.checkIn,
         checkOut: bookingData.checkOut,
@@ -73,12 +86,8 @@ export default function RoomDetails() {
         },
         goToStep: 2
       };
-      
-      console.log("📤 Sending state:", stateToSend);
-      
       navigate("/booking", { state: stateToSend });
     } else {
-      // Dacă nu avem date de booking, mergem la booking de la început
       navigate("/booking");
     }
   }
@@ -92,6 +101,24 @@ export default function RoomDetails() {
   const amenitiesList = typeof room.amenities === 'string' 
     ? JSON.parse(room.amenities) 
     : room.amenities || [];
+
+  // Map amenity names to lucide-react icons
+  const getAmenityIcon = (amenityName) => {
+    const nameLC = amenityName.toLowerCase();
+    const iconProps = { size: 18, strokeWidth: 1.5, className: "text-gray-600" };
+
+    if (nameLC.includes("wifi")) return <Wifi {...iconProps} />;
+    if (nameLC.includes("air") || nameLC.includes("conditioning")) return <Wind {...iconProps} />;
+    if (nameLC.includes("tv") || nameLC.includes("smart")) return <Tv {...iconProps} />;
+    if (nameLC.includes("mini") || nameLC.includes("bar") || nameLC.includes("wine")) return <Wine {...iconProps} />;
+    if (nameLC.includes("safe")) return <Lock {...iconProps} />;
+    if (nameLC.includes("kitchen") || nameLC.includes("dining")) return <UtensilsCrossed {...iconProps} />;
+    if (nameLC.includes("coffee") || nameLC.includes("tea")) return <Coffee {...iconProps} />;
+    if (nameLC.includes("bath") || nameLC.includes("tub")) return <Bath {...iconProps} />;
+    if (nameLC.includes("sofa") || nameLC.includes("seating")) return <Armchair {...iconProps} />;
+    
+    return <Lightbulb {...iconProps} />;
+  };
 
   return (
     <>
@@ -107,15 +134,23 @@ export default function RoomDetails() {
           <div className="hero-overlay">
             <button 
               className="back-corner-btn"
-              onClick={() => navigate("/booking", {
-                state: bookingData ? { ...bookingData, goToStep: 2 } : {}
-              })}
+              onClick={() => {
+                const stateToPass = {
+                  checkIn: bookingData?.checkIn || "",
+                  checkOut: bookingData?.checkOut || "",
+                  adults: bookingData?.adults || 2,
+                  children: bookingData?.children || 0,
+                  goToStep: 2
+                };
+                navigate("/booking", { state: stateToPass });
+              }}
             >
-              ← Înapoi
+              Back to rooms
             </button>
-            <span className="badge">📍 {room.city}</span>
+            <span className="badge">{room.city}</span>
             <h1>{room.name}</h1>
             <p className="theme-subtitle">{room.theme}</p>
+            <div className="rating">Premium Experience</div>
           </div>
 
           {/* GALLERY THUMBNAILS */}
@@ -127,7 +162,10 @@ export default function RoomDetails() {
                   src={img}
                   alt={`${room.name} ${index + 1}`}
                   className={`thumbnail ${selectedImage === index ? 'active' : ''}`}
-                  onClick={() => setSelectedImage(index)}
+                  onClick={() => {
+                    setSelectedImage(index);
+                    handleImageClick(index);
+                  }}
                 />
               ))}
             </div>
@@ -138,46 +176,32 @@ export default function RoomDetails() {
           {/* LEFT CONTENT */}
           <div className="room-main">
             <section className="section">
-              <h2>Spiritul Camerei</h2>
+              <h2>Your Experience</h2>
               <p className="description">{room.description}</p>
             </section>
 
+            <section className="section room-details-inline">
+              <p className="details-meta">
+                {room.city && <span>{room.city}</span>}
+                {room.maxGuests && <span>{room.maxGuests} guests</span>}
+                {room.bedType && <span>{room.bedType} bed</span>}
+                {room.size && <span>{room.size} m²</span>}
+              </p>
+              {room.theme && <p className="details-theme">{room.theme}</p>}
+            </section>
+
             <section className="section">
-              <h3>Specificații Cameră</h3>
-              <div className="specs-grid">
-                <Spec label="Dimensiune" value={room.size ? `${room.size} m²` : "—"} icon="📐" />
-                <Spec label="Capacitate" value={room.maxGuests ? `Max ${room.maxGuests} pers` : "—"} icon="👥" />
-                <Spec label="Tip Pat" value={room.bedType || "—"} icon="🛏️" />
-                <Spec label="Etaje Disponibile" value={room.floors && room.floors.length > 0 ? room.floors.join(", ") : "—"} icon="🏢" />
+              <h3>What this room offers</h3>
+              <div className="amenities">
+                {amenitiesList.map((a, index) => (
+                  <div key={index} className="amenity-item">
+                    <span className="amenity-icon">{getAmenityIcon(a)}</span>
+                    <span className="amenity-text">{a}</span>
+                  </div>
+                ))}
               </div>
             </section>
 
-            <section className="section">
-              <h3>Facilități Incluse</h3>
-              <ul className="amenities">
-                {amenitiesList.map((a, index) => (
-                  <li key={index}>
-                    <span className="check-icon">✓</span>
-                    {a}
-                  </li>
-                ))}
-              </ul>
-            </section>
-
-            {room.availableCount !== undefined && (
-              <section className="section availability">
-                <div className="availability-badge">
-                  {room.availableCount > 0 ? (
-                    <>
-                      <span className="available">✓ Disponibil</span>
-                      <span className="count">{room.availableCount} {room.availableCount === 1 ? 'cameră disponibilă' : 'camere disponibile'}</span>
-                    </>
-                  ) : (
-                    <span className="unavailable">Complet rezervat</span>
-                  )}
-                </div>
-              </section>
-            )}
           </div>
 
           {/* RIGHT BOOKING BOX */}
@@ -185,39 +209,36 @@ export default function RoomDetails() {
             <div className="price-section">
               <div className="price">
                 <strong>{room.basePrice}</strong>
-                <span>RON / noapte</span>
+                <span>EUR / night</span>
               </div>
             </div>
 
-            {bookingData && (
-              <>
-                <div className="booking-divider" />
-                <div className="booking-info">
-                  <div className="info-row">
-                    <span className="label">Check-in</span>
-                    <strong>{bookingData.checkIn}</strong>
-                  </div>
-                  <div className="info-row">
-                    <span className="label">Check-out</span>
-                    <strong>{bookingData.checkOut}</strong>
-                  </div>
-                  <div className="info-row">
-                    <span className="label">Oaspeți</span>
-                    <strong>{bookingData.adults} {bookingData.adults === 1 ? 'adult' : 'adulți'}</strong>
-                  </div>
-                </div>
-              </>
-            )}
+
 
             <button 
               className="reserve-btn"
               onClick={handleReserve}
               disabled={room.availableCount === 0}
             >
-              {room.availableCount === 0 ? 'Indisponibil' : 'Selectează această cameră'}
+              {room.availableCount === 0 ? 'Unavailable' : 'Check availability'}
             </button>
           </aside>
         </div>
+
+        {/* GALLERY MODAL */}
+        {showGalleryModal && (
+          <div className="modal-overlay" onClick={() => setShowGalleryModal(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-close" onClick={() => setShowGalleryModal(false)}>X</button>
+              <div className="modal-image-container">
+                <img src={images[modalImage]} alt="Gallery" className="modal-image" />
+              </div>
+              <button className="modal-nav modal-prev" onClick={handlePrevImage}>Prev</button>
+              <button className="modal-nav modal-next" onClick={handleNextImage}>Next</button>
+              <div className="modal-counter">{modalImage + 1} / {images.length}</div>
+            </div>
+          </div>
+        )}
       </main>
     </>
   );

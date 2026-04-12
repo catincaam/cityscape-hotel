@@ -31,20 +31,19 @@ export default function Booking() {
     if (location.state) {
       const { room, checkIn, checkOut, adults, children, goToStep } = location.state;
       
-      console.log("📍 checkIn:", checkIn);
-      console.log("📍 checkOut:", checkOut);
-      console.log("📍 goToStep:", goToStep);
-      console.log("📍 room:", room);
+      console.log("📍 State primit:", location.state);
       
       // Setăm datele
-      setBookingData(prev => ({
-        ...prev,
-        ...(checkIn && { checkIn }),
-        ...(checkOut && { checkOut }),
-        ...(adults && { adults }),
-        ...(children && { children }),
-        ...(room && { room })
-      }));
+      const newData = {
+        checkIn: checkIn || "",
+        checkOut: checkOut || "",
+        adults: adults || 2,
+        children: children || 0,
+        room: room || null,
+        services: {}
+      };
+      
+      setBookingData(newData);
 
       // Dacă avem goToStep, mergem direct la step-ul respectiv
       if (goToStep !== undefined) {
@@ -87,6 +86,15 @@ export default function Booking() {
     <>
       <Navbar />
 
+      {/* PREMIUM HERO SECTION */}
+      <div className="booking-hero-premium">
+        <div className="booking-hero-overlay"></div>
+        <div className="booking-hero-content">
+          <h1>Find Your Perfect Stay</h1>
+          <p>Explore our curated collection of themed rooms and create unforgettable memories</p>
+        </div>
+      </div>
+
       <div className="booking-shell">
         {/* STEPPER */}
         <BookingStepper step={step} onStepClick={handleStepClick} />
@@ -109,10 +117,10 @@ export default function Booking() {
           <>
             <div className="booking-hero">
               <div className="booking-hero-text">
-                <h1>Alege Camera Perfectă</h1>
+                <h1>Choose the Perfect Room</h1>
                 <p>
-                  Lasă-te inspirat de colecția noastră de camere tematice
-                  internaționale.
+                  Get inspired by our collection of international themed rooms
+                  and find your perfect match.
                 </p>
               </div>
 

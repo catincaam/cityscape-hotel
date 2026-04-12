@@ -3,13 +3,13 @@ import "./BookingStepper.css";
 export default function BookingStepper({ step, onStepClick }) {
   return (
     <div className="booking-stepper">
-      <Step number={1} label="Căutare" active={step >= 1} completed={step > 1} onClick={() => onStepClick && onStepClick(1)} />
+      <Step number={1} label="Search" active={step >= 1} completed={step > 1} onClick={() => onStepClick && onStepClick(1)} />
       <Line />
-      <Step number={2} label="Camere" active={step >= 2} completed={step > 2} onClick={() => onStepClick && onStepClick(2)} />
+      <Step number={2} label="Rooms" active={step >= 2} completed={step > 2} onClick={() => onStepClick && onStepClick(2)} />
       <Line />
-      <Step number={3} label="Servicii" active={step >= 3} completed={step > 3} onClick={() => onStepClick && onStepClick(3)} />
+      <Step number={3} label="Services" active={step >= 3} completed={step > 3} onClick={() => onStepClick && onStepClick(3)} />
       <Line />
-      <Step number={4} label="Confirmare" active={step >= 4} onClick={() => onStepClick && onStepClick(4)} />
+      <Step number={4} label="Confirmation" active={step >= 4} onClick={() => onStepClick && onStepClick(4)} />
     </div>
   );
 }

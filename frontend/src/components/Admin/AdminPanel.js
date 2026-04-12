@@ -4,9 +4,12 @@ import "./AdminPanel.css";
 import AdminRooms from "./rooms/AdminRooms";
 import AdminThemes from "./themes/AdminThemes";
 import AdminServices from "./services/AdminServices";
+import AdminRewards from "./rewards/AdminRewards";
+import AdminBookings from "./bookings";
+import AdminDashboard from "./AdminDashboard";
 
 export default function AdminPanel() {
-  const [activeTab, setActiveTab] = useState("rooms");
+  const [activeTab, setActiveTab] = useState("dashboard");
 
   function handleLogout() {
     localStorage.removeItem("token");
@@ -24,29 +27,45 @@ export default function AdminPanel() {
 
         <nav className="admin-nav">
           <button
+            className={activeTab === "dashboard" ? "active" : ""}
+            onClick={() => setActiveTab("dashboard")}
+          >
+            📊 Dashboard
+          </button>
+          <button
             className={activeTab === "rooms" ? "active" : ""}
             onClick={() => setActiveTab("rooms")}
           >
-            🏨 Camere
+            🏨 Rooms
           </button>
-
           <button
             className={activeTab === "themes" ? "active" : ""}
             onClick={() => setActiveTab("themes")}
           >
-            🎨 Teme
+            🎨 Themes
           </button>
-
           <button
             className={activeTab === "services" ? "active" : ""}
             onClick={() => setActiveTab("services")}
           >
-            ⚡ Servicii
+            ⚡ Services
+          </button>
+          <button
+            className={activeTab === "bookings" ? "active" : ""}
+            onClick={() => setActiveTab("bookings")}
+          >
+            📖 Bookings
+          </button>
+          <button
+            className={activeTab === "rewards" ? "active" : ""}
+            onClick={() => setActiveTab("rewards")}
+          >
+            🎁 Rewards
           </button>
         </nav>
 
         <button className="logout-btn" onClick={handleLogout}>
-          🚪 Deconectare
+          🚪 Logout
         </button>
       </aside>
 
@@ -55,9 +74,12 @@ export default function AdminPanel() {
         {/* Admin Header with Avatar */}
         <div className="admin-content-header">
           <h1>
-            {activeTab === "rooms" && "Gestionare Camere"}
-            {activeTab === "themes" && "Gestionare Teme"}
-            {activeTab === "services" && "Gestionare Servicii"}
+            {activeTab === "dashboard" && "Reports & Analytics"}
+            {activeTab === "rooms" && "Manage Rooms"}
+            {activeTab === "themes" && "Manage Themes"}
+            {activeTab === "services" && "Manage Services"}
+            {activeTab === "bookings" && "Manage Bookings"}
+            {activeTab === "rewards" && "Manage Rewards"}
           </h1>
           <div className="admin-profile">
             <div className="admin-info">
@@ -71,9 +93,12 @@ export default function AdminPanel() {
         </div>
 
         {/* Content Tabs */}
+        {activeTab === "dashboard" && <AdminDashboard />}
         {activeTab === "rooms" && <AdminRooms />}
         {activeTab === "themes" && <AdminThemes />}
         {activeTab === "services" && <AdminServices />}
+        {activeTab === "bookings" && <AdminBookings />}
+        {activeTab === "rewards" && <AdminRewards />}
       </main>
     </div>
   );

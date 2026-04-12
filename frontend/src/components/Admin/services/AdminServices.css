@@ -1,3 +1,264 @@
+/* ===== 🎨 MODERN SERVICE FORM ===== */
+
+.service-form-container {
+  margin: 0 auto 48px;
+  padding: 0 16px;
+}
+
+.service-form-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 0;
+  box-shadow: none;
+}
+
+.service-form-card h3 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 32px;
+  color: #111827;
+  padding: 0 0 24px 0;
+  border-bottom: 2px solid #f3f4f6;
+}
+
+/* Form Sections as Cards */
+.form-section {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.form-section:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #d1d5db;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  display: block;
+}
+
+/* Grid 2 Columns */
+.form-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Form Group */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #c6a969;
+  box-shadow: 0 0 0 3px rgba(198, 169, 105, 0.1);
+  background: #ffffff;
+}
+
+/* Checkbox Group - Pill Style Premium */
+.checkbox-group {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #374151;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.checkbox-label:hover {
+  color: #c6a969;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #c6a969;
+  transition: all 0.2s ease;
+}
+
+/* Image Upload Box Premium */
+.image-upload-box {
+  display: block;
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #fafafa;
+}
+
+.image-upload-box:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+}
+
+.upload-content {
+  pointer-events: none;
+}
+
+.upload-content p {
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 6px;
+}
+
+.upload-content small {
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.preview-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.preview-container img {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Submit Button - Premium */
+.btn-submit {
+  width: 100%;
+  height: 48px;
+  background: #1f2937;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(31, 41, 55, 0.2);
+  margin-top: 24px;
+}
+
+.btn-submit:hover {
+  box-shadow: 0 6px 20px rgba(31, 41, 55, 0.3);
+  transform: translateY(-2px);
+  background: #111827;
+}
+
+.btn-submit:active {
+  transform: translateY(0);
+}
+
+/* ===== END MODERN SERVICE FORM ===== */
+.admin-rewards-list-card {
+  background: #ffffff;
+  border-radius: 22px;
+  padding: 36px;
+  margin-bottom: 48px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+}
+.admin-rewards-list-card h3 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  margin-bottom: 28px;
+  color: #111827;
+}
+.admin-rewards-list-header {
+  margin-bottom: 20px;
+}
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 300px;
+}
+.search-box input {
+  width: 100%;
+  padding: 10px 12px 10px 36px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: #f9fafb;
+  transition: all 0.2s ease;
+}
+.search-box input:focus {
+  outline: none;
+  border-color: #c6a969;
+  box-shadow: 0 0 0 2px rgba(198, 169, 105, 0.15);
+}
+.search-box::before {
+  content: "🔍";
+  position: absolute;
+  left: 10px;
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+.actions-cell {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+.delete-action-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+  padding: 4px;
+  border-radius: 4px;
+}
+.delete-action-btn:hover {
+  opacity: 1;
+  background: #f1f5f9;
+}
 .services-page {
   padding: 32px;
   background: #f6f8fb;
@@ -73,8 +334,8 @@
 .service-form select:focus,
 .service-form textarea:focus {
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+  border-color: #c6a969;
+  box-shadow: 0 0 0 2px rgba(198, 169, 105, 0.15);
 }
 
 /* CHECKBOX */
@@ -92,14 +353,14 @@
   width: 18px;
   height: 18px;
   cursor: pointer;
-  accent-color: #2563eb;
+  accent-color: #c6a969;
 }
 
 /* BUTTON */
 .add-btn {
   grid-column: span 4;
   margin-top: 8px;
-  background: #2563eb;
+  background: #1f2937;
   color: white;
   border: none;
   border-radius: 10px;
@@ -111,7 +372,7 @@
 }
 
 .add-btn:hover {
-  background: #1e40af;
+  background: #111827;
 }
 
 /* IMAGE UPLOAD */
@@ -135,9 +396,9 @@
 }
 
 .image-upload-label:hover {
-  border-color: #2563eb;
-  background: #eff6ff;
-  color: #2563eb;
+  border-color: #c6a969;
+  background: #f9fafb;
+  color: #c6a969;
 }
 
 .image-preview-small {

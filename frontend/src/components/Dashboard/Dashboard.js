@@ -33,8 +33,8 @@ export default function Dashboard() {
       <>
         <Navbar />
         <main className="dashboard">
-          <h2>Dashboard indisponibil</h2>
-          <p>Nu s-au putut încărca datele utilizatorului.</p>
+          <h2>Dashboard unavailable</h2>
+          <p>Could not load user data.</p>
         </main>
       </>
     );
@@ -45,140 +45,102 @@ export default function Dashboard() {
       <Navbar />
 
       <main className="dashboard">
-        {/* HEADER */}
-        <header>
-          <h1>
-            Welcome back, {data?.client?.FirstName || "Guest"}!
-          </h1>
-          <p className="subtitle">Ready for your next adventure?</p>
-        </header>
+        {/* BLOCK 1: WELCOME */}
+        <section className="block-header">
+          <h1>Welcome back, {data?.client?.FirstName || "Guest"}!</h1>
+          <p>Discover your journey with us</p>
+        </section>
 
-        {/* STATS */}
-        <section className="dashboard-stats">
-          <div className="stat-card">
-            <h4>City Points</h4>
-            <div className="value">{data?.cityPoints ?? 0}</div>
-          </div>
-
-          <div className="stat-card gold">
-            <h4>Traveller Status</h4>
-            <div className="value">{data?.status || "—"}</div>
+        {/* BLOCK 2: CITY POINTS */}
+        <section className="block-city-points">
+          <div className="city-points-card">
+            <h2>City Points</h2>
+            <div className="points-value">{data?.cityPoints ?? 0}</div>
+            <p className="points-text">Start earning rewards with every stay</p>
+            <button 
+              className="btn-primary"
+              onClick={() => navigate("/rewards")}
+            >
+              Explore rewards →
+            </button>
           </div>
         </section>
 
-        {/* EXPLORE */}
-        <section className="explore-banner">
-          <div className="explore-content">
-            <span className="badge">Featured</span>
-            <h3>Explore Themed Rooms</h3>
-            <p>
-              Discover our unique suites inspired by the world’s most iconic
-              cities.
-            </p>
-          </div>
-
-          <button
-            className="explore-btn"
+        {/* BLOCK 3: EXPLORE */}
+        <section className="block-explore">
+          <h3>Explore Themed Rooms</h3>
+          <p>Discover unique stays inspired by the world's most iconic cities</p>
+          <button 
+            className="btn-secondary"
             onClick={() => navigate("/explore")}
           >
-            Browse All Rooms →
+            Browse rooms →
           </button>
         </section>
 
-        {/* NEXT DESTINATION */}
-        {data?.nextDestination && (
-          <section className="next-destination">
-            <h3>Upcoming Reservation</h3>
-            <div className="destination-info">
-              <p className="booking-code">#{data.nextDestination.reservationId}</p>
-              <span className="separator">•</span>
-              <p className="destination-city">{data.nextDestination.city}</p>
-              <span className="separator">•</span>
-              <p className="destination-room">{data.nextDestination.room}</p>
-              <span className="separator">•</span>
-              <div className="destination-details">
-                <span className="detail-label">
-                  {new Date(data.nextDestination.checkIn).toLocaleDateString("ro-RO", { 
-                    day: 'numeric', 
-                    month: 'short'
-                  })}
-                </span>
-                <span className="detail-value">→</span>
-                <span className="detail-label">
-                  {new Date(data.nextDestination.checkOut).toLocaleDateString("ro-RO", { 
-                    day: 'numeric', 
-                    month: 'short'
-                  })}
-                </span>
-              </div>
-              <span className="separator">•</span>
-              <span className="detail-value">
-                {data.nextDestination.guests} {data.nextDestination.guests === 1 ? 'guest' : 'guests'}
-              </span>
-              <button onClick={() => navigate(`/profile`)}>
-                View Details
-              </button>
-            </div>
-          </section>
-        )}
-
-        {/* ACTIONS */}
-        <section className="action-grid">
+        {/* BLOCK 4: QUICK ACTIONS */}
+        <section className="block-actions">
           <div className="action-card">
             <h4>Book a Stay</h4>
-            <p>Explore our city-themed rooms and find your next getaway.</p>
-            <button
-              className="action-link"
-              onClick={() => navigate("/booking")}
-            >
-              Start Booking →
+            <p>Explore our city-themed rooms and find your next getaway</p>
+            <button className="card-link" onClick={() => navigate("/booking")}>
+              Start booking →
             </button>
           </div>
 
-          <div className="action-card" onClick={() => navigate("/services")}>
+          <div className="action-card">
             <h4>Services & Spa</h4>
-            <p>Book a massage, dinner, or local tour.</p>
-            <button className="action-link">Browse Menu →</button>
+            <p>Book a massage, dinner, or local tour</p>
+            <button className="card-link" onClick={() => navigate("/services")}>
+              Browse menu →
+            </button>
           </div>
 
-          <div className="action-card dark">
-            <h4>Play & Win</h4>
-            <p>Spin the globe or play trivia to win rewards.</p>
-            <span>Play Now →</span>
+          <div className="action-card">
+            <h4>Rewards</h4>
+            <p>Redeem your points and enjoy exclusive benefits</p>
+            <button className="card-link" onClick={() => navigate("/rewards")}>
+              View rewards →
+            </button>
           </div>
         </section>
 
-        {/* PAID RESERVATIONS */}
-        <section className="next-destination">
-          <h3>Your Reservations</h3>
+        {/* BLOCK 5: RESERVATIONS */}
+        <section className="block-reservations">
+          <h3>Your Stays</h3>
           {data?.recentReservations && data.recentReservations.length > 0 ? (
-            <div className="recent-list">
+            <div className="reservations-list">
               {data.recentReservations.map((res) => (
-                <div key={res.reservationId} className="recent-item">
-                  <div className={`status-indicator ${res.status}`}></div>
-                  <div className="recent-info">
-                    <div className="recent-header">
-                      <span className="recent-room">{res.room}</span>
-                      <span className={`booking-status-badge ${res.status}`}>
-                        {res.status === 'active' ? '🟢 Active' : 
-                         res.status === 'upcoming' ? '🔵 Upcoming' : 
-                         '⚪ Past'}
-                      </span>
-                    </div>
-                    <div className="recent-details">
-                      <span className="recent-code">#{res.reservationId}</span>
-                      <span className="recent-city">{res.city}</span>
-                      <span className="recent-dates">
-                        {new Date(res.checkIn).toLocaleDateString("ro-RO", { day: 'numeric', month: 'short' })} - 
-                        {new Date(res.checkOut).toLocaleDateString("ro-RO", { day: 'numeric', month: 'short' })}
-                      </span>
-                    </div>
+                <div key={res.reservationId} className="reservation-item">
+                  <div className="reservation-info">
+                    <h4>{res.room}</h4>
+                    <p className="city">{res.city}</p>
+                    <p className="dates">
+                      {new Date(res.checkIn).toLocaleDateString("en-US", { day: 'numeric', month: 'short' })} - 
+                      {new Date(res.checkOut).toLocaleDateString("en-US", { day: 'numeric', month: 'short' })}
+                    </p>
+                  </div>
+                  <div className="reservation-status">
+                    <span className={`status-badge ${res.status}`}>
+                      {res.status === 'active' ? '🟢 Active' : 
+                       res.status === 'upcoming' ? '🔵 Upcoming' : 
+                       '⚪ Past'}
+                    </span>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="muted">No completed reservations yet.</p>
+            <div className="empty-state-block">
+              <h4>Your stays will appear here</h4>
+              <p>Explore rooms and start building your journey</p>
+              <button 
+                className="btn-secondary"
+                onClick={() => navigate("/explore")}
+              >
+                Explore rooms →
+              </button>
+            </div>
           )}
         </section>
       </main>

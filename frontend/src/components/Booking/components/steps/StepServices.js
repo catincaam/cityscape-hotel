@@ -8,7 +8,7 @@ export default function StepServices({
   onUpdateServices
 }) {
   const [services, setServices] = useState([]);
-  const [activeCategory, setActiveCategory] = useState("Toate");
+  const [activeCategory, setActiveCategory] = useState("All");
   const [selected, setSelected] = useState({}); // { serviceId: qty }
 
   useEffect(() => {
@@ -49,7 +49,7 @@ export default function StepServices({
   }
 
   const filteredServices =
-    activeCategory === "Toate"
+    activeCategory === "All"
       ? services
       : services.filter(s => s.category === activeCategory);
 
@@ -77,14 +77,14 @@ export default function StepServices({
     <div className="services-layout">
       {/* LEFT */}
       <div className="services-main">
-        <h1>Alege Servicii Extra</h1>
+        <h1>Add Extra Services</h1>
         <p className="subtitle">
-          Completează-ți experiența cu facilități premium.
+          Complete your experience with premium add-ons.
         </p>
 
         {/* FILTERS */}
         <div className="service-tabs">
-          {["Toate", "Restaurant", "Wellness & Spa", "Transport", "Experiențe"].map(c => (
+          {["All", "Restaurant", "Wellness & Spa", "Transport", "Experiences"].map(c => (
             <button
               key={c}
               className={activeCategory === c ? "active" : ""}
@@ -98,7 +98,7 @@ export default function StepServices({
         {/* SERVICES LIST */}
         <div className="service-list">
           {filteredServices.length === 0 && (
-            <p className="no-services">Nu există servicii disponibile în această categorie.</p>
+            <p className="no-services">No services available in this category.</p>
           )}
           
           {filteredServices.map(s => (
@@ -136,7 +136,7 @@ export default function StepServices({
 
       {/* RIGHT SUMMARY */}
       <aside className="services-summary">
-        <h3>Sumar Rezervare</h3>
+        <h3>Booking Summary</h3>
 
         <div className="summary-block">
           <div>
@@ -150,32 +150,32 @@ export default function StepServices({
         </div>
 
         <div className="summary-line">
-          <span>Oaspeți</span>
-          <strong>{bookingData.adults} adulți</strong>
+          <span>Guests</span>
+          <strong>{bookingData.adults} adults</strong>
         </div>
 
         <div className="summary-line">
-          <span>Nopți</span>
+          <span>Nights</span>
           <strong>{nights}</strong>
         </div>
 
         <div className="summary-divider" />
 
         <div className="summary-room">
-          <span>Cameră</span>
+          <span>Room</span>
           <strong>{bookingData.room?.name}</strong>
           <div className="room-calc">
-            <span>{bookingData.room?.basePrice} × {nights} nopți</span>
-            <strong className="price">{roomTotal.toFixed(2)} RON</strong>
+            <span>{bookingData.room?.basePrice} × {nights} nights</span>
+            <strong className="price">{roomTotal.toFixed(2)} EUR</strong>
           </div>
         </div>
 
         <div className="summary-divider" />
 
         <div className="summary-services">
-          <span className="section-title">Servicii selectate</span>
+          <span className="section-title">Selected services</span>
           {Object.keys(selected).length === 0 ? (
-            <p className="no-services-msg">Niciun serviciu selectat</p>
+            <p className="no-services-msg">No services selected</p>
           ) : (
             Object.entries(selected).map(([id, qty]) => {
               const srv = services.find(s => s.ServiceId === Number(id));
@@ -183,7 +183,7 @@ export default function StepServices({
               return (
                 <div key={id} className="summary-line">
                   <span>{srv.name} × {qty}</span>
-                  <strong>{(qty * srv.price).toFixed(2)} RON</strong>
+                  <strong>{(qty * srv.price).toFixed(2)} EUR</strong>
                 </div>
               );
             })
@@ -194,13 +194,13 @@ export default function StepServices({
 
         <div className="summary-total">
           <span>Total</span>
-          <strong>{(roomTotal + calcServicesTotal()).toFixed(2)} RON</strong>
+          <strong>{(roomTotal + calcServicesTotal()).toFixed(2)} EUR</strong>
         </div>
 
         <div className="summary-actions">
-          <button className="back" onClick={onBack}>Înapoi</button>
+          <button className="back" onClick={onBack}>Back</button>
           <button className="next" onClick={onNext}>
-            Continuă spre Confirmare →
+            Continue to Confirmation →
           </button>
         </div>
       </aside>

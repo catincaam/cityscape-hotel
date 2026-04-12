@@ -12,6 +12,13 @@ import ProfilePage from "./components/Profile/ProfilePage";
 import ReservationDetail from "./components/ReservationDetail/ReservationDetail";
 import EmailTest from "./components/EmailTest/EmailTest";
 import DayPasses from "./components/DayPasses/DayPasses";
+import Rewards from "./components/Rewards/Rewards";
+import RewardsDetails from "./components/RewardsDetails/RewardsDetails";
+import PastReservations from "./components/Reservations/PastReservations";
+import ProfileEdit from "./components/Profile/ProfileEdit";
+
+import FeedbackPage from "./components/Feedback/FeedbackPage";
+import ChatbotWidget from "./components/Chatbot/ChatbotWidget";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
 
@@ -113,6 +120,16 @@ export default function App() {
           }
         />
 
+        {/* EDIT PROFILE */}
+        <Route
+          path="/profile/edit"
+          element={
+            <ProtectedRoute>
+              <ProfileEdit />
+            </ProtectedRoute>
+          }
+        />
+
         {/* DETALII REZERVARE */}
         <Route
           path="/reservation/:id"
@@ -132,7 +149,48 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* REWARDS PAGE */}
+        <Route
+          path="/rewards"
+          element={
+            <ProtectedRoute>
+              <Rewards />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* REWARDS DETAILS PAGE */}
+        <Route
+          path="/rewards-details"
+          element={
+            <ProtectedRoute>
+              <RewardsDetails />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* PAST RESERVATIONS */}
+        <Route
+          path="/reservations"
+          element={
+            <ProtectedRoute>
+              <PastReservations />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* FEEDBACK PAGE */}
+        <Route
+          path="/feedback/:reservationId"
+          element={
+            <ProtectedRoute>
+              <FeedbackPage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
+      <ChatbotWidget />
     </BrowserRouter>
   );
 }

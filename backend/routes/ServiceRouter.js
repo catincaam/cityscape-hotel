@@ -26,9 +26,17 @@ serviceRouter.get("/", async (req, res) => {
 
 /* DELETE */
 serviceRouter.delete("/:id", async (req, res) => {
-  const deleted = await deleteService(req.params.id);
-  if (!deleted) return res.status(404).json({ message: "Not found" });
-  res.json({ message: "deleted" });
+  try {
+    const deleted = await deleteService(req.params.id);
+    if (!deleted) return res.status(404).json({ message: "Not found" });
+    res.json({ message: "deleted" });
+  } catch (err) {
+    if (err.code === 'HAS_RESERVATIONS') {
+      return res.status(400).json({ message: err.message });
+    }
+    console.error("❌ Service delete error:", err.message);
+    res.status(500).json({ message: "Eroare la ștergere serviciu.", detail: err.message });
+  }
 });
 
 export default serviceRouter;

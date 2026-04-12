@@ -2,58 +2,98 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  margin-bottom: 40px;
+  gap: 0;
+  margin-bottom: 48px;
+  padding: 32px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #f0f4f8;
 }
 
 .step-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-weight: 600;
   color: #94a3b8;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  padding: 0 12px;
+  cursor: pointer;
+  user-select: none;
 }
 
 .step-item:hover {
-  color: #2563eb;
-  transform: scale(1.05);
-}
-
-.step-item.active {
-  color: #2563eb;
-}
-
-.step-circle {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: #e5e7eb;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  font-weight: 700;
-  transition: all 0.2s ease;
+  color: #1f2937;
+  transform: translateY(-1px);
 }
 
 .step-item:hover .step-circle {
-  background: #dbeafe;
-  transform: scale(1.1);
+  transform: scale(1.1) translateY(-2px);
+}
+
+.step-item.active {
+  color: #1f2937;
+}
+
+.step-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e5e7eb, #d1d5db);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #64748b;
+  flex-shrink: 0;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.step-item:hover .step-circle {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
 }
 
 .step-circle.done {
-  background: #22c55e;
+  background: linear-gradient(135deg, #10b981, #059669);
   color: white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.step-circle.done::after {
+  content: '✓';
+  position: absolute;
+  font-weight: 800;
 }
 
 .step-item.active .step-circle {
-  background: #2563eb;
+  background: #1f2937;
   color: white;
+  box-shadow: 0 6px 20px rgba(31, 41, 55, 0.2);
+  transform: scale(1.12);
+}
+
+.step-item span {
+  min-width: 80px;
+  text-align: center;
+  font-size: 13px;
+  letter-spacing: 0.3px;
 }
 
 .step-line {
-  width: 40px;
-  height: 2px;
-  background: #e5e7eb;
+  width: 48px;
+  height: 3px;
+  background: linear-gradient(to right, #e5e7eb, #d1d5db);
+  margin: 0 -6px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.step-item.active ~ .step-line,
+.step-item:last-child .step-line {
+  background: #1f2937;
 }

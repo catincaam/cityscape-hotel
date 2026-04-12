@@ -16,6 +16,17 @@ roomThemeRouter.post("/", async (req, res) => {
   try {
     const { images, ...themeData } = req.body;
     
+    // Convertim string-uri goale în null pentru INTEGER fields
+    if (themeData.size === '' || themeData.size === undefined) {
+      themeData.size = null;
+    }
+    if (themeData.bedType === '') {
+      themeData.bedType = null;
+    }
+    if (themeData.showcaseImage === '') {
+      themeData.showcaseImage = null;
+    }
+    
     // Creăm tema
     const theme = await createRoomTheme(themeData);
     
@@ -117,6 +128,9 @@ roomThemeRouter.delete("/:id", async (req, res) => {
     if (!deleted) return res.status(404).json({ message: "not found" });
     res.status(200).json({ message: "deleted" });
   } catch (err) {
+    if (err.code === 'THEME_IN_USE') {
+      return res.status(400).json({ message: err.message });
+    }
     console.error(err);
     res.status(500).json({ message: "server error" });
   }

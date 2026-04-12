@@ -3,12 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from "../Dashboard/Navbar";
 import profilePicture from "../../assets/profilePicture.jpg";
 import { getDashboardData } from "../../services/dashboardService";
+import { getUserActivePoints } from "../../services/rewardService";
 import "./ProfilePage.css";
+import { GoogleLogin, googleLogout } from '@react-oauth/google';
 
 export default function ProfilePage() {
   const navigate = useNavigate();
+  const userId = parseInt(localStorage.getItem("userId")) || 1;
   const [notifications, setNotifications] = useState(true);
   const [userData, setUserData] = useState(null);
+  const [userPoints, setUserPoints] = useState(0);
 
   useEffect(() => {
     async function loadUserData() {
@@ -16,23 +20,47 @@ export default function ProfilePage() {
         const data = await getDashboardData();
         setUserData(data);
       } catch (err) {
-        console.error("Eroare la încărcarea datelor:", err);
+        console.error("Error loading data:", err);
       }
     }
     loadUserData();
   }, []);
+
+  useEffect(() => {
+    async function loadPoints() {
+      try {
+        const pointsData = await getUserActivePoints(userId);
+        setUserPoints(pointsData.activePoints || 0);
+      } catch (err) {
+        console.error("Error loading points:", err);
+      }
+    }
+    loadPoints();
+  }, [userId]);
 
   const user = {
     firstName: userData?.client?.FirstName || "User",
     lastName: userData?.client?.LastName || "",
     email: userData?.client?.Email || "user@email.com",
     level: "Explorer",
-    points: userData?.cityPoints || 0,
+    points: userPoints,
     nextLevelPoints: 500,
     reservationsCount: userData?.recentReservations?.length || 0
   };
 
   const paidReservations = userData?.recentReservations || [];
+
+  // Handler for Google login success
+  const handleGoogleSuccess = async (credentialResponse) => {
+    // Send credentialResponse.credential to backend for verification
+    // Example: await api.post('/auth/google', { token: credentialResponse.credential })
+    alert('Google login success! Token: ' + credentialResponse.credential);
+  };
+
+  // Handler for Google login error
+  const handleGoogleError = () => {
+    alert('Google login failed!');
+  };
 
   return (
     <>
@@ -43,18 +71,18 @@ export default function ProfilePage() {
         <section className="user-card">
           <div className="user-info">
             <div className="avatar-large">
-              <img src={profilePicture} alt="User Avatar" />
+              <img src={userData?.client?.profilePicture || profilePicture} alt="User Avatar" onError={(e) => { e.target.src = profilePicture; }} />
             </div>
             
             <div className="user-details">
-              <h1>Salut, {user.firstName} {user.lastName} 👋</h1>
-              <p className="user-meta">Membru {user.level} • {user.email}</p>
-              <p className="user-tagline">Pregătit pentru următoarea aventură?</p>
+              <h1>Hello, {user.firstName} {user.lastName} 👋</h1>
+              <p className="user-meta">Member {user.level} • {user.email}</p>
+              <p className="user-tagline">Ready for your next adventure?</p>
             </div>
           </div>
 
-          <button className="edit-profile-btn">
-            Editează Profilul
+          <button className="edit-profile-btn" onClick={() => navigate('/profile/edit')}>
+            Edit Profile
           </button>
         </section>
 
@@ -65,25 +93,33 @@ export default function ProfilePage() {
               <span>🧳</span>
             </div>
             
-            <h2>Nu ai încă nicio rezervare plătită</h2>
+            <h2>No paid reservations yet</h2>
             <p>
-              Aici vor apărea aventurile tale plătite. Descoperă camere tematice unice
-              și finalizează prima ta rezervare.
+              Your paid trips will appear here. Discover unique themed rooms
+              and complete your first booking.
             </p>
 
             <button className="discover-btn" onClick={() => window.location.href = '/explore'}>
-              Descoperă Camerele
+              Explore Rooms
             </button>
           </section>
         ) : (
-          <section className="reservations-section">
-            <h2>Rezervările Tale</h2>
+          <section className="reservations-section" style={{ position: 'relative' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2>Your Reservations</h2>
+              <button
+                className="view-more-btn"
+                style={{ background: '#1f2937', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 22px', fontWeight: 600, cursor: 'pointer', fontSize: 15 }}
+                onClick={() => navigate('/reservations')}
+              >
+                View More
+              </button>
+            </div>
             <div className="reservations-list">
               {paidReservations.map((res) => (
-                <div key={res.reservationId} className="reservation-card">
+                <div key={res.reservationId} className="reservation-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div className="reservation-main">
                     <div className={`status-indicator ${res.status}`}></div>
-                    
                     <div className="reservation-content">
                       <div className="reservation-header">
                         <div className="res-main-info">
@@ -96,21 +132,21 @@ export default function ProfilePage() {
                            '⚪ Past'}
                         </span>
                       </div>
-                      
                       <div className="reservation-details">
                         <span className="res-id">#{res.reservationId}</span>
                         <span className="res-dates">
-                          {new Date(res.checkIn).toLocaleDateString("ro-RO", { day: 'numeric', month: 'short' })} - 
-                          {new Date(res.checkOut).toLocaleDateString("ro-RO", { day: 'numeric', month: 'short' })}
+                          {new Date(res.checkIn).toLocaleDateString("en-US", { day: 'numeric', month: 'short' })} - 
+                          {new Date(res.checkOut).toLocaleDateString("en-US", { day: 'numeric', month: 'short' })}
                         </span>
                         <span className="res-amount">{res.totalAmount} RON</span>
                       </div>
                     </div>
                   </div>
-
-                  <button className="details-btn" onClick={() => navigate(`/reservation/${res.reservationId}`)}>
-                    Vezi Detalii →
-                  </button>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 'auto' }}>
+                    <button className="details-btn" style={{ background: 'transparent', color: '#c6a969', border: 'none', fontWeight: 500, fontSize: 14, boxShadow: 'none', padding: '0 8px', textDecoration: 'underline', cursor: 'pointer' }} onClick={() => navigate(`/reservation/${res.reservationId}`)}>
+                      View Details
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -123,7 +159,6 @@ export default function ProfilePage() {
           <div className="gamification-card">
             <div className="card-header">
               <h3>City Traveler</h3>
-              <span className="level-badge">Nivel 1</span>
             </div>
 
             <div className="gamification-content">
@@ -131,23 +166,23 @@ export default function ProfilePage() {
                 <span className="icon">✈️</span>
               </div>
               
-              <p className="points-value">{user.points} Puncte</p>
-              <p className="points-hint">Rezervă prima ta cameră pentru a începe</p>
+              <p className="points-value">{user.points} Points</p>
+              <p className="points-hint">Book your first room to get started</p>
             </div>
 
-            <button className="rewards-btn">
-              Vezi Recompense
+            <button className="rewards-btn" onClick={() => navigate('/rewards')}>
+              View Rewards
             </button>
           </div>
 
           {/* PREFERENCES CARD */}
           <div className="preferences-card">
-            <h3>Preferințe Rapide</h3>
+            <h3>Quick Preferences</h3>
             
             <div className="preference-item">
               <div className="preference-label">
                 <span className="preference-icon">🔔</span>
-                Notificări Email
+                Email Notifications
               </div>
               <label className="toggle-switch">
                 <input 
@@ -166,6 +201,14 @@ export default function ProfilePage() {
       <button className="chatbot-btn" title="Chatbot - Coming Soon">
         🤖
       </button>
+
+      {/* Social Login Button */}
+      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', margin: '2rem 0' }}>
+        <GoogleLogin
+          onSuccess={handleGoogleSuccess}
+          onError={handleGoogleError}
+        />
+      </div>
     </>
   );
 }

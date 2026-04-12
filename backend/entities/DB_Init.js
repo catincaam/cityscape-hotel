@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+import path from "path";
+dotenv.config({ path: path.resolve(".env") });
 import db from "../dbConfig.js";
 
 // Entități
@@ -16,63 +19,67 @@ import Staff from "./Staff.js";
 import Feedback from "./Feedback.js";
 import RoomReservation from "./RoomReservation.js"; // tabela de legătură M:N
 import Payment from "./Payment.js";
+import Reward from "./Reward.js";
+import Admin from "./Admin.js";
 
 function setupFKs() {
-  // ---------- ClientType 1 → N Client ----------
+
   ClientType.hasMany(Client, { foreignKey: "TypeClientTip" });
   Client.belongsTo(ClientType, { foreignKey: "TypeClientTip" });
 
 
-
-  // ---------- Hotel 1 → N Room ----------
   Hotel.hasMany(Room, { foreignKey: "HotelId", onDelete: "CASCADE" });
   Room.belongsTo(Hotel, { foreignKey: "HotelId" });
 
-   // RoomTheme → Room
+ 
   RoomTheme.hasMany(Room, { foreignKey: "RoomThemeId", onDelete: "RESTRICT" });
   Room.belongsTo(RoomTheme, { foreignKey: "RoomThemeId" });
 
-  // ---------- RoomTheme 1 → N RoomImage (multiple poze per cameră) ----------
+
   RoomTheme.hasMany(RoomImage, { foreignKey: "RoomThemeId", onDelete: "CASCADE", as: "images" });
   RoomImage.belongsTo(RoomTheme, { foreignKey: "RoomThemeId" });
 
-  // ---------- Client 1 → N Reservation ----------
+
   Client.hasMany(Reservation, { foreignKey: "ClientId", onDelete: "CASCADE" });
   Reservation.belongsTo(Client, { foreignKey: "ClientId" });
 
-  // ---------- Reservation 1 → 1 Invoice ----------
+  
   Reservation.hasOne(Invoice, { foreignKey: "ReservationId", onDelete: "CASCADE" });
   Invoice.belongsTo(Reservation, { foreignKey: "ReservationId" });
 
-  // ---------- Reservation M ↔ N Room (RoomReservation) ----------
+
+  Reservation.hasMany(RoomReservation, { foreignKey: "ReservationId", onDelete: "CASCADE" });
+  RoomReservation.belongsTo(Reservation, { foreignKey: "ReservationId" });
+
+  RoomReservation.belongsTo(Room, { foreignKey: "RoomId" });
+  Room.hasMany(RoomReservation, { foreignKey: "RoomId", onDelete: "CASCADE" });
+
   Reservation.belongsToMany(Room, { through: RoomReservation, foreignKey: "ReservationId", otherKey: "RoomId" });
   Room.belongsToMany(Reservation, { through: RoomReservation, foreignKey: "RoomId", otherKey: "ReservationId" });
 
-  // ---------- Reservation 1 → N ReservationService (servicii SELECTATE) ----------
+  
   Reservation.hasMany(ReservationService, { foreignKey: "ReservationId", onDelete: "CASCADE" });
   ReservationService.belongsTo(Reservation, { foreignKey: "ReservationId" });
 
-  // ---------- Service 1 → N ReservationService ----------
+
   Service.hasMany(ReservationService, { foreignKey: "ServiceId", onDelete: "RESTRICT" });
   ReservationService.belongsTo(Service, { foreignKey: "ServiceId" });
 
-  // ---------- Invoice 1 → N ConsumedService ----------
   Invoice.hasMany(ConsumedService, { foreignKey: "InvoiceId", onDelete: "CASCADE" });
   ConsumedService.belongsTo(Invoice, { foreignKey: "InvoiceId" });
 
-  // ---------- Service 1 → N ConsumedService ----------
   Service.hasMany(ConsumedService, { foreignKey: "ServiceId", onDelete: "CASCADE" });
   ConsumedService.belongsTo(Service, { foreignKey: "ServiceId" });
 
-  // ---------- Hotel 1 → N Staff ----------
   Hotel.hasMany(Staff, { foreignKey: "HotelId", onDelete: "CASCADE" });
   Staff.belongsTo(Hotel, { foreignKey: "HotelId" });
 
-  // ---------- Client 1 → N Feedback ----------
   Client.hasMany(Feedback, { foreignKey: "ClientId", onDelete: "CASCADE" });
   Feedback.belongsTo(Client, { foreignKey: "ClientId" });
 
-  // ---------- Invoice 1 → N Payment ----------
+  Reservation.hasMany(Feedback, { foreignKey: "ReservationId", onDelete: "CASCADE" });
+  Feedback.belongsTo(Reservation, { foreignKey: "ReservationId" });
+
   Invoice.hasMany(Payment, { foreignKey: "InvoiceId", onDelete: "CASCADE", as: "payments" });
   Payment.belongsTo(Invoice, { foreignKey: "InvoiceId" });
 }
@@ -88,6 +95,9 @@ async function DB_Init() {
     console.error("DB_Init ERROR:", err);
   }
 }
+
+// la final, nu uita să exporți Reward dacă e nevoie
+export { /* ...alte entități... */ Reward };
 
 export default DB_Init;
 

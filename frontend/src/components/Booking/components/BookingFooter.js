@@ -4,11 +4,11 @@ export default function BookingFooter({ bookingData, onBack, onContinue }) {
   return (
     <div className="booking-footer">
       <button className="footer-back" onClick={onBack}>
-        ← Înapoi
+        ← Back
       </button>
 
       <div className="footer-summary">
-        <span>Camera selectată</span>
+        <span>Selected room</span>
         <strong>
           {bookingData.room ? bookingData.room.name : "—"}
         </strong>
@@ -19,7 +19,7 @@ export default function BookingFooter({ bookingData, onBack, onContinue }) {
         disabled={!bookingData.room}
         onClick={onContinue}
       >
-        Continuă →
+        Continue →
       </button>
     </div>
   );

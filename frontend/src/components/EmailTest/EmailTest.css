@@ -3,7 +3,7 @@
   margin: 0 auto;
   padding: 40px 32px;
   min-height: 100vh;
-  background: #f8fafc;
+  background: #f8f6f2;
 }
 
 .test-card {
@@ -42,13 +42,13 @@
 
 .email-input:focus {
   outline: none;
-  border-color: #1d4ed8;
+  border-color: #c6a969;
   background: white;
 }
 
 .test-btn {
   padding: 14px 28px;
-  background: #1d4ed8;
+  background: #1f2937;
   color: white;
   border: none;
   border-radius: 12px;
@@ -60,9 +60,9 @@
 }
 
 .test-btn:hover:not(:disabled) {
-  background: #1e40af;
+  background: #111827;
   transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(29, 78, 216, 0.3);
+  box-shadow: 0 8px 16px rgba(31, 41, 55, 0.3);
 }
 
 .test-btn:disabled {
@@ -93,7 +93,7 @@
   background: #f8fafc;
   padding: 24px;
   border-radius: 16px;
-  border-left: 4px solid #1d4ed8;
+  border-left: 4px solid #c6a969;
 }
 
 .instructions h3 {
@@ -114,7 +114,7 @@
 }
 
 .instructions a {
-  color: #1d4ed8;
+  color: #c6a969;
   font-weight: 600;
   text-decoration: none;
 }

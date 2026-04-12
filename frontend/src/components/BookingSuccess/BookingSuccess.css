@@ -1,6 +1,6 @@
 .success-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f8f6f2 0%, #ffffff 100%);
   padding: 60px 24px;
   display: flex;
   justify-content: center;
@@ -35,14 +35,14 @@
 
 .success-header h1 {
   font-size: 2.5rem;
-  color: white;
+  color: #1f2937;
   margin: 0 0 12px;
   font-weight: 700;
 }
 
 .success-subtitle {
   font-size: 1.1rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: #6b7280;
   margin: 0;
 }
 
@@ -90,7 +90,7 @@
 
 .detail-item .value.booking-code {
   font-family: 'Courier New', monospace;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #c6a969 0%, #8b7a52 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -220,24 +220,24 @@
 }
 
 .btn-primary {
-  background: #2563eb;
+  background: #1f2937;
   color: white;
 }
 
 .btn-primary:hover {
-  background: #1d4ed8;
+  background: #111827;
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 8px 20px rgba(31, 41, 55, 0.3);
 }
 
 .btn-secondary {
   background: white;
-  color: #2563eb;
-  border: 2px solid #2563eb;
+  color: #c6a969;
+  border: 2px solid #c6a969;
 }
 
 .btn-secondary:hover {
-  background: #eff6ff;
+  background: #fffbf3;
   transform: translateY(-2px);
 }
 

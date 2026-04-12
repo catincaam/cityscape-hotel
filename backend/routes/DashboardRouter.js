@@ -27,12 +27,16 @@ router.get("/dashboard", authClient, async (req, res) => {
       where: { ClientId: clientId },
       include: [
         {
-          model: Room,
-          through: { attributes: [] },
+          model: RoomReservation,
           include: [
             {
-              model: RoomTheme,
-              attributes: ['city', 'name', 'theme']
+              model: Room,
+              include: [
+                {
+                  model: RoomTheme,
+                  attributes: ['city', 'name', 'theme']
+                }
+              ]
             }
           ]
         }
@@ -48,13 +52,13 @@ router.get("/dashboard", authClient, async (req, res) => {
     const nextReservation = upcomingReservations.length > 0 ? upcomingReservations[0] : null;
 
     let nextDestination = null;
-    if (nextReservation && nextReservation.Rooms && nextReservation.Rooms.length > 0) {
-      const room = nextReservation.Rooms[0];
-      const roomTheme = room.RoomTheme;
+    if (nextReservation && nextReservation.RoomReservations && nextReservation.RoomReservations.length > 0) {
+      const room = nextReservation.RoomReservations[0]?.Room;
+      const roomTheme = room?.RoomTheme;
       nextDestination = {
         reservationId: nextReservation.ReservationId,
         city: roomTheme?.city || "City",
-        room: roomTheme?.name || room.name || "Room",
+        room: roomTheme?.name || room?.name || "Room",
         checkIn: nextReservation.requestedCheckin,
         checkOut: nextReservation.requestedCheckout,
         guests: nextReservation.nrPeople || 1
@@ -64,34 +68,26 @@ router.get("/dashboard", authClient, async (req, res) => {
     // Rezervări recente (ultimele 5, doar cele plătite complet)
     const recentReservations = await Promise.all(
       allReservations.slice(0, 10).map(async (reservation) => {
-        const room = reservation.Rooms && reservation.Rooms.length > 0 ? reservation.Rooms[0] : null;
+        const room = reservation.RoomReservations && reservation.RoomReservations.length > 0 ? reservation.RoomReservations[0].Room : null;
         const roomTheme = room?.RoomTheme;
         const invoice = await getInvoiceByReservationId(reservation.ReservationId);
-        
         // Doar dacă factura este paid
         if (invoice?.status !== 'paid') {
           return null;
         }
-
         const checkInDate = new Date(reservation.requestedCheckin);
         const checkOutDate = new Date(reservation.requestedCheckout);
         const today = new Date();
-        
-        // Resetăm orele pentru comparare corectă (doar ziua)
         today.setHours(0, 0, 0, 0);
         checkInDate.setHours(0, 0, 0, 0);
         checkOutDate.setHours(0, 0, 0, 0);
-        
-        // Determină statusul
         let bookingStatus = 'past';
         if (checkInDate > today) {
-          bookingStatus = 'upcoming'; // încă nu a început
+          bookingStatus = 'upcoming';
         } else if (checkOutDate >= today) {
-          bookingStatus = 'active'; // în desfășurare
+          bookingStatus = 'active';
         }
-
         console.log(`Reservation #${reservation.ReservationId}: CheckIn=${checkInDate.toISOString()}, CheckOut=${checkOutDate.toISOString()}, Today=${today.toISOString()}, Status=${bookingStatus}`);
-        
         return {
           reservationId: reservation.ReservationId,
           room: roomTheme?.name || "Unknown",
@@ -110,26 +106,47 @@ router.get("/dashboard", authClient, async (req, res) => {
     // Toate rezervările (pentru Profile page)
     const allReservationsFormatted = await Promise.all(
       allReservations.map(async (reservation) => {
-        const room = reservation.Rooms && reservation.Rooms.length > 0 ? reservation.Rooms[0] : null;
+        const room = reservation.RoomReservations && reservation.RoomReservations.length > 0 ? reservation.RoomReservations[0].Room : null;
         const roomTheme = room?.RoomTheme;
         const invoice = await getInvoiceByReservationId(reservation.ReservationId);
-        
         return {
           reservationId: reservation.ReservationId,
           room: roomTheme?.name || "Unknown",
           city: roomTheme?.city || "City",
           checkIn: reservation.requestedCheckin,
           checkOut: reservation.requestedCheckout,
-          status: invoice?.status || "pending",
-          totalAmount: invoice?.totalAmount || 0
+          status: reservation.status || "pending",
+          totalAmount: invoice?.totalAmount || 0,
+          image: roomTheme?.image ? `http://localhost:9001${roomTheme.image}` : null
         };
       })
     );
 
+    // Calculează punctele active pentru user
+    let cityPoints = 0;
+    try {
+      const RewardPoint = (await import("../entities/RewardPoint.js")).default;
+      const { Op } = await import("sequelize");
+      // Activează automat punctele dacă e cazul
+      await RewardPoint.update(
+        { status: "active" },
+        {
+          where: {
+            UserId: clientId,
+            status: "pending",
+            availableAt: { [Op.lte]: new Date() }
+          }
+        }
+      );
+      cityPoints = await RewardPoint.sum("amount", {
+        where: { UserId: clientId, status: "active" }
+      }) || 0;
+    } catch (e) {
+      console.error("Could not calculate cityPoints", e);
+    }
     res.json({
       client: safeClient,
-      cityPoints: 1200,
-      status: "Gold",
+      cityPoints,
       nextDestination,
       recentReservations: paidReservations,
       allReservations: allReservationsFormatted

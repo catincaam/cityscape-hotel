@@ -1,79 +1,46 @@
 .services-page {
   min-height: calc(100vh - 64px);
-  background: #F8FAFC;
-  padding: 2rem;
+  background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+  padding: 0;
 }
 
 .services-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr 400px;
-  gap: 2rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* LEFT SIDE */
 .services-left {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 0;
+  width: 100%;
 }
 
 /* Reservation Banner */
-.reservation-banner {
-  background: white;
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  position: relative;
-  overflow: hidden;
+.services-header {
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  color: white;
+  padding: 3rem 2rem;
+  text-align: center;
 }
 
-.reservation-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+.services-header-content {
+  max-width: 800px;
+  margin: 0 auto;
 }
 
-.status-badge {
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
+.services-header h1 {
+  font-size: 2.5rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  margin: 0 0 0.75rem 0;
 }
 
-.status-badge.active {
-  background: #D1FAE5;
-  color: #065F46;
-}
-
-.reservation-header h2 {
-  font-size: 1.25rem;
-  font-weight: 700;
+.services-header p {
+  font-size: 1.125rem;
+  color: rgba(255, 255, 255, 0.9);
   margin: 0;
-}
-
-.reservation-details {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
-}
-
-.detail-box .detail-label {
-  font-size: 0.75rem;
-  color: #64748B;
-  text-transform: uppercase;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-}
-
-.detail-box .detail-value {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #111827;
 }
 
 /* Filters */
@@ -81,63 +48,100 @@
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 1.5rem 2rem;
+  background: white;
+  border-bottom: 1px solid #E2E8F0;
 }
 
 .filter-btn {
-  padding: 0.625rem 1.25rem;
-  border-radius: 24px;
-  border: 2px solid #E2E8F0;
+  padding: 0.625rem 1rem;
+  border-radius: 20px;
+  border: 1px solid #CBD5E1;
   background: white;
-  color: #64748B;
-  font-weight: 600;
+  color: #475569;
+  font-weight: 500;
   font-size: 0.875rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .filter-btn:hover {
-  border-color: #2563EB;
-  color: #2563EB;
+  border-color: #c6a969;
+  color: #c6a969;
+  background: #EFF6FF;
 }
 
 .filter-btn.active {
-  background: #2563EB;
+  background: #1f2937;
   color: white;
-  border-color: #2563EB;
+  border-color: #1f2937;
 }
 
 /* Services Grid */
 .services-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
 }
 
 .service-card {
   background: white;
-  border-radius: 12px;
-  border: 2px solid #E5E7EB;
+  border-radius: 8px;
+  border: 1px solid #E5E7EB;
   overflow: hidden;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
+  height: 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .service-card:hover {
-  box-shadow: 0 10px 30px rgba(37, 99, 235, 0.1);
-  border-color: #BFDBFE;
-  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border-color: #DBEAFE;
+  transform: translateY(-8px);
 }
 
 .service-card.selected {
-  border-color: #2563EB;
-  background: #EFF6FF;
+  border-color: #c6a969;
+  background: #fffbf3;
 }
 
-.service-image {
-  height: 160px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.service-image-container {
   position: relative;
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #E0E7FF 0%, #F0F4FF 100%);
+}
+
+.service-image-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.service-card:hover .service-image-img {
+  transform: scale(1.08);
+}
+
+.service-image-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #f8f6f2 0%, #e5e7eb 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
 }
 
 .category-badge {
@@ -146,27 +150,64 @@
   left: 12px;
   padding: 0.375rem 0.75rem;
   border-radius: 6px;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(4px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.category-badge.wellness {
+  background: linear-gradient(135deg, #FED7AA 0%, #FDBA74 100%);
+  color: #7C2D12;
+}
+
+.category-badge.transport {
+  background: linear-gradient(135deg, #DBEAFE 0%, #BAE6FD 100%);
+  color: #0C4A6E;
+}
+
+.category-badge.restaurant {
+  background: linear-gradient(135deg, #FECACA 0%, #FCA5A5 100%);
+  color: #7F1D1D;
+}
+
+.category-badge.experienta {
+  background: linear-gradient(135deg, #D1D5DB 0%, #E5E7EB 100%);
+  color: #1F2937;
+}
+
+.category-badge.other {
+  background: linear-gradient(135deg, #E5E7EB 0%, #D1D5DB 100%);
+  color: #374151;
 }
 
 .service-content {
   padding: 1.25rem;
   flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .service-title {
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 700;
-  margin-bottom: 0.5rem;
-  color: #111827;
+  margin: 0 0 0.5rem 0;
+  color: #1F2937;
+  line-height: 1.4;
 }
 
 .service-description {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: #6B7280;
-  margin-bottom: 1rem;
-  line-height: 1.5;
+  margin: 0 0 0.75rem 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .service-price {
@@ -177,23 +218,49 @@
 }
 
 .price-amount {
-  font-size: 1.5rem;
+  font-size: 1.375rem;
   font-weight: 700;
-  color: #111827;
+  color: #c6a969;
 }
 
 .price-currency {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: #6B7280;
+  font-weight: 500;
+}
+
+.service-action-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background: #1f2937;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.service-action-btn:hover {
+  background: #111827;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(31, 41, 55, 0.3);
+}
+
+.service-action-btn:active {
+  transform: translateY(0);
 }
 
 .add-service-btn {
   width: calc(100% - 2.5rem);
   margin: 0 1.25rem 1.25rem;
   padding: 0.75rem;
-  border: 2px solid #2563EB;
+  border: 2px solid #1f2937;
   background: white;
-  color: #2563EB;
+  color: #1f2937;
   font-weight: 700;
   border-radius: 8px;
   cursor: pointer;
@@ -201,7 +268,7 @@
 }
 
 .add-service-btn:hover {
-  background: #2563EB;
+  background: #1f2937;
   color: white;
 }
 
@@ -212,7 +279,7 @@
   margin: 0 1.25rem 1.25rem;
   padding: 0.5rem;
   background: white;
-  border: 2px solid #2563EB;
+  border: 2px solid #c6a969;
   border-radius: 8px;
 }
 
@@ -220,8 +287,8 @@
   width: 32px;
   height: 32px;
   border: none;
-  background: #EFF6FF;
-  color: #2563EB;
+  background: #fffbf3;
+  color: #c6a969;
   font-size: 1.25rem;
   font-weight: 700;
   border-radius: 6px;
@@ -230,7 +297,7 @@
 }
 
 .quantity-control button:hover {
-  background: #2563EB;
+  background: #c6a969;
   color: white;
 }
 
@@ -266,7 +333,7 @@
 }
 
 .cart-count {
-  background: #2563EB;
+  background: #c6a969;
   color: white;
   padding: 0.25rem 0.625rem;
   border-radius: 12px;
@@ -385,7 +452,7 @@
 .finalize-btn {
   width: 100%;
   padding: 1rem;
-  background: #2563EB;
+  background: #1f2937;
   color: white;
   border: none;
   border-radius: 12px;
@@ -397,9 +464,9 @@
 }
 
 .finalize-btn:hover:not(:disabled) {
-  background: #1D4ED8;
+  background: #111827;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 4px 12px rgba(31, 41, 55, 0.3);
 }
 
 .finalize-btn:disabled {
@@ -425,21 +492,72 @@
 }
 
 @media (max-width: 1024px) {
-  .services-container {
-    grid-template-columns: 1fr;
+  .services-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.25rem;
+    padding: 1.5rem;
   }
 
-  .services-cart {
-    position: relative;
-    top: 0;
-    height: auto;
+  .services-header h1 {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .services-header {
+    padding: 2rem 1rem;
+  }
+
+  .services-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .services-header p {
+    font-size: 1rem;
+  }
+
+  .service-filters {
+    padding: 1rem;
+    gap: 0.5rem;
+  }
+
+  .filter-btn {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.8rem;
+  }
+
+  .services-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .services-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .services-header p {
+    font-size: 0.9rem;
   }
 
   .services-grid {
     grid-template-columns: 1fr;
+    gap: 0.875rem;
+    padding: 0.875rem;
   }
 
-  .reservation-details {
-    grid-template-columns: repeat(2, 1fr);
+  .service-title {
+    font-size: 0.95rem;
+  }
+
+  .price-amount {
+    font-size: 1.25rem;
+  }
+
+  .service-action-btn {
+    padding: 0.625rem;
+    font-size: 0.8rem;
   }
 }

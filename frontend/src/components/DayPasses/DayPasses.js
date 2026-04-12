@@ -31,7 +31,9 @@ const DayPasses = () => {
           time: service.duration || "Disponibil",
           includes: service.additionalInfo || "Detalii disponibile",
           image: service.image 
-            ? `http://localhost:9001${service.image.startsWith('/') ? '' : '/'}${service.image}` 
+            ? (service.image.startsWith('/uploads') 
+                ? `http://localhost:9001${service.image}` 
+                : service.image)
             : null,
           badge: service.category,
           badgeColor: getCategoryColor(service.category)

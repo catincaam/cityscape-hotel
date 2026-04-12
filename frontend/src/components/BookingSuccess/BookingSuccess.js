@@ -29,22 +29,22 @@ export default function BookingSuccess() {
         {/* HEADER SUCCESS */}
         <div className="success-header">
           <div className="success-icon">✓</div>
-          <h1>Rezervare Confirmată!</h1>
+          <h1>Booking Confirmed!</h1>
           <p className="success-subtitle">
-            Plata a fost procesată cu succes. Vei primi un email de confirmare în cel mai scurt timp.
+            Your payment was processed successfully. You will receive a confirmation email shortly.
           </p>
         </div>
 
         {/* RESERVATION DETAILS */}
         <div className="success-card">
-          <h2>Detalii Rezervare</h2>
+          <h2>Booking Details</h2>
           <div className="detail-grid">
             <div className="detail-item">
-              <span className="label">Cod Rezervare</span>
+              <span className="label">Booking Code</span>
               <span className="value booking-code">#{reservation?.ReservationId}</span>
             </div>
             <div className="detail-item">
-              <span className="label">Data Rezervării</span>
+              <span className="label">Booking Date</span>
               <span className="value">
                 {new Date(reservation?.reservationDate).toLocaleDateString("ro-RO")}
               </span>
@@ -66,25 +66,25 @@ export default function BookingSuccess() {
 
         {/* PAYMENT DETAILS */}
         <div className="success-card">
-          <h2>Detalii Plată</h2>
+          <h2>Payment Details</h2>
           <div className="payment-summary">
             <div className="payment-row">
-              <span>Total Factură</span>
-              <span className="amount">{Number(invoice?.totalAmount).toFixed(2)} RON</span>
+              <span>Total Invoice</span>
+              <span className="amount">{Number(invoice?.totalAmount).toFixed(2)} EUR</span>
             </div>
             <div className="payment-row highlight">
-              <span>Suma Plătită Acum</span>
-              <span className="amount">{Number(payment?.amount).toFixed(2)} RON</span>
+              <span>Amount Paid Now</span>
+              <span className="amount">{Number(payment?.amount).toFixed(2)} EUR</span>
             </div>
             {bookingDetails.remainingAmount > 0 && (
               <div className="payment-row remaining">
-                <span>Rest de Plată</span>
-                <span className="amount">{Number(bookingDetails.remainingAmount).toFixed(2)} RON</span>
+                <span>Remaining Amount</span>
+                <span className="amount">{Number(bookingDetails.remainingAmount).toFixed(2)} EUR</span>
               </div>
             )}
             <div className="payment-status">
               <span className={`status-badge ${invoice?.status}`}>
-                {invoice?.status === "paid" ? "Plătit Integral" : "Plătit Parțial"}
+                {invoice?.status === "paid" ? "Paid in Full" : "Partially Paid"}
               </span>
             </div>
           </div>
@@ -92,36 +92,36 @@ export default function BookingSuccess() {
 
         {/* NEXT STEPS */}
         <div className="success-card next-steps">
-          <h2>Ce urmează?</h2>
+          <h2>What's Next?</h2>
           <ul>
             <li>
               <span className="step-icon">📧</span>
               <div>
-                <strong>Verifică emailul</strong>
-                <p>Vei primi confirmarea rezervării cu toate detaliile.</p>
+                <strong>Check your email</strong>
+                <p>You will receive your booking confirmation with all details.</p>
               </div>
             </li>
             <li>
               <span className="step-icon">📱</span>
               <div>
-                <strong>Descarcă documentele</strong>
-                <p>Poți descărca factura și voucherul din contul tău.</p>
+                <strong>Download documents</strong>
+                <p>You can download your invoice and voucher from your account.</p>
               </div>
             </li>
             {bookingDetails.remainingAmount > 0 && (
               <li>
                 <span className="step-icon">💳</span>
                 <div>
-                  <strong>Plată restantă</strong>
-                  <p>Restul sumei va fi debitat cu 2 săptămâni înainte de check-in.</p>
+                  <strong>Outstanding payment</strong>
+                  <p>The remaining amount will be charged 2 weeks before check-in.</p>
                 </div>
               </li>
             )}
             <li>
               <span className="step-icon">🏨</span>
               <div>
-                <strong>Pregătește-te de călătorie</strong>
-                <p>Check-in începe de la ora 14:00. Te așteptăm!</p>
+                <strong>Get ready for your trip</strong>
+                <p>Check-in starts at 2:00 PM. We look forward to welcoming you!</p>
               </div>
             </li>
           </ul>
@@ -133,13 +133,13 @@ export default function BookingSuccess() {
             className="btn-primary"
             onClick={() => navigate("/dashboard")}
           >
-            Înapoi la Dashboard
+            Back to Dashboard
           </button>
           <button 
             className="btn-secondary"
             onClick={() => navigate("/profile")}
           >
-            Vezi Rezervările Mele
+            View My Bookings
           </button>
         </div>
       </div>
