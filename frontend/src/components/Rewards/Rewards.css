@@ -1,4 +1,36 @@
 /* ================================
+   SERVICE FILTERS (pentru /services)
+================================ */
+.service-filters {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+.filter-btn {
+  background: #f6f7f8;
+  color: #1f2937;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+}
+.filter-btn:hover {
+  background: #f0e6d6;
+  color: #b8956e;
+  border-color: #b8956e;
+}
+.filter-btn.active {
+  background: #b8956e;
+  color: #fff;
+  border-color: #b8956e;
+}
+/* ================================
    LUXE REWARDS PAGE STYLES
 ================================ */
 
@@ -59,6 +91,10 @@
   .luxury-points-section {
     grid-template-columns: 1fr;
     gap: 40px;
+  }
+
+  .stay-card {
+    grid-template-columns: 160px 1fr;
   }
 }
 
@@ -131,8 +167,9 @@
 .upcoming-stay {
   background: #ffffff;
   border-radius: 16px;
-  padding: 40px;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+  padding: 32px;
+  box-shadow: 0 18px 42px rgba(17, 24, 39, 0.06);
+  border: 1px solid rgba(198, 169, 105, 0.14);
 }
 
 .upcoming-header {
@@ -157,75 +194,108 @@
 }
 
 .stay-card {
-  display: flex;
+  display: grid;
+  grid-template-columns: 190px 1fr;
   gap: 24px;
+  align-items: stretch;
 }
 
 .stay-card-image {
-  width: 160px;
-  height: 160px;
+  width: 100%;
+  height: 156px;
   object-fit: cover;
-  border-radius: 12px;
+  border-radius: 10px;
   flex-shrink: 0;
+  box-shadow: 0 12px 24px rgba(17, 24, 39, 0.10);
 }
 
 .stay-card-content {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .stay-card-title {
-  font-size: 18px;
+  font-size: 21px;
   font-weight: 700;
   color: #1f2937;
-  margin-bottom: 8px;
+  margin: 0 0 8px;
+  font-family: "Georgia", serif;
+  line-height: 1.15;
 }
 
 .stay-card-dates {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 16px;
+  font-size: 13px;
+  color: #7c7265;
+  margin: 0 0 16px;
+  letter-spacing: 0.01em;
 }
 
 .stay-card-tags {
   display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 22px;
 }
 
 .tag {
-  font-size: 12px;
-  font-weight: 600;
-  padding: 6px 12px;
-  border-radius: 6px;
-  background: #e8e8e8;
-  color: #1f2937;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 6px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: #f6f1e9;
+  color: #9a7a42;
+  border: 1px solid #eadcc8;
 }
 
 .tag.ocean-view {
-  background: #e3f2fd;
-  color: #1565c0;
+  background: #f6f1e9;
+  color: #9a7a42;
 }
 
 .tag.king-bed {
-  background: #f3e5f5;
-  color: #6a1b9a;
+  background: #f8f8f7;
+  color: #6f6a62;
+  border-color: #ece7df;
 }
 
 .stay-manage-btn {
   background: transparent;
   border: 1px solid #c6a969;
   color: #c6a969;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 700;
+  padding: 9px 18px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   cursor: pointer;
   transition: all 0.3s ease;
+  width: fit-content;
 }
 
 .stay-manage-btn:hover {
   background: #c6a969;
   color: #ffffff;
+  box-shadow: 0 10px 22px rgba(198, 169, 105, 0.22);
+}
+
+@media (max-width: 640px) {
+  .upcoming-stay {
+    padding: 24px;
+  }
+
+  .stay-card {
+    grid-template-columns: 1fr;
+  }
+
+  .stay-card-image {
+    height: 210px;
+  }
 }
 
 /* ================================

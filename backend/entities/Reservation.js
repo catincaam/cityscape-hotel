@@ -21,16 +21,16 @@ import Room from "./Room.js";
 import RoomTheme from "./RoomTheme.js";
 import Invoice from "./Invoice.js";
 
-Reservation.hasMany(RoomReservation, { foreignKey: "ReservationId" });
+Reservation.hasMany(RoomReservation, { foreignKey: "ReservationId", as: "RoomReservations" });
 RoomReservation.belongsTo(Reservation, { foreignKey: "ReservationId" });
 
-RoomReservation.belongsTo(Room, { foreignKey: "RoomId" });
+RoomReservation.belongsTo(Room, { foreignKey: "RoomId", as: "Room" });
 Room.hasMany(RoomReservation, { foreignKey: "RoomId" });
 
-Room.belongsTo(RoomTheme, { foreignKey: "RoomThemeId" });
+Room.belongsTo(RoomTheme, { foreignKey: "RoomThemeId", as: "RoomTheme" });
 RoomTheme.hasMany(Room, { foreignKey: "RoomThemeId" });
 
-Reservation.hasOne(Invoice, { foreignKey: "ReservationId" });
+Reservation.hasOne(Invoice, { foreignKey: "ReservationId", as: "Invoice" });
 Invoice.belongsTo(Reservation, { foreignKey: "ReservationId" });
 
 export default Reservation;

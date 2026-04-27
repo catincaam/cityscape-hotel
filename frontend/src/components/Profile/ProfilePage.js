@@ -1,16 +1,22 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  CalendarDays,
+  Gift,
+  MapPin,
+  Settings,
+  Sparkles,
+  UserRound,
+} from "lucide-react";
 import Navbar from "../Dashboard/Navbar";
 import profilePicture from "../../assets/profilePicture.jpg";
 import { getDashboardData } from "../../services/dashboardService";
 import { getUserActivePoints } from "../../services/rewardService";
 import "./ProfilePage.css";
-import { GoogleLogin, googleLogout } from '@react-oauth/google';
 
 export default function ProfilePage() {
   const navigate = useNavigate();
   const userId = parseInt(localStorage.getItem("userId")) || 1;
-  const [notifications, setNotifications] = useState(true);
   const [userData, setUserData] = useState(null);
   const [userPoints, setUserPoints] = useState(0);
 
@@ -20,7 +26,7 @@ export default function ProfilePage() {
         const data = await getDashboardData();
         setUserData(data);
       } catch (err) {
-        console.error("Error loading data:", err);
+        console.error("Error loading profile data:", err);
       }
     }
     loadUserData();
@@ -38,177 +44,193 @@ export default function ProfilePage() {
     loadPoints();
   }, [userId]);
 
+  const reservations = useMemo(() => userData?.recentReservations || [], [userData?.recentReservations]);
   const user = {
-    firstName: userData?.client?.FirstName || "User",
+    firstName: userData?.client?.FirstName || "Guest",
     lastName: userData?.client?.LastName || "",
-    email: userData?.client?.Email || "user@email.com",
-    level: "Explorer",
+    email: userData?.client?.Email || "guest@cityscape.com",
+    level: userPoints >= 500 ? "Gold Tier Member" : "Explorer Member",
     points: userPoints,
-    nextLevelPoints: 500,
-    reservationsCount: userData?.recentReservations?.length || 0
   };
 
-  const paidReservations = userData?.recentReservations || [];
+  const favoriteCity = useMemo(() => {
+    if (!reservations.length) return "No destination yet";
+    const cityCounts = reservations.reduce((counts, reservation) => {
+      const city = reservation.city || "Cityscape";
+      counts[city] = (counts[city] || 0) + 1;
+      return counts;
+    }, {});
 
-  // Handler for Google login success
-  const handleGoogleSuccess = async (credentialResponse) => {
-    // Send credentialResponse.credential to backend for verification
-    // Example: await api.post('/auth/google', { token: credentialResponse.credential })
-    alert('Google login success! Token: ' + credentialResponse.credential);
+    return Object.keys(cityCounts).reduce((favorite, city) => (
+      cityCounts[city] > cityCounts[favorite] ? city : favorite
+    ));
+  }, [reservations]);
+
+  const upcomingReservations = reservations
+    .filter(reservation => reservation.status === "upcoming" || reservation.status === "active")
+    .slice(0, 3);
+  const displayedReservations = upcomingReservations.length ? upcomingReservations : reservations.slice(0, 3);
+  const citiesVisited = new Set(reservations.map(reservation => reservation.city).filter(Boolean)).size;
+  const totalSpent = reservations.reduce((sum, reservation) => sum + (parseFloat(reservation.totalAmount) || 0), 0);
+
+  const formatDate = (date) => {
+    if (!date) return "TBD";
+    return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   };
 
-  // Handler for Google login error
-  const handleGoogleError = () => {
-    alert('Google login failed!');
+  const getStatusLabel = (status) => {
+    if (status === "active") return "Active";
+    if (status === "upcoming") return "Upcoming";
+    if (status === "cancelled") return "Cancelled";
+    return "Past";
   };
 
   return (
     <>
       <Navbar />
-      
-      <main className="profile-page">
-        {/* USER CARD */}
-        <section className="user-card">
-          <div className="user-info">
-            <div className="avatar-large">
-              <img src={userData?.client?.profilePicture || profilePicture} alt="User Avatar" onError={(e) => { e.target.src = profilePicture; }} />
-            </div>
-            
-            <div className="user-details">
-              <h1>Hello, {user.firstName} {user.lastName} 👋</h1>
-              <p className="user-meta">Member {user.level} • {user.email}</p>
-              <p className="user-tagline">Ready for your next adventure?</p>
-            </div>
-          </div>
 
-          <button className="edit-profile-btn" onClick={() => navigate('/profile/edit')}>
-            Edit Profile
+      <main className="profile-page profile-collection">
+        <aside className="profile-sidebar">
+          <div className="profile-portrait">
+            <img
+              src={userData?.client?.profilePicture || profilePicture}
+              alt="User avatar"
+              onError={(event) => { event.currentTarget.src = profilePicture; }}
+            />
+          </div>
+          <h2>{user.firstName} {user.lastName}</h2>
+          <p>{user.level}</p>
+
+          <nav className="profile-side-nav" aria-label="Profile sections">
+            <button type="button" className="active" onClick={() => navigate("/reservations")}>
+              <CalendarDays size={16} />
+              My Stays
+            </button>
+            <button type="button" onClick={() => navigate("/rewards")}>
+              <Gift size={16} />
+              Member Rewards
+            </button>
+            <button type="button" onClick={() => navigate("/services")}>
+              <Sparkles size={16} />
+              Curated Services
+            </button>
+            <button type="button" onClick={() => navigate("/profile/edit")}>
+              <Settings size={16} />
+              Account Settings
+            </button>
+          </nav>
+
+          <button className="profile-book-btn" onClick={() => navigate("/booking")}>
+            Book New Stay
           </button>
-        </section>
+        </aside>
 
-        {/* RESERVATIONS LIST */}
-        {paidReservations.length === 0 ? (
-          <section className="empty-state">
-            <div className="empty-icon">
-              <span>🧳</span>
+        <section className="profile-content">
+          <header className="profile-hero">
+            <div>
+              <p className="profile-kicker">Archive & Future</p>
+              <h1>Your Collection</h1>
+              <p className="profile-subtitle">
+                Welcome back, {user.firstName}. Revisit your stays, rewards, and favorite Cityscape moments.
+              </p>
             </div>
-            
-            <h2>No paid reservations yet</h2>
-            <p>
-              Your paid trips will appear here. Discover unique themed rooms
-              and complete your first booking.
-            </p>
-
-            <button className="discover-btn" onClick={() => window.location.href = '/explore'}>
-              Explore Rooms
+            <button className="profile-edit-action" onClick={() => navigate("/profile/edit")}>
+              <UserRound size={16} />
+              Edit Profile
             </button>
-          </section>
-        ) : (
-          <section className="reservations-section" style={{ position: 'relative' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2>Your Reservations</h2>
-              <button
-                className="view-more-btn"
-                style={{ background: '#1f2937', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 22px', fontWeight: 600, cursor: 'pointer', fontSize: 15 }}
-                onClick={() => navigate('/reservations')}
-              >
-                View More
-              </button>
+          </header>
+
+          <section className="profile-summary-strip">
+            <div>
+              <span>Loyalty Points</span>
+              <strong>{user.points.toLocaleString("en-US")}</strong>
             </div>
-            <div className="reservations-list">
-              {paidReservations.map((res) => (
-                <div key={res.reservationId} className="reservation-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div className="reservation-main">
-                    <div className={`status-indicator ${res.status}`}></div>
-                    <div className="reservation-content">
-                      <div className="reservation-header">
-                        <div className="res-main-info">
-                          <h3>{res.room}</h3>
-                          <p className="res-city">{res.city}</p>
-                        </div>
-                        <span className={`booking-status-badge ${res.status}`}>
-                          {res.status === 'active' ? '🟢 Active' : 
-                           res.status === 'upcoming' ? '🔵 Upcoming' : 
-                           '⚪ Past'}
-                        </span>
-                      </div>
-                      <div className="reservation-details">
-                        <span className="res-id">#{res.reservationId}</span>
-                        <span className="res-dates">
-                          {new Date(res.checkIn).toLocaleDateString("en-US", { day: 'numeric', month: 'short' })} - 
-                          {new Date(res.checkOut).toLocaleDateString("en-US", { day: 'numeric', month: 'short' })}
-                        </span>
-                        <span className="res-amount">{res.totalAmount} RON</span>
-                      </div>
+            <div>
+              <span>Stays</span>
+              <strong>{reservations.length}</strong>
+            </div>
+            <div>
+              <span>Cities</span>
+              <strong>{citiesVisited}</strong>
+            </div>
+            <div>
+              <span>Favorite</span>
+              <strong>{favoriteCity}</strong>
+            </div>
+          </section>
+
+          <section className="profile-stays-panel">
+            <div className="profile-section-heading">
+              <div>
+                <p>Upcoming</p>
+                <h2>Recent Stays</h2>
+              </div>
+              <button onClick={() => navigate("/reservations")}>View All</button>
+            </div>
+
+            {displayedReservations.length === 0 ? (
+              <div className="profile-empty-state">
+                <CalendarDays size={28} />
+                <h3>No reservations yet</h3>
+                <p>Your paid trips will appear here once you complete your first booking.</p>
+                <button onClick={() => navigate("/booking")}>Explore Rooms</button>
+              </div>
+            ) : (
+              <div className="profile-stay-list">
+                {displayedReservations.map((reservation) => (
+                  <article key={reservation.reservationId} className="profile-stay-card">
+                    <div
+                      className={`profile-stay-visual ${reservation.image ? "has-image" : ""}`}
+                      style={reservation.image ? { backgroundImage: `url(${reservation.image})` } : undefined}
+                    >
+                      <span>{getStatusLabel(reservation.status)}</span>
+                      <MapPin size={18} />
                     </div>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 'auto' }}>
-                    <button className="details-btn" style={{ background: 'transparent', color: '#c6a969', border: 'none', fontWeight: 500, fontSize: 14, boxShadow: 'none', padding: '0 8px', textDecoration: 'underline', cursor: 'pointer' }} onClick={() => navigate(`/reservation/${res.reservationId}`)}>
-                      View Details
-                    </button>
-                  </div>
-                </div>
-              ))}
+
+                    <div className="profile-stay-details">
+                      <p>{reservation.city || "Cityscape Hotel"}</p>
+                      <h3>{reservation.room || "Curated Suite"}</h3>
+                      <div className="profile-stay-meta">
+                        <div>
+                          <span>Check-in</span>
+                          <strong>{formatDate(reservation.checkIn)}</strong>
+                        </div>
+                        <div>
+                          <span>Check-out</span>
+                          <strong>{formatDate(reservation.checkOut)}</strong>
+                        </div>
+                        <div>
+                          <span>Total</span>
+                          <strong>{reservation.totalAmount || 0} RON</strong>
+                        </div>
+                      </div>
+                      <button onClick={() => navigate(`/reservation/${reservation.reservationId}`)}>
+                        View Details
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="profile-insights">
+            <div className="profile-insight-card">
+              <p>Member Rewards</p>
+              <h3>{user.points.toLocaleString("en-US")} pts</h3>
+              <span>Use your points for curated hotel experiences.</span>
+              <button onClick={() => navigate("/rewards")}>Open Rewards</button>
+            </div>
+
+            <div className="profile-insight-card muted">
+              <p>Total Spend</p>
+              <h3>{totalSpent.toLocaleString("en-US", { maximumFractionDigits: 0 })} RON</h3>
+              <span>A quiet overview of your completed Cityscape journey.</span>
+              <button onClick={() => navigate("/reservations")}>See Stays</button>
             </div>
           </section>
-        )}
-
-        {/* GRID CARDS */}
-        <div className="profile-grid">
-          {/* GAMIFICATION CARD */}
-          <div className="gamification-card">
-            <div className="card-header">
-              <h3>City Traveler</h3>
-            </div>
-
-            <div className="gamification-content">
-              <div className="points-circle">
-                <span className="icon">✈️</span>
-              </div>
-              
-              <p className="points-value">{user.points} Points</p>
-              <p className="points-hint">Book your first room to get started</p>
-            </div>
-
-            <button className="rewards-btn" onClick={() => navigate('/rewards')}>
-              View Rewards
-            </button>
-          </div>
-
-          {/* PREFERENCES CARD */}
-          <div className="preferences-card">
-            <h3>Quick Preferences</h3>
-            
-            <div className="preference-item">
-              <div className="preference-label">
-                <span className="preference-icon">🔔</span>
-                Email Notifications
-              </div>
-              <label className="toggle-switch">
-                <input 
-                  type="checkbox" 
-                  checked={notifications} 
-                  onChange={(e) => setNotifications(e.target.checked)}
-                />
-                <span className="slider"></span>
-              </label>
-            </div>
-          </div>
-        </div>
+        </section>
       </main>
-
-      {/* CHATBOT BUTTON (placeholder pentru viitor) */}
-      <button className="chatbot-btn" title="Chatbot - Coming Soon">
-        🤖
-      </button>
-
-      {/* Social Login Button */}
-      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', margin: '2rem 0' }}>
-        <GoogleLogin
-          onSuccess={handleGoogleSuccess}
-          onError={handleGoogleError}
-        />
-      </div>
     </>
   );
 }

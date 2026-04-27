@@ -1,13 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   getRoomThemes,
   createRoomTheme,
-  updateRoomTheme,
   uploadMultipleImages,
   deleteRoomTheme
 } from "../../../services/roomThemeService";
 import "./AdminThemes.css";
-import "../services/AdminServices.css";
+import "../rewards/AdminRewards.css";
 
 const AMENITIES = [
   "Free WiFi",
@@ -24,11 +23,17 @@ const AMENITIES = [
 
 export default function AdminThemes() {
   const [themes, setThemes] = useState([]);
-  const [rooms, setRooms] = useState([]);
+  const [themeImages, setThemeImages] = useState([]);
+  const [themePreviews, setThemePreviews] = useState([]);
+  const [showcaseImage, setShowcaseImage] = useState(null);
+  const [showcasePreview, setShowcasePreview] = useState("");
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [deleteConfirmTitle, setDeleteConfirmTitle] = useState("");
 
-  /* ADD FORM */
   const [form, setForm] = useState({
     city: "",
     continent: "",
@@ -41,64 +46,61 @@ export default function AdminThemes() {
     description: "",
     amenities: []
   });
+  const [continentFilter, setContinentFilter] = useState('All');
 
-  const [themeImages, setThemeImages] = useState([]);
-  const [themePreviews, setThemePreviews] = useState([]);
-  const [showcaseImage, setShowcaseImage] = useState(null);
-  const [showcasePreview, setShowcasePreview] = useState("");
-  const [addError, setAddError] = useState("");
+  // Unique continents for filter and dropdown
+  // List of all continents (fixed, no manual entry)
+  const ALL_CONTINENTS = [
+    "Africa",
+    "Antarctica",
+    "Asia",
+    "Europe",
+    "North America",
+    "Oceania",
+    "South America"
+  ];
 
-  /* ======================
-     LOAD DATA
-  ====================== */
-  async function loadThemes() {
-    try {
-      const data = await getRoomThemes();
-      setThemes(data || []);
-    } catch {
-      setError("Error loading themes");
+  // Auto-hide notifications
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => setSuccess(""), 3000);
+      return () => clearTimeout(timer);
     }
-  }
-
-  async function loadRooms() {
-    try {
-      const r = await fetch("http://localhost:9001/api/rooms");
-      setRooms(await r.json());
-    } catch {
-      setRooms([]);
-    }
-  }
+  }, [success]);
 
   useEffect(() => {
-    loadThemes();
-    loadRooms();
+    if (error) {
+      const timer = setTimeout(() => setError(""), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
+  // Load themes
+  useEffect(() => {
+    fetchThemes();
   }, []);
 
-  /* ======================
-     FORM HANDLERS
-  ====================== */
-  function handleChange(e) {
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
-  }
-
-  function toggleAmenity(a) {
-    setForm(prev => ({
-      ...prev,
-      amenities: prev.amenities.includes(a)
-        ? prev.amenities.filter(x => x !== a)
-        : [...prev.amenities, a]
-    }));
+  async function fetchThemes() {
+    setLoading(true);
+    try {
+      const data = await getRoomThemes();
+      setThemes(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error loading themes:", err);
+      setError("Error loading themes");
+    }
+    setLoading(false);
   }
 
   function handleThemeImages(e) {
     const files = Array.from(e.target.files);
-    if (!files.length) return;
+    if (files.length === 0) return;
+    
     setThemeImages(files);
-    setThemePreviews(files.map(f => URL.createObjectURL(f)));
+    setThemePreviews(files.map(file => URL.createObjectURL(file)));
   }
 
-  function removeImage(idx) {
+  function removeThemeImage(idx) {
     setThemeImages(prev => prev.filter((_, i) => i !== idx));
     setThemePreviews(prev => prev.filter((_, i) => i !== idx));
   }
@@ -115,17 +117,45 @@ export default function AdminThemes() {
     setShowcasePreview("");
   }
 
-  async function handleAddSubmit(e) {
+  function toggleAmenity(amenity) {
+    setForm(prev => ({
+      ...prev,
+      amenities: prev.amenities.includes(amenity)
+        ? prev.amenities.filter(a => a !== amenity)
+        : [...prev.amenities, amenity]
+    }));
+  }
+
+  async function handleSubmit(e) {
     e.preventDefault();
-    setAddError("");
+    setLoading(true);
+    setError("");
+
+    if (!form.city || !form.theme || !form.name || !form.basePrice) {
+      setError("All required fields must be filled!");
+      setLoading(false);
+      return;
+    }
+
+    if (themeImages.length === 0) {
+      setError("At least one theme image is required!");
+      setLoading(false);
+      return;
+    }
+
+    if (!showcaseImage) {
+      setError("Showcase image is required!");
+      setLoading(false);
+      return;
+    }
 
     try {
       let imagePaths = [];
       let showcasePath = null;
 
       if (themeImages.length > 0) {
-        const uploadResult = await uploadMultipleImages(themeImages);
-        imagePaths = uploadResult.imageUrls || [];
+        const uploadRes = await uploadMultipleImages(themeImages);
+        imagePaths = uploadRes.imageUrls || [];
       }
 
       if (showcaseImage) {
@@ -133,24 +163,23 @@ export default function AdminThemes() {
         showcasePath = showcaseUpload.imageUrls ? showcaseUpload.imageUrls[0] : null;
       }
 
-      const themePayload = {
-        ...form,
+      await createRoomTheme({
+        city: form.city.trim(),
+        continent: form.continent || "",
+        theme: form.theme.trim(),
+        name: form.name.trim(),
+        basePrice: parseInt(form.basePrice),
+        maxGuests: parseInt(form.maxGuests),
+        size: form.size || "",
+        bedType: form.bedType || "",
+        description: form.description.trim(),
+        amenities: form.amenities,
         images: imagePaths.length > 0 ? imagePaths : undefined,
         showcaseImage: showcasePath || undefined
-      };
+      });
 
-      if (form.id) {
-        // UPDATE existing theme
-        await updateRoomTheme(form.id, themePayload);
-        alert("Theme updated successfully!");
-      } else {
-        // CREATE new theme
-        await createRoomTheme(themePayload);
-        alert("Theme added successfully!");
-      }
-
+      setSuccess("Theme created successfully!");
       setForm({
-        id: null,
         city: "",
         continent: "",
         theme: "",
@@ -162,362 +191,456 @@ export default function AdminThemes() {
         description: "",
         amenities: []
       });
-
       setThemeImages([]);
       setThemePreviews([]);
       setShowcaseImage(null);
       setShowcasePreview("");
-
-      await loadThemes();
+      await fetchThemes();
     } catch (err) {
-      setAddError("Error: " + (err.message || ""));
+      setError(err.message || "Error creating theme!");
+    } finally {
+      setLoading(false);
     }
   }
 
-  /* ======================
-     DELETE
-  ====================== */
-  async function handleDelete(theme) {
-    const hasRooms = rooms.some(
-      r => r.RoomThemeId === theme.RoomThemeId
-    );
-
-    if (hasRooms) {
-      alert("Cannot delete theme: rooms are assigned to it.");
-      return;
-    }
-
-    if (!window.confirm("Delete this theme?")) return;
-
-    await deleteRoomTheme(theme.RoomThemeId);
-    loadThemes();
-  }
-
-  /* ======================
-     EDIT
-  ====================== */
-  function handleEdit(theme) {
-    setForm({
-      id: theme.RoomThemeId,
-      city: theme.city,
-      continent: theme.continent || "",
-      theme: theme.theme,
-      name: theme.name,
-      basePrice: theme.basePrice.toString(),
-      maxGuests: theme.maxGuests,
-      size: theme.size || "",
-      bedType: theme.bedType || "",
-      description: theme.description || "",
-      amenities: theme.amenities && typeof theme.amenities === 'string' 
-        ? JSON.parse(theme.amenities) 
-        : Array.isArray(theme.amenities) 
-          ? theme.amenities 
-          : []
+  const filteredThemes = useMemo(() => {
+    return themes.filter(t => {
+      const matchesSearch =
+        t.name?.toLowerCase().includes(search.toLowerCase()) ||
+        t.city?.toLowerCase().includes(search.toLowerCase()) ||
+        t.theme?.toLowerCase().includes(search.toLowerCase());
+      const matchesContinent =
+        continentFilter === 'All' || (t.continent && t.continent.toLowerCase() === continentFilter.toLowerCase());
+      return matchesSearch && matchesContinent;
     });
-    setShowcaseImage(null);
-    setShowcasePreview("");
-    setThemeImages([]);
-    setThemePreviews([]);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [themes, search, continentFilter]);
+
+  function handleDelete(themeId) {
+    const theme = themes.find(t => t.RoomThemeId === themeId);
+    setDeleteConfirmTitle(theme?.name || "this theme");
+    setDeleteConfirm(themeId);
   }
 
-  /* ======================
-     FILTER
-  ====================== */
-  const filteredThemes = themes.filter(t =>
-    t.name?.toLowerCase().includes(search.toLowerCase()) ||
-    t.city?.toLowerCase().includes(search.toLowerCase())
-  );
+  async function confirmDelete() {
+    if (!deleteConfirm) return;
+    
+    try {
+      setThemes(themes.filter(t => t.RoomThemeId !== deleteConfirm));
+      await deleteRoomTheme(deleteConfirm);
+      setSuccess("Theme deleted successfully!");
+      setDeleteConfirm(null);
+      setDeleteConfirmTitle("");
+    } catch (err) {
+      await fetchThemes();
+      setError(err.message || "Error deleting theme");
+      setDeleteConfirm(null);
+      setDeleteConfirmTitle("");
+    }
+  }
 
-  /* ======================
-     JSX
-  ====================== */
+  function cancelDelete() {
+    setDeleteConfirm(null);
+    setDeleteConfirmTitle("");
+  }
+
   return (
-    <>
-      {/* ADD THEME - MODERN CARD DESIGN */}
-      <div className="service-form-container">
-        <div className="service-form-card">
-          <h3>{form.id ? 'Edit Theme' : 'Add New Theme'}</h3>
+    <div className="admin-rewards-container">
+      {/* HERO SECTION */}
+      <div className="rewards-hero">
+        <h1>Theme Architecture</h1>
+        <p>Refine the visual soul of your properties. Orchestrate atmosphere through curated themes that define the guest experience across the globe.</p>
+      </div>
 
-          <form onSubmit={handleAddSubmit}>
-            {/* LOCATION INFO CARD */}
-            <div className="form-section">
-              <div className="section-title">Location Info</div>
-              <div className="form-grid-2col">
-                <div className="form-group">
-                  <label>City</label>
-                  <input name="city" value={form.city} onChange={handleChange} required />
-                </div>
-                <div className="form-group">
-                  <label>Continent</label>
-                  <select name="continent" value={form.continent} onChange={handleChange} required>
-                    <option value="">Select Continent</option>
-                    <option value="Asia">Asia</option>
-                    <option value="Europa">Europa</option>
-                    <option value="Africa">Africa</option>
-                    <option value="North America">North America</option>
-                    <option value="South America">South America</option>
-                    <option value="Oceania">Oceania</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Theme</label>
-                  <input name="theme" value={form.theme} onChange={handleChange} required />
-                </div>
-                <div className="form-group">
-                  <label>Base Price (EUR)</label>
-                  <input type="number" name="basePrice" value={form.basePrice} onChange={handleChange} required />
-                </div>
+      {/* FORM + PREVIEW SECTION */}
+      <div className="rewards-creation-section">
+        {/* LEFT: FORM */}
+        <div className="rewards-form-wrapper">
+          <div className="form-header">
+            <h2>Add New Theme</h2>
+          </div>
+
+          <form onSubmit={handleSubmit} className="rewards-form">
+            {/* LOCATION */}
+            <div className="form-row-2">
+              <div className="form-field">
+                <label>City</label>
+                <input
+                  type="text"
+                  placeholder="e.g., Tokyo"
+                  value={form.city}
+                  onChange={e => setForm({ ...form, city: e.target.value })}
+                  required
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-field">
+                <label>Continent</label>
+                <select
+                  value={form.continent}
+                  onChange={e => setForm({ ...form, continent: e.target.value })}
+                  className="form-input"
+                  required
+                >
+                  <option value="">Select continent</option>
+                  {ALL_CONTINENTS.map(cont => (
+                    <option key={cont} value={cont}>{cont}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
-            {/* ROOM DETAILS CARD */}
-            <div className="form-section">
-              <div className="section-title">Room Details</div>
-              <div className="form-grid-2col">
-                <div className="form-group">
-                  <label>Full Name</label>
-                  <input name="name" value={form.name} onChange={handleChange} required />
-                </div>
-                <div className="form-group">
-                  <label>Max Guests</label>
-                  <input type="number" name="maxGuests" value={form.maxGuests} onChange={handleChange} min="1" />
-                </div>
-                <div className="form-group">
-                  <label>Room Size (m²)</label>
-                  <input type="number" name="size" value={form.size} onChange={handleChange} placeholder="ex: 25" />
-                </div>
-                <div className="form-group">
-                  <label>Bed Type</label>
-                  <select name="bedType" value={form.bedType} onChange={handleChange}>
-                    <option value="">Select Bed Type</option>
-                    <option value="Single">Single</option>
-                    <option value="Twin">Twin</option>
-                    <option value="Queen">Queen</option>
-                    <option value="King">King</option>
-                    <option value="Super King">Super King</option>
-                    <option value="Bunk">Bunk</option>
-                    <option value="Sofa Bed">Sofa Bed</option>
-                  </select>
-                </div>
+            {/* THEME NAME */}
+            <div className="form-row-2">
+              <div className="form-field">
+                <label>Theme Style</label>
+                <input
+                  type="text"
+                  placeholder="e.g., Minimalist"
+                  value={form.theme}
+                  onChange={e => setForm({ ...form, theme: e.target.value })}
+                  required
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-field">
+                <label>Theme Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g., Tokyo Neon"
+                  value={form.name}
+                  onChange={e => setForm({ ...form, name: e.target.value })}
+                  required
+                  className="form-input"
+                />
               </div>
             </div>
 
-            {/* DESCRIPTION CARD */}
-            <div className="form-section">
-              <div className="section-title">Description</div>
-              <textarea 
-                name="description" 
-                value={form.description} 
-                onChange={handleChange}
-                style={{ width: '100%', minHeight: '100px', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontFamily: 'inherit', resize: 'vertical' }}
+            {/* PRICE & GUESTS */}
+            <div className="form-row-2">
+              <div className="form-field">
+                <label>Base Price (EUR)</label>
+                <div className="points-input-wrapper">
+                  <input
+                    type="number"
+                    placeholder="e.g., 450"
+                    value={form.basePrice}
+                    onChange={e => setForm({ ...form, basePrice: e.target.value })}
+                    required
+                    className="form-input points-input"
+                  />
+                  <span className="points-label">EUR</span>
+                </div>
+              </div>
+
+              <div className="form-field">
+                <label>Max Guests</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={form.maxGuests}
+                  onChange={e => setForm({ ...form, maxGuests: e.target.value })}
+                  className="form-input"
+                />
+              </div>
+            </div>
+
+            {/* SIZE & BED */}
+            <div className="form-row-2">
+              <div className="form-field">
+                <label>Room Size (m²)</label>
+                <input
+                  type="text"
+                  placeholder="e.g., 65"
+                  value={form.size}
+                  onChange={e => setForm({ ...form, size: e.target.value })}
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-field">
+                <label>Bed Type</label>
+                <input
+                  type="text"
+                  placeholder="e.g., King"
+                  value={form.bedType}
+                  onChange={e => setForm({ ...form, bedType: e.target.value })}
+                  className="form-input"
+                />
+              </div>
+            </div>
+
+            {/* DESCRIPTION */}
+            <div className="form-field">
+              <label>Editorial Description</label>
+              <textarea
+                placeholder="Describe the atmosphere..."
+                value={form.description}
+                onChange={e => setForm({ ...form, description: e.target.value })}
+                className="form-textarea"
+                rows="4"
               />
             </div>
 
-            {/* AMENITIES CARD */}
-            <div className="form-section">
-              <div className="section-title">Amenities</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+            {/* AMENITIES */}
+            <div className="form-field">
+              <label>Amenities</label>
+              <div className="amenities-grid">
                 {AMENITIES.map(a => (
-                  <label key={a} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '8px 12px', borderRadius: '8px', fontSize: '0.95rem', transition: 'background 0.2s' }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                  >
+                  <label key={a} className="checkbox-label">
                     <input
                       type="checkbox"
                       checked={form.amenities.includes(a)}
                       onChange={() => toggleAmenity(a)}
-                      style={{ cursor: 'pointer', width: '18px', height: '18px' }}
                     />
-                    {a}
+                    <span>{a}</span>
                   </label>
                 ))}
               </div>
             </div>
 
-            {/* IMAGES CARD */}
-            <div className="form-section">
-              <div className="section-title">Room Gallery Images</div>
+            {/* IMAGE UPLOAD - THEME IMAGES */}
+            <div className="form-field">
+              <label>Theme Images (Gallery)</label>
               <label className="image-upload-box">
-                <input type="file" accept="image/*" multiple hidden onChange={handleThemeImages} />
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  multiple
+                  hidden 
+                  onChange={handleThemeImages}
+                />
                 <div className="upload-content">
-                  <p>{themePreviews.length ? 'Change images' : 'Upload images'}</p>
-                  <small>PNG, JPG, max 5MB each</small>
+                  <div className="upload-icon">⬆</div>
+                  <p>Drop theme images here or browse</p>
+                  <small>Multiple images recommended</small>
                 </div>
               </label>
+
               {themePreviews.length > 0 && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '12px', marginTop: '16px' }}>
-                  {themePreviews.map((src, i) => (
-                    <div key={i} style={{ position: 'relative', aspectRatio: '1/1', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-                      <img src={src} alt={`preview ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <div className="preview-thumbnails">
+                  {themePreviews.map((preview, idx) => (
+                    <div key={idx} className="thumbnail">
+                      <img src={preview} alt={`theme-${idx}`} />
                       <button
                         type="button"
-                        onClick={() => removeImage(i)}
-                        style={{ position: 'absolute', top: '4px', right: '4px', width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(239,68,68,0.95)', color: 'white', border: 'none', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                      >✕</button>
+                        className="thumbnail-remove"
+                        onClick={() => removeThemeImage(idx)}
+                      >
+                        ✕
+                      </button>
                     </div>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* SHOWCASE IMAGE CARD */}
-            <div className="form-section">
-              <div className="section-title">Showcase for Homepage</div>
+            {/* SHOWCASE IMAGE UPLOAD */}
+            <div className="form-field">
+              <label>Showcase Image</label>
               <label className="image-upload-box">
-                <input type="file" accept="image/*" hidden onChange={handleShowcaseImage} />
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  hidden 
+                  onChange={handleShowcaseImage}
+                />
                 <div className="upload-content">
-                  <p>{showcasePreview ? 'Change image' : 'Upload image'}</p>
-                  <small>Upload a photo of the city</small>
+                  <div className="upload-icon">⬆</div>
+                  <p>Drop showcase image here or browse</p>
+                  <small>Single high-quality image</small>
                 </div>
               </label>
+
               {showcasePreview && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '12px', marginTop: '16px' }}>
-                  <div style={{ position: 'relative', aspectRatio: '1/1', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-                    <img src={showcasePreview} alt="showcase" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    <button
-                      type="button"
-                      onClick={removeShowcaseImage}
-                      style={{ position: 'absolute', top: '4px', right: '4px', width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(239,68,68,0.95)', color: 'white', border: 'none', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    >✕</button>
-                  </div>
+                <div className="showcase-preview">
+                  <img src={showcasePreview} alt="showcase" />
+                  <button
+                    type="button"
+                    className="thumbnail-remove"
+                    onClick={removeShowcaseImage}
+                  >
+                    ✕
+                  </button>
                 </div>
               )}
             </div>
 
             {/* ERROR MESSAGE */}
-            {addError && <div style={{ color: '#dc2626', fontSize: '0.9rem', marginBottom: '16px', padding: '12px', background: '#fee2e2', borderRadius: '8px' }}>{addError}</div>}
+            {error && <div className="error-message">{error}</div>}
 
-            {/* ACTION BUTTONS */}
-            <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
-              <button type="submit" className="btn-submit">
-                {form.id ? 'Update Theme' : 'Add Theme'}
+            {/* BUTTON */}
+            <div className="form-actions">
+              <button type="submit" disabled={loading} className="btn-primary">
+                Publish Theme
               </button>
-              {form.id && (
-                <button 
-                  type="button"
-                  onClick={() => {
-                    setForm({
-                      id: null,
-                      city: "",
-                      continent: "",
-                      theme: "",
-                      name: "",
-                      basePrice: "",
-                      maxGuests: 2,
-                      size: "",
-                      bedType: "",
-                      description: "",
-                      amenities: []
-                    });
-                    setThemeImages([]);
-                    setThemePreviews([]);
-                    setShowcaseImage(null);
-                    setShowcasePreview("");
-                  }}
-                  style={{
-                    background: '#e5e7eb',
-                    color: '#374151',
-                    border: 'none',
-                    borderRadius: '12px',
-                    padding: '12px 24px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    height: '48px',
-                    transition: 'background 0.2s'
-                  }}
-                >
-                  Cancel
-                </button>
-              )}
             </div>
           </form>
         </div>
+
+        {/* RIGHT: PREVIEW */}
+        <div className="rewards-preview-wrapper">
+          <div className="preview-header">
+            <span className="preview-label">Instant Preview</span>
+            {showcasePreview && <span className="preview-dot">● Visualizing live data</span>}
+          </div>
+
+          {showcasePreview ? (
+            <div className="preview-card">
+              <div className="preview-image-wrapper">
+                <img src={showcasePreview} alt="preview" className="preview-image" />
+                <div className="preview-badge">{form.basePrice} EUR</div>
+              </div>
+
+              <div className="preview-content">
+                <div className="preview-category">{form.city}</div>
+                <h3 className="preview-title">{form.name || "Theme Name"}</h3>
+                <p className="preview-description">{form.description || "Theme description will appear here"}</p>
+                
+                <div className="preview-meta">
+                  <span className="meta-item">
+                    <span className="meta-label">Location:</span>
+                    <span className="meta-value">{form.city}, {form.continent}</span>
+                  </span>
+                  <span className="meta-item">
+                    <span className="meta-label">Starting From:</span>
+                    <span className="meta-value">{form.basePrice} EUR /night</span>
+                  </span>
+                </div>
+
+                <button className="preview-btn" disabled>Live View Rendering</button>
+              </div>
+            </div>
+          ) : (
+            <div className="preview-empty">
+              <div className="empty-icon">🎨</div>
+              <p>Upload showcase image to see your theme preview here</p>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* LIST - MODERN TABLE */}
-      <div className="admin-rewards-list-card">
-        <h3>Theme List ({themes.length})</h3>
-        <div className="admin-rewards-list-header">
+      {/* EXISTING THEMES */}
+      <div className="existing-inventory">
+        <div className="inventory-header">
+          <h2>Active Room Themes</h2>
+          <p>Manage and curate your room theme catalog</p>
+        </div>
+
+        {/* SEARCH */}
+        <div className="inventory-controls">
           <div className="search-box">
             <input
               type="text"
-              placeholder="Search theme..."
+              placeholder="Search themes..."
               value={search}
               onChange={e => setSearch(e.target.value)}
+              className="search-input"
             />
           </div>
-        </div>
-        <table className="admin-theme-table">
-          <thead>
-            <tr>
-              <th>Image</th>
-              <th>Room</th>
-              <th>Theme</th>
-              <th>City</th>
-              <th>Guests</th>
-              <th>Price/night</th>
-              <th>Description</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredThemes.map(t => (
-              <tr key={t.RoomThemeId}>
-                <td>
-                  {t.showcaseImage ? (
-                    <img
-                      src={`http://localhost:9001${t.showcaseImage}`}
-                      alt={t.name}
-                      className="reward-table-image"
-                    />
-                  ) : t.images?.length > 0 ? (
-                    <img
-                      src={`http://localhost:9001${t.images[0]}`}
-                      alt={t.name}
-                      className="reward-table-image"
-                    />
-                  ) : (
-                    <div className="no-image">📷</div>
-                  )}
-                </td>
-                <td>
-                  <strong>{t.name}</strong>
-                </td>
-                <td>{t.theme}</td>
-                <td>{t.city}</td>
-                <td>{t.maxGuests}</td>
-                <td>{t.basePrice} EUR</td>
-                <td style={{fontSize:'0.85rem',color:'#64748b'}}>{t.description}</td>
-                <td className="actions-cell">
-                  <button className="edit-action-btn" style={{
-                    background: 'transparent',
-                    color: '#c6a969',
-                    border: '1px solid #c6a969',
-                    borderRadius: '8px',
-                    padding: '6px 16px',
-                    fontWeight: 600,
-                    fontSize: '1rem',
-                    transition: 'background 0.2s, color 0.2s',
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => handleEdit(t)}
-                  onMouseOver={e => { e.currentTarget.style.background = '#c6a969'; e.currentTarget.style.color = '#fff'; }}
-                  onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#c6a969'; }}
-                  >
-                    ✏️ Edit
-                  </button>
-                  <button
-                    className="delete-action-btn"
-                    onClick={() => handleDelete(t)}
-                  >🗑️</button>
-                </td>
-              </tr>
+          <div className="filter-pills">
+            <button
+              className={`pill${continentFilter === 'All' ? ' active' : ''}`}
+              onClick={() => setContinentFilter('All')}
+              type="button"
+            >
+              All
+            </button>
+            {ALL_CONTINENTS.map(cont => (
+              <button
+                key={cont}
+                className={`pill${continentFilter.toLowerCase() === cont.toLowerCase() ? ' active' : ''}`}
+                onClick={() => setContinentFilter(cont)}
+                type="button"
+              >
+                {cont}
+              </button>
             ))}
-          </tbody>
-        </table>
-        {error && <div className="error">{error}</div>}
+          </div>
+        </div>
+
+        {/* THEMES GRID */}
+        {loading ? (
+          <div className="loading-state">Loading...</div>
+        ) : filteredThemes.length === 0 ? (
+          <div className="empty-state">No themes yet. Create your first one above!</div>
+        ) : (
+          <div className="rewards-grid">
+            {filteredThemes.map(t => (
+              <div key={t.RoomThemeId} className="reward-card">
+                <div className="reward-card-image">
+                  {t.showcaseImage ? (
+                    <img src={`http://localhost:9001${t.showcaseImage}`} alt={t.name} />
+                  ) : t.images && t.images.length > 0 ? (
+                    <img src={`http://localhost:9001${t.images[0]}`} alt={t.name} />
+                  ) : (
+                    <div className="no-image">[No Image]</div>
+                  )}
+                  <div className="reward-card-badge">{t.basePrice} EUR</div>
+                </div>
+
+                <div className="reward-card-content">
+                  <div className="reward-card-category">{t.city}</div>
+                  <h4 className="reward-card-title">{t.name}</h4>
+                  <p className="reward-card-desc">{t.description}</p>
+
+                  <div className="reward-card-meta">
+                    <span className={`type-badge`} style={{ background: '#dbeafe', color: '#1e40af' }}>
+                      {t.theme}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="reward-card-actions">
+                  <button className="action-btn delete" onClick={() => handleDelete(t.RoomThemeId)} title="Delete">
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-    </>
+
+      {/* DELETE CONFIRMATION MODAL */}
+      {deleteConfirm && (
+        <div className="modal-overlay">
+          <div className="modal-content delete-modal">
+            <div className="modal-header">
+              <h3>Delete Theme?</h3>
+            </div>
+            <div className="modal-body">
+              <p>Are you sure you want to delete <strong>"{deleteConfirmTitle}"</strong>?</p>
+              <p className="modal-warning">This action cannot be undone.</p>
+            </div>
+            <div className="modal-actions">
+              <button className="btn-secondary" onClick={cancelDelete}>
+                Cancel
+              </button>
+              <button className="btn-delete" onClick={confirmDelete}>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUCCESS TOAST */}
+      {success && (
+        <div className="toast toast-success">
+          <div className="toast-icon">✓</div>
+          <div className="toast-message">{success}</div>
+        </div>
+      )}
+
+      {/* ERROR TOAST */}
+      {error && (
+        <div className="toast toast-error">
+          <div className="toast-icon">⚠</div>
+          <div className="toast-message">{error}</div>
+        </div>
+      )}
+    </div>
   );
 }

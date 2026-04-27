@@ -9,9 +9,17 @@ const Reward = sequelize.define('Reward', {
   image: { type: DataTypes.STRING, allowNull: true },
   category: { type: DataTypes.STRING, allowNull: false, defaultValue: "Dining" },
   active: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+  rewardType: { 
+    type: DataTypes.STRING, 
+    allowNull: false, 
+    defaultValue: 'per_booking',
+    columnName: 'rewardType'  // EXACT column name din database
+  },
 }, {
   tableName: 'Rewards',
-  timestamps: true
+  timestamps: true,
+  freezeTableName: true,
+  underscored: false  // Nu converta camelCase la snake_case
 });
 
 export default Reward;

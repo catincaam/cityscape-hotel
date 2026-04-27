@@ -130,6 +130,7 @@ export default function Booking() {
               bookingData={bookingData}
               onSelectRoom={selectRoom}
               onBack={() => setStep(1)}
+              onNext={() => setStep(3)}
             />
           </>
         )}
@@ -166,14 +167,7 @@ export default function Booking() {
         )}
       </div>
 
-      {/* FOOTER FIX – DOAR LA PASUL 2 */}
-      {step === 2 && (
-        <BookingFooter
-          bookingData={bookingData}
-          onBack={() => setStep(1)}
-          onContinue={() => setStep(3)}
-        />
-      )}
+
     </>
   );
 }

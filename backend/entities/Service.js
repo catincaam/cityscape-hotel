@@ -45,6 +45,13 @@ const Service = db.define(
       defaultValue: false
     },
 
+    priceType: {
+      type: Sequelize.STRING(50),
+      defaultValue: "per_booking",
+      allowNull: false,
+      comment: "per_person or per_booking"
+    },
+
     image: {
       type: Sequelize.STRING(255),
       allowNull: true,

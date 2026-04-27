@@ -10,6 +10,7 @@ async function createService(payload) {
     status,
     bookableOnline,
     availableForExternalGuests,
+    priceType,
     image
   } = payload;
 
@@ -30,8 +31,44 @@ async function createService(payload) {
     status: status || "activ",
     bookableOnline: bookableOnline ?? true,
     availableForExternalGuests: availableForExternalGuests ?? false,
+    priceType: priceType || "per_booking",
     image: image || null
   });
+}
+
+async function updateService(id, payload) {
+  const {
+    name,
+    category,
+    price,
+    description,
+    status,
+    bookableOnline,
+    availableForExternalGuests,
+    priceType,
+    image
+  } = payload;
+
+  const service = await Service.findByPk(id);
+  if (!service) throw new Error("Service not found");
+
+  const updates = {};
+  if (name !== undefined) updates.name = name;
+  if (category !== undefined) updates.category = category;
+  if (price !== undefined) {
+    const parsedPrice = Number(price);
+    if (!parsedPrice || isNaN(parsedPrice)) throw new Error("Invalid price");
+    updates.price = parsedPrice;
+  }
+  if (description !== undefined) updates.description = description;
+  if (status !== undefined) updates.status = status;
+  if (bookableOnline !== undefined) updates.bookableOnline = bookableOnline;
+  if (availableForExternalGuests !== undefined) updates.availableForExternalGuests = availableForExternalGuests;
+  if (priceType !== undefined) updates.priceType = priceType;
+  if (image !== undefined) updates.image = image;
+
+  await service.update(updates);
+  return service;
 }
 
 async function getServices() {
@@ -60,4 +97,4 @@ async function deleteService(id) {
   }
 }
 
-export { createService, getServices, getServiceById, deleteService };
+export { createService, updateService, getServices, getServiceById, deleteService };

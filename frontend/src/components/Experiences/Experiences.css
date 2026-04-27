@@ -1,0 +1,8 @@
+/* Folosește Rewards.css pentru stiluri principale. Poți adăuga override-uri aici dacă vrei să personalizezi ceva doar pentru Experiences. */
+@import '../Rewards/Rewards.css';
+
+/* Exemplu override: */
+.reward-card-label {
+  background: #e0e7ef !important;
+  color: #1f2937 !important;
+}

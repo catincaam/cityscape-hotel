@@ -1,6 +1,7 @@
 import express from "express";
 import {
   createService,
+  updateService,
   getServices,
   deleteService
 } from "../dataAccess/ServiceDA.js";
@@ -14,6 +15,17 @@ serviceRouter.post("/", async (req, res) => {
     res.status(201).json(service);
   } catch (err) {
     console.error("❌ Service create error:", err.message);
+    res.status(400).json({ message: err.message });
+  }
+});
+
+/* UPDATE */
+serviceRouter.put("/:id", async (req, res) => {
+  try {
+    const service = await updateService(req.params.id, req.body);
+    res.json(service);
+  } catch (err) {
+    console.error("❌ Service update error:", err.message);
     res.status(400).json({ message: err.message });
   }
 });

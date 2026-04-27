@@ -1,21 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import Navbar from '../Dashboard/Navbar';
 import '../../feedback.css';
 
 const MAX_COMMENT_LENGTH = 500;
 
-function StarRating({ value, onChange, size = 32, label, icon = 'star', className = '' }) {
+function StarRating({ value, onChange, size = 32, label, className = '' }) {
   return (
     <div style={{ display: 'flex', gap: 4, alignItems: 'center' }} className={className}>
       {[1, 2, 3, 4, 5].map((i) => (
         <span
           key={i}
-          className={`material-symbols-outlined ${i <= value ? 'star-active' : ''}`}
-          style={{ fontSize: size, cursor: 'pointer', color: i <= value ? 'var(--primary)' : '#e5e7eb' }}
+          aria-label={`${i} star${i > 1 ? 's' : ''}`}
+          role="button"
+          style={{
+            fontSize: size,
+            cursor: 'pointer',
+            color: i <= value ? 'var(--primary)' : '#e5e7eb',
+            lineHeight: 1,
+            fontFamily: 'Georgia, serif'
+          }}
           onClick={() => onChange(i)}
         >
-          {icon}
+          {'\u2605'}
         </span>
       ))}
       {label && <span style={{ marginLeft: 8, fontWeight: 600 }}>{label}</span>}
@@ -35,7 +43,6 @@ const FeedbackPage = () => {
   const [service, setService] = useState(0);
   const [theme, setTheme] = useState(0);
   const [comment, setComment] = useState('');
-  const [reservationStatus, setReservationStatus] = useState(null);
 
   useEffect(() => {
     async function fetchReservation() {
@@ -52,21 +59,6 @@ const FeedbackPage = () => {
           } catch (e) {}
         }
         setReservation(reservationObj);
-        // Status logic fallback
-        const r = reservationObj;
-        const checkinStr = r.requestedCheckin || r.checkIn || r.checkin || r.startDate;
-        const checkoutStr = r.requestedCheckout || r.checkOut || r.checkout || r.endDate;
-        const now = new Date();
-        const checkin = checkinStr ? new Date(checkinStr) : null;
-        const checkout = checkoutStr ? new Date(checkoutStr) : null;
-        let status = 'Upcoming';
-        if (checkin && checkout) {
-          if (now < checkin) status = 'Upcoming';
-          else if (now >= checkin && now <= checkout) status = 'Active';
-          else if (now > checkout) status = 'Completed';
-        }
-        else if (r.status === 'pending') status = 'Pending';
-        setReservationStatus(status);
       } catch (err) {
         setError('Could not load reservation.');
       } finally {
@@ -120,26 +112,7 @@ const FeedbackPage = () => {
 
   return (
     <div style={{ background: 'var(--background-light)', minHeight: '100vh', color: '#111418', fontFamily: 'Plus Jakarta Sans, Manrope, system-ui, sans-serif', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e5e7eb', background: '#fff', padding: '16px 40px', position: 'sticky', top: 0, zIndex: 50 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, color: 'var(--primary)' }}>
-          <div style={{ width: 32, height: 32 }}>
-            <svg style={{ width: '100%', height: '100%' }} fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-              <g clipPath="url(#clip0_6_535)">
-                <path clipRule="evenodd" d="M47.2426 24L24 47.2426L0.757355 24L24 0.757355L47.2426 24ZM12.2426 21H35.7574L24 9.24264L12.2426 21Z" fill="currentColor" fillRule="evenodd"></path>
-              </g>
-              <defs><clipPath id="clip0_6_535"><rect fill="white" height="48" width="48"></rect></clipPath></defs>
-            </svg>
-          </div>
-          <h2 style={{ fontSize: 20, fontWeight: 700, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Cityscape Hotel</h2>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
-          <button onClick={() => navigate('/dashboard')} style={{ color: '#111418', fontSize: 15, fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer', marginRight: 16 }}>Home</button>
-          <a style={{ color: '#111418', fontSize: 15, fontWeight: 500, textDecoration: 'none', marginRight: 16 }} href="/profile">My Bookings</a>
-          <button style={{ color: '#111418', fontSize: 15, fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => alert('Support coming soon!')}>Support</button>
-          <div style={{ backgroundPosition: 'center', backgroundRepeat: 'no-repeat', backgroundSize: 'cover', borderRadius: '50%', width: 40, height: 40, border: '2px solid rgba(31, 41, 55, 0.2)', backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuCCCFIel_YwISZXGMzImuxjTRssbTMk2a7FUmFIfJDRMUBjHAt8GBHgoMDKGOHEIRD9J1IsaLUuulh7CfeSSafYv0oBLsRuiYd6Pc47cjuv2m1T11yfhJzZK42KUi3ZFcpzx1dJ3_WEubXF9VP-Fx2jx7Eq7Zyp8Heg1vHCEAw2Kwju_3L_QWWPAf00Sa_fcvUAzQhH-p6DMzDv4KrlBwK4j9_ZxiKzkvB6U1HuV19Dx6UZp1kvnIBezVxZVUjD3s5iDIa6GVCs6v8')` }}></div>
-        </div>
-      </header>
+      <Navbar />
       <main style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '48px 16px' }}>
         <div style={{ width: '100%', maxWidth: 800, display: 'flex', flexDirection: 'column', gap: 32 }}>
           {/* Hero Section */}
@@ -164,17 +137,17 @@ const FeedbackPage = () => {
             {/* Detailed Metrics Grid */}
             <section style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 24 }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: 16, borderRadius: 12, background: 'var(--background-light)' }}>
-                <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: 32 }}>cleaning_services</span>
+                <span style={{ color: 'var(--primary)', fontSize: 28, lineHeight: 1 }}>{'\u2713'}</span>
                 <h3 style={{ fontWeight: 700, fontSize: 15, margin: 0 }}>Cleanliness</h3>
                 <StarRating value={cleanliness} onChange={setCleanliness} size={24} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: 16, borderRadius: 12, background: 'var(--background-light)' }}>
-                <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: 32 }}>doorbell</span>
+                <span style={{ color: 'var(--primary)', fontSize: 28, lineHeight: 1 }}>{'\u25c7'}</span>
                 <h3 style={{ fontWeight: 700, fontSize: 15, margin: 0 }}>Service</h3>
                 <StarRating value={service} onChange={setService} size={24} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: 16, borderRadius: 12, background: 'var(--background-light)' }}>
-                <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: 32 }}>architecture</span>
+                <span style={{ color: 'var(--primary)', fontSize: 28, lineHeight: 1 }}>{'\u2302'}</span>
                 <h3 style={{ fontWeight: 700, fontSize: 15, margin: 0 }}>Theme Accuracy</h3>
                 <StarRating value={theme} onChange={setTheme} size={24} />
               </div>
@@ -202,7 +175,7 @@ const FeedbackPage = () => {
             <section style={{ paddingTop: 16 }}>
               <button type="submit" style={{ width: '100%', background: 'var(--primary)', color: '#fff', fontWeight: 700, fontSize: 17, padding: '16px 0', borderRadius: 16, boxShadow: '0 2px 8px rgba(31, 41, 55, 0.15)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                 Submit Review
-                <span className="material-symbols-outlined" style={{ fontSize: 20 }}>send</span>
+                <span style={{ fontSize: 18, lineHeight: 1 }}>{'\u2192'}</span>
               </button>
               {error && <p style={{ textAlign: 'center', fontSize: 13, color: '#e53935', marginTop: 16 }}>{error}</p>}
               {success && <p style={{ textAlign: 'center', fontSize: 13, color: '#43a047', marginTop: 16 }}>Thank you for your feedback!</p>}
@@ -224,7 +197,7 @@ const FeedbackPage = () => {
               <button style={{ color: 'var(--primary)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 14 }} onClick={() => alert('Terms of Use coming soon!')}>Terms of Use</button>
               <button style={{ color: 'var(--primary)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 14 }} onClick={() => window.location.href = 'http://localhost:3000/explore'}>Hotel Info</button>
             </div>
-            <p style={{ margin: 0 }}>© 2026 Cityscape Hotel Group. All rights reserved.</p>
+            <p style={{ margin: 0 }}>{'\u00a9'} 2026 Cityscape Hotel Group. All rights reserved.</p>
           </footer>
         </div>
       </main>

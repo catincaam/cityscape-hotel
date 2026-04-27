@@ -208,8 +208,8 @@ export default function RoomDetails() {
           <aside className="booking-box">
             <div className="price-section">
               <div className="price">
-                <strong>{room.basePrice}</strong>
-                <span>EUR / night</span>
+                <strong>€{room.basePrice}</strong>
+                <span>/ night</span>
               </div>
             </div>
 

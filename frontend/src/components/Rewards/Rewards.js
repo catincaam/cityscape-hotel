@@ -7,6 +7,13 @@ import { getUserActivePoints, getUserPendingPoints, getUserPoints, getAllRewards
 // Get userId from localStorage (set during login)
 const USER_ID = parseInt(localStorage.getItem("userId")) || 1;
 
+const getStayRoom = (stay) => stay?.room || stay?.RoomReservations?.[0]?.Room || null;
+const getStayTheme = (stay) => getStayRoom(stay)?.RoomTheme || null;
+const toImageUrl = (path) => {
+  if (!path) return null;
+  return path.startsWith("http") ? path : `http://localhost:9001${path}`;
+};
+
 export default function Rewards() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -16,6 +23,7 @@ export default function Rewards() {
   const [rewards, setRewards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [upcomingStay, setUpcomingStay] = useState(null);
+  const [upcomingStayImage, setUpcomingStayImage] = useState(null);
   const [user, setUser] = useState({
     name: localStorage.getItem("userName") || "User"
   });
@@ -59,41 +67,25 @@ export default function Rewards() {
       // Fetch upcoming stay
       try {
         const res = await fetch(`http://localhost:9001/api/reservations/upcoming/${USER_ID}`);
+        console.log("Upcoming reservations API response:", res.status, res.statusText);
         if (res.ok) {
           const stay = await res.json();
-          setUpcomingStay(stay);
+          console.log("Upcoming stay data:", stay);
+          const detailsRes = await fetch(`http://localhost:9001/api/reservations/${stay.ReservationId}`);
+          if (detailsRes.ok) {
+            const stayDetails = await detailsRes.json();
+            setUpcomingStay(stayDetails);
+          } else {
+            setUpcomingStay(stay);
+          }
         } else {
-          // Mock upcoming stay for testing
-          const mockStay = {
-            ReservationId: 999,
-            requestedCheckin: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-            requestedCheckout: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
-            room: {
-              RoomThemeId: 1,
-              name: "The Azure Suite",
-              city: "Santorini, Greece",
-              theme: "Ocean View",
-              image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&h=300&fit=crop"
-            }
-          };
-          setUpcomingStay(mockStay);
+          console.log("API returned non-ok status:", res.status);
+          // Try to get error details
+          const errorData = await res.json().catch(() => ({}));
+          console.log("Error details:", errorData);
         }
       } catch (err) {
-        console.log("Using mock upcoming stay for demo");
-        // Mock upcoming stay for testing
-        const mockStay = {
-          ReservationId: 999,
-          requestedCheckin: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          requestedCheckout: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
-          room: {
-            RoomThemeId: 1,
-            name: "The Azure Suite",
-            city: "Santorini, Greece",
-            theme: "Ocean View",
-            image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&h=300&fit=crop"
-          }
-        };
-        setUpcomingStay(mockStay);
+        console.log("Fetch error:", err.message);
       }
     } catch (err) {
       console.error("Error fetching data:", err);
@@ -112,6 +104,16 @@ export default function Rewards() {
     fetchData();
   }, [location]);
 
+  // Fetch room theme image for upcoming stay
+  useEffect(() => {
+    const room = getStayRoom(upcomingStay);
+    const theme = getStayTheme(upcomingStay);
+    const firstThemeImage = theme?.images?.[0]?.imageUrl;
+    setUpcomingStayImage(
+      toImageUrl(theme?.showcaseImage || room?.showcaseImage || room?.image || theme?.image || firstThemeImage)
+    );
+  }, [upcomingStay]);
+
   const handlePrevCarousel = () => {
     setCarouselIndex((prev) => (prev - 1 + rewards.length) % rewards.length);
   };
@@ -121,6 +123,8 @@ export default function Rewards() {
   };
 
   const visibleRewards = rewards.slice(carouselIndex, carouselIndex + 3);
+  const upcomingRoom = getStayRoom(upcomingStay);
+  const upcomingTheme = getStayTheme(upcomingStay);
 
   return (
     <>
@@ -129,7 +133,6 @@ export default function Rewards() {
         {/* PERSONAL SANCTUARY SECTION */}
         <section className="luxury-sanctuary">
           <div className="sanctuary-label">PERSONAL SANCTUARY</div>
-          <h1 className="sanctuary-greeting">Welcome back, {user.name}.</h1>
           <p className="sanctuary-subtitle">
             Your journey towards the extraordinary continues. Explore your curated benefits and upcoming escapes tailored for your discerning taste.
           </p>
@@ -156,30 +159,44 @@ export default function Rewards() {
             <div className="upcoming-stay">
               <div className="upcoming-header">
                 <h3 className="section-label">UPCOMING STAY</h3>
-                <a href="#" className="view-all-stays">VIEW ALL STAYS</a>
+                <a href="/reservations" className="view-all-stays">VIEW ALL STAYS</a>
               </div>
               <div className="stay-card">
-                {upcomingStay.room?.image && (
+                {upcomingStayImage ? (
                   <img 
-                    src={`http://localhost:9001${upcomingStay.room.image}`}
+                    src={upcomingStayImage}
                     alt="Upcoming stay"
                     className="stay-card-image"
                   />
+                ) : upcomingRoom?.image ? (
+                  <img 
+                    src={toImageUrl(upcomingRoom.image)}
+                    alt="Upcoming stay"
+                    className="stay-card-image"
+                  />
+                ) : (
+                  <div style={{ width: 160, height: 160, background: '#e5e7eb', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontSize: '2rem' }}>-</span>
+                  </div>
                 )}
                 <div className="stay-card-content">
-                  <h4 className="stay-card-title">{upcomingStay.room?.name || "Your Upcoming Stay"}</h4>
+                  <h4 className="stay-card-title">
+                    {upcomingTheme?.name || upcomingRoom?.RoomName || upcomingRoom?.name || "Your Upcoming Stay"}
+                  </h4>
                   <p className="stay-card-dates">
-                    📅 {new Date(upcomingStay.requestedCheckin).toLocaleDateString()} - {new Date(upcomingStay.requestedCheckout).toLocaleDateString()}
+                    {new Date(upcomingStay.requestedCheckin).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    {" - "}
+                    {new Date(upcomingStay.requestedCheckout).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                   </p>
                   <div className="stay-card-tags">
-                    {upcomingStay.room?.city && (
-                      <span className="tag ocean-view">{upcomingStay.room.city}</span>
+                    {upcomingTheme?.city && (
+                      <span className="tag ocean-view">{upcomingTheme.city}</span>
                     )}
-                    {upcomingStay.room?.theme && (
-                      <span className="tag king-bed">{upcomingStay.room.theme}</span>
+                    {upcomingTheme?.theme && (
+                      <span className="tag king-bed">{upcomingTheme.theme}</span>
                     )}
                   </div>
-                  <button className="stay-manage-btn">Manage</button>
+                  <button className="stay-manage-btn" onClick={() => navigate(`/reservation/${upcomingStay.ReservationId}`)}>Manage</button>
                 </div>
               </div>
             </div>
@@ -221,7 +238,7 @@ export default function Rewards() {
                         : 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)'
                     }}
                   >
-                    <div className="reward-card-cost">⭐ {reward.points}p</div>
+                    <div className="reward-card-cost">{reward.points}p</div>
                   </div>
                   <div className="luxury-reward-content">
                     <h4 className="reward-title">{reward.title}</h4>

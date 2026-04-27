@@ -59,9 +59,9 @@
 }
 
 .step-circle.done {
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, #d4b896, #b8956d);
   color: white;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 4px 12px rgba(212, 184, 150, 0.2);
 }
 
 .step-circle.done::after {
@@ -71,9 +71,9 @@
 }
 
 .step-item.active .step-circle {
-  background: #1f2937;
+  background: #d4b896;
   color: white;
-  box-shadow: 0 6px 20px rgba(31, 41, 55, 0.2);
+  box-shadow: 0 6px 20px rgba(212, 184, 150, 0.2);
   transform: scale(1.12);
 }
 
@@ -95,5 +95,5 @@
 
 .step-item.active ~ .step-line,
 .step-item:last-child .step-line {
-  background: #1f2937;
+  background: #d4b896;
 }

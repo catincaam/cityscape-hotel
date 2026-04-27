@@ -17,7 +17,8 @@ consumedServiceRouter.post("/", async (req, res) => {
     res.status(201).json(consumed);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "server error" });
+    // Returnează eroare clară pentru frontend
+    res.status(400).json({ message: err.message || "server error" });
   }
 });
 

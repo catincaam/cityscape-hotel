@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
+/* Dashboard styles - inherits Georgia from global */
 
 /* ======================
    BASE & COLORS
@@ -7,7 +7,7 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 40px 32px 80px;
-  font-family: "Manrope", system-ui, sans-serif;
+  font-family: 'Georgia', serif;
   background: #f8f6f2;
   min-height: 100vh;
 }

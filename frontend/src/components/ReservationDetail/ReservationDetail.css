@@ -1,35 +1,819 @@
+/* === 2-COLUMN GRID LAYOUT === */
+.reservation-content-grid {
+  display: grid;
+  grid-template-columns: 65% 1fr;
+  gap: 2.5rem;
+  align-items: flex-start;
+  margin: 0 auto 2.5rem;
+}
+
+.reservation-left-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.reservation-right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  min-width: 320px;
+}
+
+@media (max-width: 1100px) {
+  .reservation-content-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .reservation-right-col {
+    min-width: 0;
+  }
+}
+
+/* Sticky payment summary */
+.payment-sidebar.sticky {
+  position: sticky;
+  top: 24px;
+  z-index: 2;
+}
+
+/* Card styling for all sections */
+.section, .services-section, .guest-information, .payment-sidebar, .feedback-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.04);
+  border: 1px solid #e5e7eb;
+  padding: 2rem;
+}
+
+.cancellation-policy {
+  margin-top: 2rem;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #fafafa;
+  padding: 1.5rem 1.5rem 1rem 1.5rem;
+}
+
+/* Spacing between cards */
+.reservation-left-col > *:not(:last-child) {
+  margin-bottom: 1.5rem;
+}
+.reservation-right-col > *:not(:last-child) {
+  margin-bottom: 1.5rem;
+}
+
+/* Make payment card visually important */
+.payment-sidebar > div {
+  box-shadow: 0 4px 16px 0 rgba(183,123,0,0.07);
+  border-radius: 16px;
+  border: 1.5px solid #e5e7eb;
+}
+
+/* Feedback card spacing */
+.feedback-card {
+  margin-top: 2rem;
+}
+
+/* Make hero image bigger */
+.hero-section {
+  height: 400px;
+  border-radius: 16px;
+}
+.hero-title {
+  font-size: 2.8rem;
+  font-weight: 700;
+  letter-spacing: -1px;
+}
+
+/* Add icons to details */
+
 .reservation-detail-page {
   min-height: 100vh;
-  background: #f8f6f2;
+  background: #f5f3f0;
+  font-family: "Georgia", serif;
 }
 
 .detail-container {
-  max-width: 1400px;
+  max-width: 900px;
   margin: 0 auto;
+  padding: 1.5rem;
+}
+
+/* HERO SECTION */
+.hero-section {
+  position: relative;
+  width: 100%;
+  height: 320px;
+  overflow: hidden;
+  border-radius: 4px;
+  margin: 0 auto 2.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.hero-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.3), transparent);
+  padding: 3rem 2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.category-badge {
+  color: #c6a969;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  margin-bottom: 0.5rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.hero-title {
+  color: white;
+  font-size: 2.5rem;
+  font-weight: 400;
+  margin: 0;
+  font-family: "Georgia", serif;
+  letter-spacing: -0.5px;
+}
+
+.hero-section-placeholder {
+  width: 100%;
+  height: 450px;
+  background: linear-gradient(135deg, #f0ebe3 0%, #e8dfd5 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 3rem;
+  border-radius: 8px;
+}
+
+.hero-section-placeholder .hero-title {
+  color: #8b7355;
+  font-size: 2rem;
+}
+
+/* MAIN SECTIONS */
+.section {
   padding: 2rem;
+  margin: 0 auto 2rem;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.section-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 2rem 0;
+  font-family: "Georgia", serif;
+  border-bottom: 1px solid #e0ddd5;
+  padding-bottom: 1rem;
+}
+
+/* Reservation Meta */
+.reservation-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1.5rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.download-link {
+  color: #c6a969;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.download-link:hover {
+  color: #8b7355;
+  text-decoration: underline;
+}
+
+/* DETAILS GRID */
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+  .details-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #c6a969;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.detail-value {
+  font-size: 1rem;
+  color: #1a1a1a;
+  font-weight: 500;
+  font-family: "Georgia", serif;
+}
+
+/* CONTENT GRID - Services + Payment */
+.content-grid-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  align-items: stretch;
+  padding: 0;
+  margin: 0 auto 2rem;
+}
+
+@media (max-width: 1024px) {
+  .detail-container {
+    padding: 1.5rem 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-section {
+    height: 280px;
+    margin-bottom: 2rem;
+  }
+
+  .hero-title {
+    font-size: 1.8rem !important;
+  }
+
+  .section,
+  .guest-information {
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .payment-sidebar {
+    position: static !important;
+    top: auto !important;
+  }
+
+  .details-grid {
+    gap: 1rem;
+  }
+
+  .payment-summary-card {
+    padding: 1.5rem;
+  }
+}
+
+.services-section {
+  background: white;
+  border-radius: 4px;
+  padding: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.services-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 1.5rem 0;
+  font-family: "Georgia", serif;
+}
+
+.services-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.service-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 1.5rem;
+  background: #f9f8f6;
+  border-radius: 8px;
+  border-left: 3px solid #c6a969;
+}
+
+.service-info {
+  display: flex;
+  gap: 1rem;
+  flex: 1;
+}
+
+.service-icon {
+  font-size: 1.5rem;
+  width: 2rem;
+  text-align: center;
+}
+
+.service-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.service-quantity {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 0.3rem 0 0 0;
+}
+
+.service-price {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #c6a969;
+  white-space: nowrap;
+  font-family: "Georgia", serif;
+}
+
+/* PAYMENT SIDEBAR - Now full width at bottom */
+.payment-sidebar {
+  width: 100%;
+  margin: 0 auto 2rem;
+}
+
+.payment-summary-card {
+  background: white;
+  border-radius: 4px;
+  padding: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-top: 3px solid #c6a969;
+}
+
+.payment-summary-card h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 2rem 0;
+  font-family: "Georgia", serif;
+  border-bottom: 1px solid #e0ddd5;
+  padding-bottom: 1rem;
+}
+
+.summary-items {
+  margin-bottom: 2rem;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  padding: 0.75rem 0;
+  color: #555;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.summary-row.total {
+  border-top: 2px solid #e0ddd5;
+  border-bottom: 2px solid #e0ddd5;
+  padding: 1rem 0;
+  font-weight: 700;
+  color: #1a1a1a;
+  font-size: 1.1rem;
+}
+
+.total-amount {
+  color: #c6a969;
+  font-family: "Georgia", serif;
+}
+
+.summary-divider {
+  height: 1px;
+  background: #e0ddd5;
+  margin: 1rem 0;
+}
+
+/* PAYMENT STATUS */
+.payment-status-card {
+  background: #f9f8f6;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border-left: 3px solid #d4af37;
+}
+
+.payment-status-card.paid {
+  border-left-color: #4caf50;
+  background: rgba(76, 175, 80, 0.05);
+}
+
+.payment-status-card.partial {
+  border-left-color: #ff9800;
+  background: rgba(255, 152, 0, 0.05);
+}
+
+.payment-status-card.unpaid {
+  border-left-color: #f44336;
+  background: rgba(244, 67, 54, 0.05);
+}
+
+.status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.status-label {
+  font-size: 0.9rem;
+  color: #555;
+  font-weight: 600;
+}
+
+.status-badge {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-weight: 700;
+  background: white;
+}
+
+.status-badge.paid {
+  color: #4caf50;
+}
+
+.status-badge.partial {
+  color: #ff9800;
+}
+
+.status-badge.unpaid {
+  color: #f44336;
+}
+
+.payment-progress {
+  height: 4px;
+  background: #e0ddd5;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #c6a969, #d4af37);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.payment-amounts {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.paid-amount {
+  color: #4caf50;
+  font-weight: 600;
+}
+
+.remaining-amount {
+  color: #f44336;
+  font-weight: 600;
+}
+
+.pay-now-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background: #8b7355;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.pay-now-btn:hover {
+  background: #a0874f;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 115, 85, 0.3);
+}
+
+.paid-message,
+.cancelled-message,
+.completed-message {
+  padding: 1rem;
+  border-radius: 6px;
+  text-align: center;
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.paid-message {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+}
+
+.cancelled-message {
+  background: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+}
+
+.completed-message {
+  background: rgba(33, 150, 243, 0.1);
+  color: #2196f3;
+}
+
+/* CANCELLATION POLICY */
+.cancellation-policy {
+  background: #fafafa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border-left: 3px solid #c6a969;
+}
+
+.cancellation-policy h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 1rem 0;
+  font-family: "Georgia", serif;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.policy-info {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.85rem;
+  color: #555;
+  line-height: 1.5;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.policy-info .check-icon {
+  color: #4caf50;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.cancel-reservation-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.cancel-reservation-btn:hover {
+  background: #d32f2f;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+}
+
+/* FEEDBACK CARD */
+.feedback-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.feedback-btn {
+  width: 100%;
+  padding: 1rem;
+  background: #8b7355;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.feedback-btn:hover:not(:disabled) {
+  background: #a0874f;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 115, 85, 0.3);
+}
+
+.feedback-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* SUPPORT CARD */
+.support-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.support-icon {
+  font-size: 2rem;
+}
+
+.support-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+  font-family: "Georgia", serif;
+}
+
+.support-link {
+  color: #c6a969;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+  display: block;
+  margin-top: 0.3rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.support-link:hover {
+  color: #8b7355;
+  text-decoration: underline;
+}
+
+/* GUEST INFORMATION */
+.guest-information {
+  padding: 2rem;
+  margin: 0 auto 2rem;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.guest-information h2 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 2rem 0;
+  font-family: "Georgia", serif;
+  border-bottom: 1px solid #e0ddd5;
+  padding-bottom: 1rem;
+}
+
+.guest-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+}
+
+@media (max-width: 768px) {
+  .guest-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+.guest-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.guest-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #c6a969;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.guest-value {
+  font-size: 1rem;
+  color: #1a1a1a;
+  font-weight: 500;
+  margin: 0;
+  font-family: "Georgia", serif;
+}
+
+/* RESPONSIVE ADJUSTMENTS */
+@media (max-width: 768px) {
+  .hero-section {
+    height: 300px;
+  }
+
+  .hero-title {
+    font-size: 1.8rem !important;
+  }
+
+  .category-badge {
+    font-size: 0.65rem;
+  }
+
+  .section,
+  .guest-information {
+    margin: 0 1rem 2rem 1rem;
+  }
+
+  .content-grid-wrapper {
+    padding: 0 1rem;
+  }
+
+  .details-grid {
+    gap: 1rem;
+  }
+
+  .payment-summary-card {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-section {
+    height: 200px;
+    margin-bottom: 2rem;
+  }
+
+  .hero-title {
+    font-size: 1.4rem !important;
+  }
+
+  .detail-label,
+  .guest-label {
+    font-size: 0.7rem;
+  }
+
+  .detail-value,
+  .guest-value {
+    font-size: 0.95rem;
+  }
+
+  .section,
+  .guest-information {
+    margin: 0 0.5rem 1.5rem 0.5rem;
+  }
+
+  .content-grid-wrapper {
+    padding: 0 0.5rem;
+  }
 }
 
 /* Header */
 .detail-header {
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
 }
 
 .back-link {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  color: #64748b;
-  font-size: 0.875rem;
+  color: #999;
+  font-size: 0.9rem;
   font-weight: 500;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   background: none;
   border: none;
   cursor: pointer;
-  transition: color 0.2s ease;
+  transition: all 0.3s ease;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .back-link:hover {
   color: #c6a969;
+  transform: translateX(-3px);
 }
 
 .header-content {
@@ -37,64 +821,71 @@
   justify-content: space-between;
   align-items: flex-end;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 2rem;
 }
 
 .header-left h1 {
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: #1e293b;
+  font-family: "Georgia", serif;
+  font-size: 2.5rem;
+  font-weight: 400;
+  color: #1a1a1a;
   margin: 0;
+  letter-spacing: -0.5px;
 }
 
 .res-id-header {
-  color: #94a3b8;
+  color: #bbb;
   font-weight: 300;
+  font-size: 1.2rem;
 }
 
 .booking-date {
-  color: #64748b;
-  font-size: 0.875rem;
+  color: #999;
+  font-size: 0.9rem;
   margin-top: 0.5rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .header-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
 .action-btn {
-  padding: 0.625rem 1rem;
-  border-radius: 10px;
-  font-size: 0.875rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   border: none;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .action-btn.secondary {
   background: white;
-  color: #475569;
-  border: 2px solid #e2e8f0;
+  color: #8b7355;
+  border: 2px solid #d4af37;
 }
 
 .action-btn.secondary:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
+  background: #d4af37;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
 }
 
 /* --- GRID LAYOUT FIX --- */
 .detail-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 380px;
-  gap: 32px;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: 3rem;
   align-items: start;
 }
 
@@ -104,115 +895,146 @@
   }
 }
 
-/* --- ROOM CARD MODERN --- */
+/* --- ROOM CARD LUXURY --- */
 .room-card {
   background: white;
-  border-radius: 22px;
+  border-radius: 12px;
   overflow: hidden;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
-  max-width: 750px;
-  margin-bottom: 2.5rem;
-  min-height: 380px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  max-width: 800px;
+  margin-bottom: 2rem;
 }
 
-.room-media {
+.room-image-container {
   position: relative;
-  height: 320px;
-  background: #f3f4f6;
+  width: 100%;
+  padding-bottom: 66.67%;
+  overflow: hidden;
+  background: #f0f0f0;
 }
 
-.room-media img {
+.room-main-image {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
 }
 
 .room-badge {
   position: absolute;
-  top: 1rem;
-  left: 1rem;
-  background: rgba(255, 255, 255, 0.95);
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  top: 1.5rem;
+  left: 1.5rem;
+  background: rgba(212, 175, 55, 0.95);
+  padding: 0.6rem 1.2rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
   text-transform: uppercase;
-  color: #1e293b;
-  border: 1px solid #e2e8f0;
+  color: white;
+  letter-spacing: 1px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-.room-content {
-  padding: 36px 36px 32px 36px;
+.image-thumbnails {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
   display: flex;
-  flex-direction: column;
-  gap: 28px;
+  gap: 0.5rem;
+}
+
+.thumbnail-image {
+  width: 60px;
+  height: 60px;
+  border-radius: 4px;
+  border: 2px solid white;
+  object-fit: cover;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.thumbnail-image:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.room-info {
+  padding: 2.5rem;
 }
 
 .room-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 0.5rem;
+  margin-bottom: 2rem;
 }
 
 .room-header h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1e293b;
+  font-family: "Georgia", serif;
+  font-size: 1.8rem;
+  font-weight: 400;
+  color: #1a1a1a;
   margin: 0;
+  letter-spacing: -0.3px;
 }
 
 .room-theme {
   color: #c6a969;
   font-size: 0.95rem;
   font-weight: 500;
-  margin-top: 0.25rem;
+  margin-top: 0.5rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .rating {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
+  color: #d4af37;
 }
 
-/* --- CHECKIN/CHECKOUT MODERN --- */
+/* --- CHECKIN/CHECKOUT LUXURY --- */
 .checkin-checkout-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  background: #f9fafb;
-  padding: 16px;
-  border-radius: 14px;
-  border: 1px solid #e5e7eb;
-  gap: 12px;
-  margin-bottom: 0.5rem;
+  background: transparent;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .check-item {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 1rem;
+}
+
+.check-icon {
+  font-size: 1.8rem;
 }
 
 .check-label {
   text-transform: uppercase;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  color: #64748b;
-  margin: 0 0 0.15rem 0;
-  letter-spacing: 0.5px;
+  color: #999;
+  margin: 0;
+  letter-spacing: 1px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .check-date {
-  font-weight: 700;
-  color: #1e293b;
-  font-size: 0.95rem;
-  margin: 0 0 0.15rem 0;
+  font-family: "Georgia", serif;
+  font-weight: 400;
+  color: #1a1a1a;
+  font-size: 1.1rem;
+  margin: 0.5rem 0 0 0;
 }
 
 .check-time {
   font-size: 0.85rem;
-  color: #64748b;
-  margin: 0;
+  color: #999;
+  margin: 0.25rem 0 0 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 /* Room Features */
@@ -220,37 +1042,39 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #eee;
 }
 
 .feature-tag {
-  background: #f1f5f9;
-  color: #475569;
-  padding: 0.5rem 1rem;
+  background: #f9f8f6;
+  color: #666;
+  padding: 0.6rem 1.2rem;
   border-radius: 20px;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   font-weight: 500;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 /* Services Card */
 .services-card {
   background: white;
-  border-radius: 20px;
-  padding: 2.25rem 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
-  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 2.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
 }
 
 .services-card h3 {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 1.25rem 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  font-family: "Georgia", serif;
+  font-size: 1.3rem;
+  font-weight: 400;
+  color: #1a1a1a;
+  margin: 0 0 1.5rem 0;
+  letter-spacing: -0.3px;
 }
 
 .services-list {
@@ -259,51 +1083,116 @@
   gap: 1rem;
 }
 
-.service-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.875rem 0;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.service-item:last-child {
-  border-bottom: none;
-}
-
 .service-info {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
 .service-icon {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
-  background: #f1f5f9;
+  font-size: 1.5rem;
+  background: #f9f8f6;
 }
 
 .service-name {
   font-weight: 600;
-  color: #1e293b;
-  margin: 0 0 0.25rem 0;
+  color: #1a1a1a;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .service-quantity {
-  font-size: 0.75rem;
-  color: #64748b;
-  margin: 0;
+  font-size: 0.85rem;
+  color: #999;
+  margin: 0.25rem 0 0 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .service-price {
+    font-weight: 700;
+    color: #1a1a1a;
+    font-size: 1rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+.services-section {
+  border-radius: 6px;
+}
+
+.services-list {
+  gap: 0.75rem;
+}
+
+.service-item {
+  align-items: center;
+  gap: 1rem;
+  min-height: auto;
+  padding: 1rem 1.1rem;
+  background: #fbfaf8;
+  border: 1px solid #eee7dd;
+  border-left: 3px solid #c6a969;
+  border-radius: 8px;
+}
+
+.service-info {
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.service-info > div {
+  min-width: 0;
+}
+
+.service-line-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.service-type-pill {
+  background: #f3e7d1;
+  color: #b77b00;
+  border-radius: 999px;
+  padding: 0.18rem 0.55rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  color: #1e293b;
-  font-size: 0.9375rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.service-category-text {
+  margin: 0.25rem 0 0;
+  color: #8a7a67;
+  font-size: 0.78rem;
+}
+
+.service-quantity {
+  color: #6b7280;
+  margin-top: 0.35rem;
+}
+
+.service-price {
+  color: #1a1a1a;
+  font-size: 0.95rem;
+  text-align: right;
+}
+
+.services-total-row {
+  background: #fff;
+  border-left-color: #1f2937;
+  margin-top: 0.2rem;
+}
+
+.services-total-row .service-name,
+.services-total-row .service-price {
+  font-weight: 700;
 }
 
 /* Sidebar */
@@ -313,183 +1202,157 @@
   gap: 1.5rem;
 }
 
-.payment-summary-card {
-  background: white;
-  border-radius: 20px;
-  padding: 2.25rem 2rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10);
-  border: 2px solid #e2e8f0;
-  position: sticky;
-  top: 6rem;
-}
-
 .payment-summary-card h3 {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 1.5rem 0;
+  font-family: "Georgia", serif;
+  font-size: 1.3rem;
+  font-weight: 400;
+  color: #1a1a1a;
+  margin: 0 0 1.75rem 0;
+  letter-spacing: -0.3px;
 }
-
 
 .summary-items {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-}
-
-.summary-row.nights {
-  font-size: 1rem;
-  font-weight: 500;
-  color: #1e293b;
-  margin-bottom: 0.25rem;
-}
-
-.summary-row.services {
-  font-size: 0.95rem;
-  color: #64748b;
-  margin-bottom: 0.25rem;
-  display: flex;
-  justify-content: space-between;
-}
-
-.summary-row.total {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin-top: 0.75rem;
+  gap: 0.75rem;
 }
 
 .summary-row {
   display: flex;
   justify-content: space-between;
-  font-size: 0.875rem;
-  color: #64748b;
-  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.summary-row.nights {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.summary-row.services {
+  font-size: 0.95rem;
+  color: #666;
 }
 
 .summary-divider {
   height: 1px;
-  background: #e2e8f0;
-  margin: 1rem 0;
+  background: #e5e5e5;
+  margin: 1.25rem 0;
 }
 
-.summary-total {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 1.125rem;
+.summary-row.total {
+  font-size: 1.2rem;
   font-weight: 700;
-  color: #1e293b;
+  color: #1a1a1a;
 }
 
 .total-amount {
   color: #c6a969;
-  font-size: 1.25rem;
+  font-size: 1.4rem;
+  font-weight: 700;
 }
 
 /* Payment Status Card */
 .payment-status-card {
-  background: #dbeafe;
-  border: 2px solid #bfdbfe;
-  border-radius: 16px;
-  padding: 1.75rem 1.5rem;
+  background: #f0fdf4;
+  border: 2px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 1.75rem;
   margin-bottom: 2rem;
 }
 
 .payment-status-card.paid {
-  background: #dcfce7;
-  border-color: #bbf7d0;
+  background: #f0fdf4;
+  border-color: #86efac;
 }
 
 .status-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .status-label {
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  color: #1e40af;
-}
-
-.payment-status-card.paid .status-label {
-  color: #166534;
+  color: #1a1a1a;
 }
 
 .status-badge {
-  padding: 0.375rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  background: #93c5fd;
-  color: #1e40af;
-}
-
-.status-badge.paid {
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
   background: #86efac;
-  color: #166534;
+  color: #1a1a1a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .payment-progress {
   width: 100%;
-  height: 8px;
-  background: #e0f2fe;
-  border-radius: 4px;
+  height: 6px;
+  background: #e5e5e5;
+  border-radius: 3px;
   overflow: hidden;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #c6a969, #d4b896);
+  background: linear-gradient(90deg, #c6a969, #d4af37);
   transition: width 0.3s ease;
-  border-radius: 4px;
 }
 
 .payment-amounts {
   display: flex;
   justify-content: space-between;
-  font-size: 0.75rem;
-  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .paid-amount {
-  color: #16a34a;
+  color: #22863a;
   font-weight: 600;
 }
 
 .remaining-amount {
-  color: #dc2626;
+  color: #cb2431;
   font-weight: 600;
 }
 
 .pay-now-btn {
   width: 100%;
-  background: #1f2937;
+  background: #8b7355;
   color: white;
   border: none;
-  padding: 0.875rem;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 0.9375rem;
+  padding: 1rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: 0.5px;
 }
 
 .pay-now-btn:hover {
-  background: #111827;
+  background: #6b5345;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(31, 41, 55, 0.3);
+  box-shadow: 0 6px 20px rgba(139, 115, 85, 0.3);
 }
 
 .paid-message {
@@ -498,76 +1361,110 @@
 }
 
 .paid-message p {
-  color: #166534;
+  color: #22863a;
   font-weight: 600;
   margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.completed-message {
+  text-align: center;
+  padding: 1rem;
+}
+
+.completed-message p {
+  color: #1a1a1a;
+  font-weight: 600;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.cancelled-message {
+  text-align: center;
+  padding: 1rem;
+}
+
+.cancelled-message p {
+  color: #cb2431;
+  font-weight: 600;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 /* Cancellation Policy */
 .cancellation-policy {
-  border-top: 2px solid #f1f5f9;
-  padding-top: 1.5rem;
+  border-top: 2px solid #e5e5e5;
+  padding-top: 1.75rem;
 }
 
 .cancellation-policy h4 {
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 1rem 0;
+  font-family: "Georgia", serif;
+  font-size: 1rem;
+  font-weight: 400;
+  color: #1a1a1a;
+  margin: 0 0 1.25rem 0;
+  letter-spacing: -0.2px;
 }
 
 .policy-info {
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-.check-icon {
-  font-size: 1.25rem;
+.policy-info .check-icon {
+  font-size: 1.2rem;
   flex-shrink: 0;
+  margin-top: 0.2rem;
 }
 
 .policy-info p {
-  font-size: 0.875rem;
-  color: #475569;
-  line-height: 1.5;
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.6;
   margin: 0;
 }
 
 .cancel-reservation-btn {
   width: 100%;
   background: white;
-  color: #dc2626;
-  border: 2px solid #fecaca;
-  padding: 0.75rem;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 0.875rem;
+  color: #cb2431;
+  border: 2px solid #fdbebe;
+  padding: 0.9rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: 0.5px;
 }
 
 .cancel-reservation-btn:hover {
   background: #fef2f2;
-  border-color: #fca5a5;
+  border-color: #f5a5a5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(203, 36, 49, 0.15);
 }
 
 /* Support Card */
 .support-card {
   background: white;
-  border: 2px solid #e2e8f0;
-  border-radius: 20px;
-  padding: 1.75rem 1.5rem;
+  border: 2px solid #e5e5e5;
+  border-radius: 12px;
+  padding: 1.75rem;
   display: flex;
   align-items: center;
   gap: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .support-icon {
-  background: #ede9fe;
-  width: 48px;
-  height: 48px;
+  background: #f9f8f6;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -577,41 +1474,102 @@
 }
 
 .support-title {
-  font-weight: 600;
-  color: #1e293b;
-  font-size: 0.875rem;
-  margin: 0 0 0.25rem 0;
+  font-family: "Georgia", serif;
+  font-size: 1rem;
+  font-weight: 400;
+  color: #1a1a1a;
+  margin: 0 0 0.5rem 0;
 }
 
 .support-link {
   color: #c6a969;
-  font-size: 0.875rem;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 0.95rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  transition: all 0.3s ease;
+  display: inline-block;
 }
 
 .support-link:hover {
+  color: #d4af37;
   text-decoration: underline;
 }
 
-/* Loading & Error States */
-.loading-container,
+/* Feedback Card */
+.feedback-btn {
+  background: #8b7355;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 1rem;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: 0.5px;
+}
+
+.feedback-btn:hover:not(:disabled) {
+  background: #6b5345;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(139, 115, 85, 0.3);
+}
+
+/* Error Container */
 .error-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-  gap: 1rem;
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.error-container h2 {
+  font-family: "Georgia", serif;
+  font-size: 1.8rem;
+  color: #1a1a1a;
+  margin-bottom: 1rem;
+}
+
+.error-container p {
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 2rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.back-btn {
+  background: #8b7355;
+  color: white;
+  border: none;
+  padding: 0.9rem 2rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.back-btn:hover {
+  background: #6b5345;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(139, 115, 85, 0.3);
+}
+
+/* Loading Container */
+.loading-container {
+  text-align: center;
+  padding: 4rem 2rem;
 }
 
 .spinner {
-  width: 48px;
-  height: 48px;
-  border: 4px solid #e2e8f0;
-  border-top-color: #c6a969;
+  border: 4px solid #f0f0f0;
+  border-top: 4px solid #c6a969;
   border-radius: 50%;
+  width: 40px;
+  height: 40px;
   animation: spin 0.8s linear infinite;
+  margin: 0 auto 1.5rem;
 }
 
 @keyframes spin {
@@ -620,21 +1578,38 @@
   }
 }
 
-.error-container h2 {
-  color: #1e293b;
-  font-size: 1.5rem;
-  margin: 0;
-}
+/* Responsive Design */
+@media (max-width: 768px) {
+  .detail-container {
+    padding: 1.5rem 1rem;
+  }
 
-.error-container p {
-  color: #64748b;
-  margin: 0;
+  .header-left h1 {
+    font-size: 1.8rem;
+  }
+
+  .detail-grid {
+    gap: 1.5rem;
+  }
+
+  .room-card {
+    max-width: 100%;
+  }
+
+  .payment-summary-card {
+    position: static;
+  }
+
+  .room-info {
+    padding: 1.5rem;
+  }
+
+  .checkin-checkout-grid {
+    gap: 1rem;
+  }
 }
 
 .back-btn {
-  margin-top: 1rem;
-  padding: 0.75rem 1.5rem;
-  background: #1f2937;
   color: white;
   border: none;
   border-radius: 10px;
@@ -675,5 +1650,468 @@
 
   .feature-tag {
     justify-content: center;
+  }
+}
+
+/* Premium booking detail redesign */
+.booking-detail-page {
+  background: #eef1f4;
+  min-height: 100vh;
+  color: #111827;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.booking-detail-page .booking-shell {
+  width: min(1380px, calc(100vw - 56px));
+  min-height: calc(100vh - 120px);
+  margin: 28px auto 48px;
+  display: grid;
+  grid-template-columns: minmax(520px, 1.12fr) minmax(420px, 0.88fr);
+  overflow: hidden;
+  border: 8px solid rgba(154, 163, 173, 0.78);
+  border-radius: 30px;
+  background: #f8fafc;
+  box-shadow: 0 28px 60px rgba(15, 23, 42, 0.16);
+}
+
+.booking-hero-panel {
+  position: relative;
+  min-height: 760px;
+  overflow: hidden;
+  background: #d9d1c4;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.booking-hero-image,
+.booking-hero-fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.booking-hero-fallback {
+  background: linear-gradient(135deg, #e8dfd5, #b9aa96);
+}
+
+.booking-image-gallery {
+  position: absolute;
+  left: 42px;
+  right: 42px;
+  bottom: 204px;
+  z-index: 3;
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 2px 2px 10px;
+  scrollbar-width: thin;
+}
+
+.booking-image-gallery button {
+  width: 72px;
+  height: 54px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 1px solid rgba(255, 250, 244, 0.5);
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255, 250, 244, 0.16);
+  cursor: pointer;
+  opacity: 0.78;
+  transition: opacity 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+}
+
+.booking-image-gallery button:hover,
+.booking-image-gallery button.active {
+  opacity: 1;
+  transform: translateY(-2px);
+  border-color: #fffaf4;
+}
+
+.booking-image-gallery img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.booking-hero-shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(16, 18, 22, 0.12) 0%, rgba(16, 18, 22, 0.08) 38%, rgba(16, 18, 22, 0.82) 100%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.18), transparent 50%);
+}
+
+.booking-back-btn {
+  position: absolute;
+  top: 28px;
+  left: 30px;
+  z-index: 2;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 22px;
+  background: rgba(17, 24, 39, 0.46);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.booking-detail-page .booking-hero-content {
+  position: absolute;
+  left: 42px;
+  right: 42px;
+  bottom: 38px;
+  z-index: 2;
+  color: #fff;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 250, 244, 0.22);
+}
+
+.booking-kicker,
+.booking-label {
+  margin: 0 0 10px;
+  color: #b8a078;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+}
+
+.booking-detail-page .booking-hero-content h1 {
+  max-width: 620px;
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(42px, 5vw, 64px);
+  line-height: 0.98;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: #fffaf4;
+  text-shadow: 0 10px 30px rgba(0, 0, 0, 0.26);
+}
+
+.booking-hero-meta {
+  display: flex;
+  gap: 22px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+
+.booking-hero-meta span {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.booking-details-panel {
+  background: #fbfbfa;
+  padding: 70px 72px 52px;
+  overflow-y: auto;
+}
+
+.booking-reference-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 34px;
+  border-bottom: 1px solid #e7e3dc;
+}
+
+.booking-reference-row h2 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  font-size: 22px;
+  letter-spacing: 0.01em;
+}
+
+.booking-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.booking-actions button,
+.booking-section-heading button,
+.booking-empty-services button,
+.booking-secondary-actions button {
+  border: 0;
+  background: transparent;
+  color: #9a7a42;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.booking-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  padding: 46px 0 40px;
+}
+
+.booking-detail-grid strong {
+  display: block;
+  margin-bottom: 6px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.booking-detail-grid span,
+.booking-service-row span,
+.booking-footer-actions span {
+  display: block;
+  color: #9aa1ad;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.booking-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.booking-section-heading p {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+}
+
+.booking-services-list {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid #f0ede8;
+}
+
+.booking-service-row {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 20px 0;
+  border-bottom: 1px solid #f0ede8;
+}
+
+.booking-service-icon {
+  color: #c1a676;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.booking-service-row strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.booking-service-row p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.booking-empty-services {
+  padding: 24px 0;
+  color: #8c94a1;
+  border-top: 1px solid #f0ede8;
+  border-bottom: 1px solid #f0ede8;
+}
+
+.booking-summary-card {
+  margin-top: 48px;
+  padding: 32px;
+  border: 1px solid #ebe7df;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.05);
+}
+
+.booking-summary-line,
+.booking-summary-total,
+.booking-payment-status,
+.booking-footer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.booking-summary-line {
+  margin-bottom: 14px;
+  color: #687386;
+  font-size: 13px;
+}
+
+.booking-summary-total {
+  margin-top: 26px;
+  padding-top: 22px;
+  color: #111827;
+  border-top: 1px solid #eee9df;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.booking-summary-total strong {
+  color: #b07c35;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.booking-progress-track {
+  height: 5px;
+  margin: 28px 0 16px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e9edf2;
+}
+
+.booking-progress-track div {
+  height: 100%;
+  background: #16a34a;
+}
+
+.booking-payment-status {
+  color: #8c94a1;
+  font-size: 11px;
+  margin-bottom: 20px;
+}
+
+.booking-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+}
+
+.booking-status-dot.partial {
+  background: #f59e0b;
+}
+
+.booking-status-dot.paid {
+  background: #22c55e;
+}
+
+.booking-payment-status strong {
+  margin-right: auto;
+  color: #16a34a;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.booking-primary-btn {
+  width: 100%;
+  border: 0;
+  border-radius: 999px;
+  padding: 15px 18px;
+  background: #111827;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+}
+
+.booking-footer-actions {
+  align-items: flex-start;
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid #eee9df;
+}
+
+.booking-footer-actions strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.booking-secondary-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.booking-secondary-actions button:disabled {
+  color: #c5cad3;
+  cursor: not-allowed;
+}
+
+@media (max-width: 980px) {
+  .booking-detail-page .booking-shell {
+    grid-template-columns: 1fr;
+    width: min(860px, calc(100vw - 28px));
+  }
+
+  .booking-hero-panel {
+    min-height: 560px;
+  }
+
+  .booking-details-panel {
+    padding: 42px 30px;
+  }
+}
+
+@media (max-width: 620px) {
+  .booking-detail-page .booking-shell {
+    border-width: 6px;
+    border-radius: 24px;
+  }
+
+  .booking-detail-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .booking-image-gallery {
+    left: 22px;
+    right: 22px;
+    bottom: 172px;
+  }
+
+  .booking-image-gallery button {
+    width: 62px;
+    height: 46px;
+  }
+
+  .booking-detail-page .booking-hero-content {
+    left: 24px;
+    right: 24px;
+    bottom: 30px;
+  }
+
+  .booking-detail-page .booking-hero-content h1 {
+    font-size: clamp(34px, 13vw, 48px);
+  }
+
+  .booking-reference-row,
+  .booking-footer-actions {
+    flex-direction: column;
+  }
+
+  .booking-service-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 }

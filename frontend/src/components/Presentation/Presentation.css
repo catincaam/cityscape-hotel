@@ -1,7 +1,7 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap");
+/* Presentation styles - inherits Georgia from global */
 
 .presentation-page {
-  font-family: "Manrope", sans-serif;
+  font-family: 'Georgia', serif;
   background: #f6f7f8;
   min-height: 100vh;
 }

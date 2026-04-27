@@ -6,6 +6,8 @@ import Feedback from "../entities/Feedback.js";
 import ConsumedService from "../entities/ConsumedService.js";
 import Client from "../entities/Client.js";
 import Service from "../entities/Service.js";
+import Invoice from "../entities/Invoice.js";
+import Payment from "../entities/Payment.js";
 
 const dashboardRouter = express.Router();
 
@@ -94,6 +96,7 @@ function getDateRange(period) {
 // KPI: Total Revenue, Average Occupancy, Satisfaction Score, Cash Received
 // GET /api/admin/dashboard/kpi?period=thisMonth
 dashboardRouter.get("/kpi", async (req, res) => {
+    console.log('[DASHBOARD KPI] endpoint hit');
   try {
     const period = req.query.period || 'thisMonth';
     const { start, end } = getDateRange(period);
@@ -111,12 +114,30 @@ dashboardRouter.get("/kpi", async (req, res) => {
       }
     }) || 0;
     
-    // Total cash received: sum of all payments in date range
-    const cashReceived = await Payment.sum("amount", {
-      where: {
-        createdAt: { [Op.between]: [start, end] }
+    // Total cash received: sum for ALL completed and fully paid reservations (historic total)
+    const allCompletedReservations = await Reservation.findAll({
+      where: { status: 'completed' },
+      include: [{
+        model: Invoice,
+        as: 'Invoice',
+        required: true,
+        where: { status: 'paid' }
+      }]
+    });
+
+    let cashReceived = 0;
+    const includedReservationIds = [];
+    for (const reservation of allCompletedReservations) {
+      const invoice = reservation.Invoice;
+      if (!invoice) continue;
+      const payments = await Payment.findAll({ where: { InvoiceId: invoice.InvoiceId } });
+      const totalPaid = payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+      if (totalPaid >= parseFloat(invoice.totalAmount)) {
+        cashReceived += totalPaid;
+        includedReservationIds.push(reservation.ReservationId);
       }
-    }) || 0;
+    }
+    console.log('[DASHBOARD KPI] cashReceived:', cashReceived, 'ReservationIds:', includedReservationIds);
     
     // Grad ocupare: CAMERE OCUPATE ÎN PERIOADA / TOTAL CAMERE
     const totalRooms = await Room.count();
@@ -141,8 +162,8 @@ dashboardRouter.get("/kpi", async (req, res) => {
     
     let satisfaction = 0;
     if (feedbacks.length) {
-      const sum = feedbacks.reduce((acc, f) => acc + (f.serviceRating ? Number(f.serviceRating) : 0), 0);
-      satisfaction = (sum / feedbacks.length).toFixed(1);
+      const sum = feedbacks.reduce((acc, f) => acc + (f.service ? Number(f.service) : 0), 0);
+      satisfaction = (sum / (feedbacks.length || 1)).toFixed(1);
     }
     
     res.json({
@@ -156,6 +177,7 @@ dashboardRouter.get("/kpi", async (req, res) => {
       dateRange: { start, end }
     });
   } catch (err) {
+    console.error('[DASHBOARD KPI ERROR]', err);
     res.status(500).json({ message: "server error", error: err.message });
   }
 });
@@ -352,3 +374,4 @@ dashboardRouter.get("/recent-feedback", async (req, res) => {
 });
 
 export default dashboardRouter;
+

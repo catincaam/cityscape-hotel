@@ -1,0 +1,445 @@
+/* Service Booking Page - Luxury Aesthetic */
+
+.service-booking-page {
+  background: #f8f6f2;
+}
+
+.service-booking-content {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 48px;
+  margin-top: 48px;
+  align-items: start;
+}
+
+.service-booking-main {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+
+.booking-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.booking-section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'Georgia', serif;
+}
+
+.section-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: #c6a969;
+  color: #ffffff;
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* Service Card Large */
+.service-card-large {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+}
+
+.service-card-large:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+}
+
+.service-category-badge {
+  display: inline-block;
+  background: #f3e2b3;
+  color: #b77b00;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 20px;
+  margin-top: 12px;
+  width: fit-content;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.service-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.service-meta-row .service-category-badge {
+  margin-top: 0;
+}
+
+.service-price-type-badge {
+  display: inline-block;
+  background: #f3f0eb;
+  color: #b8956e;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 20px;
+  width: fit-content;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Stay Selection */
+.stays-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stays-empty {
+  text-align: center;
+  padding: 48px 24px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  color: #6b7280;
+}
+
+.stays-empty p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.stay-option {
+  background: #ffffff;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.stay-option:hover {
+  border-color: #c6a969;
+  box-shadow: 0 4px 12px rgba(198, 169, 105, 0.15);
+}
+
+.stay-option.selected {
+  border-color: #c6a969;
+  background: #f9f5ee;
+  box-shadow: 0 4px 12px rgba(198, 169, 105, 0.15);
+}
+
+.stay-option-header {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.stay-room-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  font-family: 'Georgia', serif;
+}
+
+.stay-room-theme {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 6px 0 0 0;
+  line-height: 1.4;
+}
+
+.stay-selected-badge {
+  background: #c6a969;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 20px;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stay-option-dates {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 12px;
+}
+
+.stay-guests {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* Person Details */
+.service-person-title {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.service-add-person {
+  background: none;
+  border: none;
+  color: #b8956e;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 6px 8px;
+}
+
+.service-add-person:disabled {
+  color: #d6cfc2;
+  cursor: not-allowed;
+}
+
+.service-person-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.service-person-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  background: #ffffff;
+  border: 1px solid #ece7df;
+  border-radius: 10px;
+  padding: 18px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.service-person-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.service-person-field label {
+  font-size: 12px;
+  color: #b3a78f;
+  font-weight: 700;
+  margin-bottom: 6px;
+  letter-spacing: 0.8px;
+}
+
+.service-person-field input {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: #fcfaf7;
+  color: #1f2937;
+  outline: none;
+  transition: border 0.2s;
+}
+
+.service-person-field input:focus {
+  border-color: #b8956e;
+}
+
+.service-remove-person {
+  background: none;
+  border: none;
+  color: #b8956e;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 8px 4px;
+}
+
+.service-remove-person:hover {
+  color: #a37d5a;
+}
+
+/* Sidebar - Booking Summary */
+.service-booking-sidebar {
+  position: sticky;
+  top: 100px;
+  height: fit-content;
+}
+
+.booking-summary-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.summary-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 20px 0;
+  font-family: 'Georgia', serif;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 16px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  font-size: 14px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.summary-label {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.summary-value {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.summary-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 12px 0 16px 0;
+}
+
+.summary-total {
+  padding: 16px 0;
+  border-bottom: none;
+  font-size: 15px;
+}
+
+.summary-total .summary-label {
+  color: #1f2937;
+  font-weight: 700;
+}
+
+.summary-total .summary-value {
+  color: #c6a969;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.summary-btn {
+  width: 100%;
+  background: #1f2937;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 14px;
+  margin-top: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.25s ease;
+  font-family: 'Georgia', serif;
+}
+
+.summary-btn:hover:not(:disabled) {
+  background: #374151;
+  box-shadow: 0 4px 12px rgba(31, 41, 55, 0.2);
+}
+
+.summary-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.summary-note {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 12px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.summary-success {
+  margin-top: 16px;
+  padding: 12px;
+  background: #ecfdf5;
+  color: #059669;
+  border-radius: 8px;
+  font-size: 13px;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .service-booking-content {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  
+  .service-booking-sidebar {
+    position: relative;
+    top: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .service-booking-content {
+    gap: 24px;
+  }
+  
+  .booking-section-title {
+    font-size: 16px;
+  }
+  
+  .booking-summary-card {
+    padding: 20px;
+  }
+  
+  .stay-option {
+    flex-direction: column;
+  }
+  
+  .stay-option-header {
+    width: 100%;
+    flex-direction: column;
+  }
+  
+  .stay-selected-badge {
+    order: -1;
+  }
+
+  .service-person-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .service-remove-person {
+    align-self: flex-end;
+  }
+}

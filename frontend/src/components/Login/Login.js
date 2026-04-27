@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 import "./Login.css";
+import { EyeOpen, EyeClosed } from "./EyeIcons";
 
 export default function Login() {
   const [mode, setMode] = useState("login"); // login | register
@@ -158,28 +159,23 @@ export default function Login() {
         <div className="decorative-blur blur-2" />
 
         <div className="form-card">
-          {/* Secured Badge */}
-          <div className="secured-badge">
-            🔒 SECURED
-          </div>
 
-          {/* Admin Toggle */}
-          <button 
+          {/* User/Admin Toggle (single label) */}
+          <button
             type="button"
-            className="admin-toggle-modern"
+            className={`admin-toggle-modern admin-toggle-pill${isAdminMode ? " admin-active" : ""}`}
             onClick={() => setIsAdminMode(!isAdminMode)}
+            aria-label={isAdminMode ? "Switch to user login" : "Switch to admin login"}
           >
-            {isAdminMode ? "👤 User" : "🔐 Admin"}
+            {isAdminMode ? "Admin" : "User"}
           </button>
 
-          {/* Header */}
-          <div className="form-header">
-            <h2 className="form-title">Welcome{isAdminMode ? " Admin" : ""}!</h2>
-            <p className="form-subtitle">
-              {mode === "login"
-                ? "Log in to continue your journey."
-                : "Fill in the details to create your account."}
-            </p>
+          {/* Premium Header */}
+          <div className="form-header-luxury">
+            <div className="login-title-row">
+              <h2 className="form-title-luxury">Welcome back, {isAdminMode ? "Admin" : "User"}</h2>
+            </div>
+            <div className="form-subtitle-luxury">Your next experience awaits.</div>
           </div>
 
           {/* Tabs */}
@@ -264,8 +260,9 @@ export default function Login() {
                   type="button"
                   className="toggle-password"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? "🙈" : "👁"}
+                  {showPassword ? <EyeOpen size={22} /> : <EyeClosed size={22} />}
                 </button>
               </div>
             </div>

@@ -41,6 +41,16 @@
   height: 100%;
   object-fit: cover;
   transition: transform 0.3s ease;
+  position: relative;
+}
+
+.room-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.35), rgba(0,0,0,0.08), transparent);
+  pointer-events: none;
+  transition: opacity 0.3s ease;
 }
 
 .room-hero:hover .hero-image {
@@ -52,13 +62,13 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
-  padding: 40px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.4), transparent);
+  padding: 48px 40px 40px;
   color: white;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  min-height: 40%;
+  min-height: 45%;
 }
 
 .back-corner-btn {
@@ -87,13 +97,16 @@
 
 .badge {
   display: inline-block;
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(10px);
-  padding: 8px 16px;
+  padding: 4px 10px;
   border-radius: 999px;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
+  color: white;
   margin-bottom: 12px;
+  letter-spacing: 0.3px;
+  transition: all 0.2s ease;
 }
 
 .hero-overlay h1 {
@@ -179,7 +192,8 @@
   font-size: 32px;
   font-weight: 800;
   color: #1e293b;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  letter-spacing: -0.3px;
 }
 
 .section h3 {
@@ -190,9 +204,12 @@
 }
 
 .description {
-  font-size: 16px;
-  line-height: 1.8;
-  color: #475569;
+  font-size: 15px;
+  line-height: 1.65;
+  color: #666666;
+  max-width: 90%;
+  font-weight: 400;
+  letter-spacing: 0.2px;
 }
 
 /* ROOM DETAILS - INLINE PREMIUM FORMAT */
@@ -247,11 +264,11 @@
 .spec {
   background: white;
   border: 2px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 24px;
+  border-radius: 14px;
+  padding: 20px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   transition: all 0.3s;
   position: relative;
   overflow: hidden;
@@ -276,9 +293,9 @@
 
 .spec:hover {
   background: #faf8f3;
-  border-color: #c6a969;
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(198, 169, 105, 0.15);
+  border-color: #d4b896;
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(201, 168, 106, 0.12);
 }
 
 .spec-icon {
@@ -312,19 +329,19 @@
   margin: 0;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  margin-top: 24px;
+  gap: 18px;
+  margin-top: 28px;
 }
 
 .amenity-item {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  padding: 14px 16px;
-  background: #f8fafc;
+  padding: 12px 14px;
+  background: #fafaf8;
   border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  transition: all 0.2s;
+  border: 1px solid #e5e0da;
+  transition: all 0.3s ease;
   cursor: default;
 }
 
@@ -346,10 +363,10 @@
 }
 
 .amenity-item:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  background: #f8f5f1;
+  border-color: #d4b896;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(201, 168, 106, 0.12);
 }
 
 .check-icon {
@@ -405,12 +422,17 @@
   position: sticky;
   top: 100px;
   background: white;
-  padding: 32px;
-  border-radius: 24px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+  padding: 36px;
+  border-radius: 20px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.1);
   height: fit-content;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e8e3dd;
   backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.booking-box:hover {
+  box-shadow: 0 28px 76px rgba(0, 0, 0, 0.12);
 }
 
 .price-section {
@@ -426,10 +448,11 @@
 }
 
 .price strong {
-  font-size: 52px;
+  font-size: 36px;
   font-weight: 800;
-  color: #c6a969;
+  color: #c9a86a;
   line-height: 1;
+  letter-spacing: -0.8px;
 }
 
 .price span {
@@ -440,8 +463,8 @@
 
 .booking-divider {
   height: 1px;
-  background: #e5e7eb;
-  margin: 24px 0;
+  background: linear-gradient(90deg, transparent, #e5e0da, transparent);
+  margin: 28px 0;
 }
 
 .booking-info {
@@ -473,18 +496,19 @@
 .reserve-btn {
   width: 100%;
   height: 56px;
-  background: linear-gradient(135deg, #1f2937, #111827);
+  background: linear-gradient(135deg, #1f2937, #0f1419);
   color: white;
   border: none;
-  border-radius: 16px;
-  font-size: 18px;
+  border-radius: 14px;
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
   margin-bottom: 12px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(31, 41, 55, 0.3);
+  box-shadow: 0 10px 32px rgba(15, 20, 25, 0.3);
+  letter-spacing: 0.6px;
 }
 
 .reserve-btn::before {
@@ -503,8 +527,9 @@
 }
 
 .reserve-btn:hover:not(:disabled) {
-  transform: translateY(-3px);
-  box-shadow: 0 14px 36px rgba(29, 78, 216, 0.4);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 44px rgba(15, 20, 25, 0.4);
+  background: linear-gradient(135deg, #0f1419, #000);
 }
 
 .reserve-btn:disabled {
@@ -517,17 +542,18 @@
   height: 48px;
   background: white;
   color: #475569;
-  border: 2px solid #e5e7eb;
+  border: 2px solid #e8e3dd;
   border-radius: 14px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
 }
 
 .back-btn:hover {
-  border-color: #cbd5e1;
-  background: #f8fafc;
+  border-color: #d4b896;
+  background: #fffbf7;
+  transform: translateY(-2px);
 }
 
 /* GALLERY MODAL */

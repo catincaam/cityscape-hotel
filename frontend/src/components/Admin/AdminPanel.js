@@ -6,7 +6,9 @@ import AdminThemes from "./themes/AdminThemes";
 import AdminServices from "./services/AdminServices";
 import AdminRewards from "./rewards/AdminRewards";
 import AdminBookings from "./bookings";
-import AdminDashboard from "./AdminDashboard";
+
+// Noul dashboard premium
+import AdminDashboardV2 from "./Dashboard/AdminDashboardV2";
 
 export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -21,7 +23,7 @@ export default function AdminPanel() {
       {/* SIDEBAR */}
       <aside className="admin-sidebar">
         <div className="admin-header">
-          <h2>🔧 Admin Panel</h2>
+          <h2>Admin Panel</h2>
           <p className="admin-subtitle">Cityscape Hotel</p>
         </div>
 
@@ -30,42 +32,42 @@ export default function AdminPanel() {
             className={activeTab === "dashboard" ? "active" : ""}
             onClick={() => setActiveTab("dashboard")}
           >
-            📊 Dashboard
+            Dashboard
           </button>
           <button
             className={activeTab === "rooms" ? "active" : ""}
             onClick={() => setActiveTab("rooms")}
           >
-            🏨 Rooms
+            Rooms
           </button>
           <button
             className={activeTab === "themes" ? "active" : ""}
             onClick={() => setActiveTab("themes")}
           >
-            🎨 Themes
+            Themes
           </button>
           <button
             className={activeTab === "services" ? "active" : ""}
             onClick={() => setActiveTab("services")}
           >
-            ⚡ Services
+            Services
           </button>
           <button
             className={activeTab === "bookings" ? "active" : ""}
             onClick={() => setActiveTab("bookings")}
           >
-            📖 Bookings
+            Bookings
           </button>
           <button
             className={activeTab === "rewards" ? "active" : ""}
             onClick={() => setActiveTab("rewards")}
           >
-            🎁 Rewards
+            Rewards
           </button>
         </nav>
 
         <button className="logout-btn" onClick={handleLogout}>
-          🚪 Logout
+          Logout
         </button>
       </aside>
 
@@ -93,7 +95,7 @@ export default function AdminPanel() {
         </div>
 
         {/* Content Tabs */}
-        {activeTab === "dashboard" && <AdminDashboard />}
+        {activeTab === "dashboard" && <AdminDashboardV2 />}
         {activeTab === "rooms" && <AdminRooms />}
         {activeTab === "themes" && <AdminThemes />}
         {activeTab === "services" && <AdminServices />}

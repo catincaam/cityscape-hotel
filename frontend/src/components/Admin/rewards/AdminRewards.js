@@ -1,35 +1,66 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import "./AdminRewards.css";
-import "../services/AdminServices.css";
 import { getAllRewards, createReward, updateReward, deleteReward } from "../../../services/rewardService";
 
-const CATEGORIES = [
-  { value: "Dining", label: "Dining", color: "bg-orange-100 text-orange-700" },
-  { value: "Stay", label: "Stay", color: "bg-blue-100 text-blue-700" },
-  { value: "Wellness", label: "Wellness", color: "bg-emerald-100 text-emerald-700" },
-  { value: "Transfer", label: "Transfer", color: "bg-gray-100 text-gray-700" },
-  { value: "Service", label: "Service", color: "bg-purple-100 text-purple-700" },
-];
+// CONFIG CONSTANTS
+const CONFIG = {
+  API_BASE_URL: "http://localhost:9001",
+  UPLOAD_ENDPOINT: "/api/upload/multiple",
+  NOTIFICATION_TIMERS: {
+    SUCCESS: 3000,
+    ERROR: 4000
+  },
+  DEFAULT_CATEGORY: "Dining",
+  DEFAULT_REWARD_TYPE: "per_booking"
+};
+
+const INITIAL_FORM_STATE = { 
+  id: null, 
+  title: "", 
+  desc: "", 
+  points: "", 
+  category: CONFIG.DEFAULT_CATEGORY, 
+  rewardType: CONFIG.DEFAULT_REWARD_TYPE, 
+  active: true, 
+  image: null 
+};
 
 export default function AdminRewards() {
   const [rewards, setRewards] = useState([]);
-  const [form, setForm] = useState({ id: null, title: "", desc: "", points: "", category: "Dining", active: true, image: null });
+  const [form, setForm] = useState(INITIAL_FORM_STATE);
   const [images, setImages] = useState([]);
   const [previews, setPreviews] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [deleteConfirmTitle, setDeleteConfirmTitle] = useState("");
 
   useEffect(() => {
     fetchRewards();
   }, []);
 
+  // Auto-hide notifications
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => setSuccess(""), CONFIG.NOTIFICATION_TIMERS.SUCCESS);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(""), CONFIG.NOTIFICATION_TIMERS.ERROR);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
   async function fetchRewards() {
     setLoading(true);
-    setError("");
     try {
       const data = await getAllRewards();
-      console.log("Rewards loaded:", data);
       setRewards(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Error loading rewards:", err);
@@ -46,11 +77,6 @@ export default function AdminRewards() {
     setPreviews(files.map(file => URL.createObjectURL(file)));
   }
 
-  function removeImage(index) {
-    setImages(prev => prev.filter((_, i) => i !== index));
-    setPreviews(prev => prev.filter((_, i) => i !== index));
-  }
-
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
@@ -62,7 +88,6 @@ export default function AdminRewards() {
       return;
     }
 
-    // Pentru create - trebuie imagine
     if (!form.id && images.length === 0) {
       setError("At least one image is required for a new reward!");
       setLoading(false);
@@ -74,12 +99,11 @@ export default function AdminRewards() {
         // UPDATE
         let finalImage = form.image;
 
-        // If new images are uploaded, use them
         if (images.length > 0) {
           const formData = new FormData();
           images.forEach(img => formData.append('images', img));
           
-          const uploadRes = await fetch('http://localhost:9001/api/upload/multiple', {
+          const uploadRes = await fetch(`${CONFIG.API_BASE_URL}${CONFIG.UPLOAD_ENDPOINT}`, {
             method: 'POST',
             body: formData
           });
@@ -101,17 +125,17 @@ export default function AdminRewards() {
           desc: form.desc,
           points: form.points,
           category: form.category,
+          rewardType: form.rewardType || CONFIG.DEFAULT_REWARD_TYPE,
           active: form.active,
           image: finalImage
         });
-        alert("Recompensă actualizată cu succes!");
+        setSuccess("Reward updated successfully!");
       } else {
-        // CREATE - trebuie imagine
-        // Upload images
+        // CREATE
         const formData = new FormData();
         images.forEach(img => formData.append('images', img));
         
-        const uploadRes = await fetch('http://localhost:9001/api/upload/multiple', {
+        const uploadRes = await fetch(`${CONFIG.API_BASE_URL}${CONFIG.UPLOAD_ENDPOINT}`, {
           method: 'POST',
           body: formData
         });
@@ -122,17 +146,17 @@ export default function AdminRewards() {
 
         const uploadData = await uploadRes.json();
         if (!uploadData.imageUrls || uploadData.imageUrls.length === 0) {
-          throw new Error("Nu s-au primesc URLs de imagini de la server");
+          throw new Error("No image URLs received from server");
         }
 
         const imageUrls = uploadData.imageUrls;
 
-        // Create reward
         const newReward = await createReward({
           title: form.title,
           desc: form.desc,
           points: form.points,
           category: form.category,
+          rewardType: form.rewardType,
           image: imageUrls[0]
         });
 
@@ -140,51 +164,66 @@ export default function AdminRewards() {
           throw new Error("Error saving reward to database");
         }
 
-        alert("Recompensă adăugată cu succes!");
+        setSuccess("Reward added successfully!");
       }
 
-      setForm({ id: null, title: "", desc: "", points: "", category: "Dining", active: true, image: null });
+      setForm(INITIAL_FORM_STATE);
       setImages([]);
       setPreviews([]);
+      setEditingId(null);
       await fetchRewards();
     } catch (err) {
-      setError(err.message || "Eroare la operație!");
+      setError(err.message || "Error during operation!");
     } finally {
       setLoading(false);
     }
   }
 
-  const filteredRewards = rewards.filter(r =>
-    r.title.toLowerCase().includes(search.toLowerCase()) ||
-    (r.desc && r.desc.toLowerCase().includes(search.toLowerCase()))
-  );
+  const [categoryFilter, setCategoryFilter] = useState('All');
 
-  async function handleToggle(rewardId, currentActive) {
-    try {
-      setLoading(true);
-      await updateReward(rewardId, { active: !currentActive });
-      await fetchRewards();
-    } catch (err) {
-      setError(err.message || "Error updating status");
-    } finally {
-      setLoading(false);
-    }
-  }
+  // Compute unique categories from rewards data
+  const uniqueCategories = Array.from(new Set(rewards.map(r => r.category).filter(Boolean)));
+
+  // Filter rewards by search and category (case-insensitive)
+  const filteredRewards = rewards.filter(r => {
+    const matchesSearch = r.title.toLowerCase().includes(search.toLowerCase()) ||
+      (r.desc && r.desc.toLowerCase().includes(search.toLowerCase()));
+    const matchesCategory =
+      categoryFilter === 'All' ||
+      (r.category && r.category.toLowerCase() === categoryFilter.toLowerCase());
+    return matchesSearch && matchesCategory;
+  });
 
   async function handleDelete(rewardId) {
-    if (!window.confirm("Are you sure you want to delete this reward?")) return;
+    const reward = rewards.find(r => r.RewardId === rewardId);
+    setDeleteConfirmTitle(reward?.title || "this reward");
+    setDeleteConfirm(rewardId);
+  }
+
+  async function confirmDelete() {
+    if (!deleteConfirm) return;
     
     try {
-      setLoading(true);
-      await deleteReward(rewardId);
-      await fetchRewards();
-      alert("Recompensă ștearsă cu succes!");
-
+      // Remove from UI immediately (optimistic update)
+      setRewards(rewards.filter(r => r.RewardId !== deleteConfirm));
+      
+      // Delete from backend
+      await deleteReward(deleteConfirm);
+      setSuccess("Reward deleted successfully!");
+      setDeleteConfirm(null);
+      setDeleteConfirmTitle("");
     } catch (err) {
-      setError(err.message || "Eroare la ștergere");
-    } finally {
-      setLoading(false);
+      // If delete fails, reload from backend
+      await fetchRewards();
+      setError(err.message || "Error deleting reward");
+      setDeleteConfirm(null);
+      setDeleteConfirmTitle("");
     }
+  }
+
+  function cancelDelete() {
+    setDeleteConfirm(null);
+    setDeleteConfirmTitle("");
   }
 
   function handleEdit(reward) {
@@ -194,251 +233,331 @@ export default function AdminRewards() {
       desc: reward.desc,
       points: reward.points.toString(),
       category: reward.category,
+      rewardType: reward.rewardType || "per_booking",
       active: reward.active,
       image: reward.image
     });
+    setEditingId(reward.RewardId);
+    setImages([]);
+    setPreviews([]);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  function handleCancel() {
+    setForm(INITIAL_FORM_STATE);
+    setImages([]);
+    setPreviews([]);
+    setError("");
+    setEditingId(null);
+  }
+
+  const previewImage = previews.length > 0 ? previews[0] : (form.image ? `${CONFIG.API_BASE_URL}${form.image}` : null);
+  const categoryLabel = form.category;
+
   return (
-    <div className="admin-rewards-main">
-      <div>
-        {/* Add New Reward Form - MODERN CARD DESIGN */}
-        <div className="service-form-container">
-          <div className="service-form-card">
-            <h3>{form.id ? 'Edit Reward' : 'Add New Reward'}</h3>
-            <form onSubmit={handleSubmit}>
-              {/* REWARD DETAILS CARD */}
-              <div className="form-section">
-                <div className="section-title">Reward Details</div>
-                <div className="form-grid-2col">
-                  <div className="form-group">
-                    <label>Reward Name</label>
-                    <input
-                      type="text"
-                      placeholder="ex: Complimentary Spa Day"
-                      value={form.title}
-                      onChange={e => setForm({ ...form, title: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Required Points</label>
-                    <input
-                      type="number"
-                      placeholder="ex: 200"
-                      value={form.points}
-                      onChange={e => setForm({ ...form, points: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Category</label>
-                    <select
-                      value={form.category}
-                      onChange={e => setForm({ ...form, category: e.target.value })}
-                      required
-                    >
-                      <option value="">Select category</option>
-                      {CATEGORIES.map(c => (
-                        <option key={c.value} value={c.value}>{c.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+    <div className="admin-rewards-container">
+      {/* HERO SECTION */}
+      <div className="rewards-hero">
+        <h1>Manage Rewards</h1>
+        <p>Create and curate exclusive rewards for your guests</p>
+      </div>
+
+      {/* FORM + PREVIEW SECTION */}
+      <div className="rewards-creation-section">
+        {/* LEFT: FORM */}
+        <div className="rewards-form-wrapper">
+          <div className="form-header">
+            <h2>{form.id ? "Edit Reward" : "Create Reward Entity"}</h2>
+            {form.id && (
+              <div className="form-status">
+                <span className={`status-pill ${form.active ? 'active' : 'inactive'}`}>
+                  {form.active ? 'Active' : 'Inactive'}
+                </span>
               </div>
-
-              {/* DESCRIPTION CARD */}
-              <div className="form-section">
-                <div className="section-title">Description</div>
-                <textarea
-                  placeholder="Describe reward benefits and conditions..."
-                  value={form.desc}
-                  onChange={e => setForm({ ...form, desc: e.target.value })}
-                  required
-                  style={{ width: '100%', minHeight: '100px', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontFamily: 'inherit', resize: 'vertical' }}
-                />
-              </div>
-
-              {/* STATUS CARD */}
-              {form.id && (
-                <div className="form-section">
-                  <div className="section-title">Status</div>
-                  <div className="checkbox-group">
-                    <label className="checkbox-label">
-                      <input
-                        type="checkbox"
-                        checked={form.active}
-                        onChange={e => setForm({ ...form, active: e.target.checked })}
-                      />
-                      <span>Active</span>
-                    </label>
-                  </div>
-                </div>
-              )}
-
-              {/* IMAGE CARD */}
-              <div className="form-section">
-                <div className="section-title">Reward Image</div>
-                {form.id && form.image && !previews.length && (
-                  <div style={{marginBottom: '16px'}}>
-                    <p style={{fontSize: '0.85rem', color: '#718096', marginBottom: '8px'}}>Current image:</p>
-                    <img 
-                      src={`http://localhost:9001${form.image}`} 
-                      alt="current"
-                      style={{maxWidth: '150px', maxHeight: '150px', borderRadius: '8px'}}
-                    />
-                  </div>
-                )}
-                <label className="image-upload-box">
-                  <input type="file" accept="image/*" hidden onChange={handleImages} />
-                  <div className="upload-content">
-                    <p>{previews.length ? 'Change image' : 'Upload image'}</p>
-                    <small>PNG, JPG, max 5MB</small>
-                  </div>
-                </label>
-                {previews.length > 0 && (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '12px', marginTop: '16px' }}>
-                    {previews.map((preview, index) => (
-                      <div key={index} style={{ position: 'relative', aspectRatio: '1/1', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-                        <img src={preview} alt={`preview ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        <button
-                          type="button"
-                          onClick={() => removeImage(index)}
-                          style={{ position: 'absolute', top: '4px', right: '4px', width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(239,68,68,0.95)', color: 'white', border: 'none', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* ERROR MESSAGE */}
-              {error && <div style={{ color: '#dc2626', fontSize: '0.9rem', marginBottom: '16px', padding: '12px', background: '#fee2e2', borderRadius: '8px' }}>{error}</div>}
-
-              {/* ACTION BUTTONS */}
-              <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
-                <button type="submit" disabled={loading} className="btn-submit">
-                  {form.id ? 'Update Reward' : 'Add Reward'}
-                </button>
-                {form.id && (
-                  <button 
-                    type="button" 
-                    onClick={() => {
-                      setForm({ id: null, title: "", desc: "", points: "", category: "Dining", active: true, image: null });
-                      setImages([]);
-                      setPreviews([]);
-                      setError("");
-                    }}
-                    style={{
-                      background: '#e5e7eb',
-                      color: '#374151',
-                      border: 'none',
-                      borderRadius: '12px',
-                      padding: '12px 24px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      height: '48px',
-                      transition: 'background 0.2s'
-                    }}
-                  >
-                    Cancel
-                  </button>
-                )}
-              </div>
-            </form>
+            )}
           </div>
-        </div>
 
-        {/* Rewards List */}
-        <div className="admin-rewards-list-card">
-          <h3>Reward List ({filteredRewards.length})</h3>
-          
-          <div className="admin-rewards-list-header">
-            <div className="search-box">
+          <form onSubmit={handleSubmit} className="rewards-form">
+            {/* REWARD NAME */}
+            <div className="form-field">
+              <label>Reward Name</label>
               <input
                 type="text"
-                placeholder="Search reward..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
+                placeholder="e.g., Royal Suite Afternoon Tea"
+                value={form.title}
+                onChange={e => setForm({ ...form, title: e.target.value })}
+                required
+                className="form-input"
               />
             </div>
+
+            {/* CATEGORY & REWARD TYPE */}
+            <div className="form-row-2">
+              <div className="form-field">
+                <label>Category</label>
+                <select
+                  value={form.category}
+                  onChange={e => setForm({ ...form, category: e.target.value })}
+                  className="form-select"
+                >
+                  {uniqueCategories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                  {/* Optionally allow new category entry here if needed */}
+                </select>
+              </div>
+
+              <div className="form-field">
+                <label>Reward Type</label>
+                <select
+                  value={form.rewardType}
+                  onChange={e => setForm({ ...form, rewardType: e.target.value })}
+                  className="form-select"
+                >
+                  <option value="per_booking">Per Booking</option>
+                  <option value="per_person">Per Person</option>
+                </select>
+              </div>
+            </div>
+
+            {/* REQUIRED POINTS */}
+            <div className="form-field">
+              <label>Required Points</label>
+              <div className="points-input-wrapper">
+                <input
+                  type="number"
+                  placeholder="e.g., 4500"
+                  value={form.points}
+                  onChange={e => setForm({ ...form, points: e.target.value })}
+                  required
+                  className="form-input points-input"
+                />
+                <span className="points-label">PTS</span>
+              </div>
+            </div>
+
+            {/* DESCRIPTION */}
+            <div className="form-field">
+              <label>Description</label>
+              <textarea
+                placeholder="Describe the reward and its benefits..."
+                value={form.desc}
+                onChange={e => setForm({ ...form, desc: e.target.value })}
+                required
+                className="form-textarea"
+                rows="4"
+              />
+            </div>
+
+            {/* IMAGE UPLOAD */}
+            <div className="form-field">
+              <label>Reward Image</label>
+              <label className="image-upload-box">
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  hidden 
+                  onChange={handleImages}
+                />
+                <div className="upload-content">
+                  <div className="upload-icon">⬆</div>
+                  <p>Drop high-resolution image here or browse</p>
+                  <small>Recommended: 16:10 images</small>
+                </div>
+              </label>
+            </div>
+
+            {/* ACTIVE STATUS */}
+            <div className="form-field checkbox-field">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={form.active}
+                  onChange={e => setForm({ ...form, active: e.target.checked })}
+                />
+                <span>Active</span>
+              </label>
+            </div>
+
+            {/* ERROR MESSAGE */}
+            {error && <div className="error-message">{error}</div>}
+
+            {/* BUTTONS */}
+            <div className="form-actions">
+              <button type="submit" disabled={loading} className="btn-primary">
+                {form.id ? "Update Reward" : "Publish Reward"}
+              </button>
+              {form.id && (
+                <button type="button" onClick={handleCancel} className="btn-secondary">
+                  Cancel
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
+
+        {/* RIGHT: PREVIEW */}
+        <div className="rewards-preview-wrapper">
+          <div className="preview-header">
+            <span className="preview-label">Instant Preview</span>
+            {previewImage && <span className="preview-dot">● Visualizing live data</span>}
           </div>
 
-          {error && <div className="error-message">{error}</div>}
-          {loading ? (
-            <div className="loading-message">Loading rewards...</div>
-          ) : filteredRewards.length === 0 ? (
-            <div className="empty-message">No rewards added yet.</div>
+          {previewImage ? (
+            <div className="preview-card">
+              <div className="preview-image-wrapper">
+                <img src={previewImage} alt="preview" className="preview-image" />
+                <div className="preview-badge">{form.points || "XXX"} PTS</div>
+              </div>
+
+              <div className="preview-content">
+                <div className="preview-category">{categoryLabel}</div>
+                <h3 className="preview-title">{form.title || "Reward Title"}</h3>
+                <p className="preview-description">{form.desc || "Reward description will appear here"}</p>
+                
+                <div className="preview-meta">
+                  <span className="meta-item">
+                    <span className="meta-label">Reward Type:</span>
+                    <span className="meta-value">{form.rewardType === 'per_person' ? 'PER PERSON' : 'PER BOOKING'}</span>
+                  </span>
+                </div>
+
+                <button className="preview-btn" disabled>Sample Action</button>
+              </div>
+            </div>
           ) : (
-            <table>
-              <thead>
-                <tr>
-                  <th>Image</th>
-                  <th>Reward</th>
-                  <th>Category</th>
-                  <th>Points</th>
-                  <th>Status</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRewards.map((r) => {
-                  const categoryObj = CATEGORIES.find(c => c.value === (r.category || "Dining"));
-                  return (
-                    <tr key={r.RewardId}>
-                      <td>
-                        {r.image ? (
-                          <img
-                            src={`http://localhost:9001${r.image}`}
-                            alt={r.title}
-                            className="reward-table-image"
-                          />
-                        ) : (
-                          <div className="no-image">🎁</div>
-                        )}
-                      </td>
-                      <td>
-                        <strong>{r.title}</strong>
-                        <div className="muted">{r.desc}</div>
-                      </td>
-                      <td>{r.category || "Dining"}</td>
-                      <td>
-                        <span className="reward-points-badge">⭐ {r.points}</span>
-                      </td>
-                      <td>
-                        <span className={`status-badge ${r.active !== false ? 'active' : 'inactive'}`}>
-                          {r.active !== false ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td className="actions-cell">
-                        <button 
-                          className="edit-action-btn" 
-                          onClick={() => handleEdit(r)}
-                          disabled={loading}
-                          title="Edit"
-                        >
-                          ✏️
-                        </button>
-                        <button 
-                          className="delete-action-btn"
-                          onClick={() => handleDelete(r.RewardId)}
-                          disabled={loading}
-                          title="Delete"
-                        >
-                          🗑️
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div className="preview-empty">
+              <div className="empty-icon">📸</div>
+              <p>Fill in the form and upload an image to see your reward preview here</p>
+            </div>
           )}
         </div>
       </div>
+
+      {/* EXISTING INVENTORY */}
+      <div className="existing-inventory">
+        <div className="inventory-header">
+          <h2>Existing Inventory</h2>
+          <p>Manage and curate your active guest rewards</p>
+        </div>
+
+        {/* SEARCH */}
+        <div className="inventory-controls">
+          <div className="search-box">
+            <input
+              type="text"
+              placeholder="Search rewards..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="search-input"
+            />
+          </div>
+          <div className="filter-pills">
+            <button
+              className={`pill${categoryFilter === 'All' ? ' active' : ''}`}
+              onClick={() => setCategoryFilter('All')}
+              type="button"
+            >
+              All
+            </button>
+            {uniqueCategories.map(cat => (
+              <button
+                key={cat}
+                className={`pill${categoryFilter.toLowerCase() === cat.toLowerCase() ? ' active' : ''}`}
+                onClick={() => setCategoryFilter(cat)}
+                type="button"
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* REWARDS GRID */}
+        {loading ? (
+          <div className="loading-state">Loading...</div>
+        ) : filteredRewards.length === 0 ? (
+          <div className="empty-state">No rewards yet. Create your first one above!</div>
+        ) : (
+          <div className="rewards-grid">
+            {filteredRewards.map(r => (
+              <div key={r.RewardId} className="reward-card">
+                <div className="reward-card-image">
+                  {r.image ? (
+                    <img src={`http://localhost:9001${r.image}`} alt={r.title} />
+                  ) : (
+                    <div className="no-image">[No Image]</div>
+                  )}
+                  <div className="reward-card-badge">{r.points} PTS</div>
+                </div>
+
+                <div className="reward-card-content">
+                  <div className="reward-card-category">{r.category}</div>
+                  <h4 className="reward-card-title">{r.title}</h4>
+                  <p className="reward-card-desc">{r.desc}</p>
+
+                  <div className="reward-card-meta">
+                    <span className={`type-badge ${r.rewardType}`}>
+                      {r.rewardType === 'per_person' ? 'PER PERSON' : 'PER BOOKING'}
+                    </span>
+                    <span className={`status-badge ${r.active ? 'active' : 'inactive'}`}>
+                      {r.active ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="reward-card-actions">
+                  <button className="action-btn edit" onClick={() => handleEdit(r)} title="Edit">
+                    Edit
+                  </button>
+                  <button className="action-btn delete" onClick={() => handleDelete(r.RewardId)} title="Delete">
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* DELETE CONFIRMATION MODAL */}
+      {deleteConfirm && (
+        <div className="modal-overlay">
+          <div className="modal-content delete-modal">
+            <div className="modal-header">
+              <h3>Delete Reward?</h3>
+            </div>
+            <div className="modal-body">
+              <p>Are you sure you want to delete <strong>"{deleteConfirmTitle}"</strong>?</p>
+              <p className="modal-warning">This action cannot be undone.</p>
+            </div>
+            <div className="modal-actions">
+              <button className="btn-secondary" onClick={cancelDelete}>
+                Cancel
+              </button>
+              <button className="btn-delete" onClick={confirmDelete}>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUCCESS TOAST */}
+      {success && (
+        <div className="toast toast-success">
+          <div className="toast-icon">✓</div>
+          <div className="toast-message">{success}</div>
+        </div>
+      )}
+
+      {/* ERROR TOAST */}
+      {error && (
+        <div className="toast toast-error">
+          <div className="toast-icon">⚠</div>
+          <div className="toast-message">{error}</div>
+        </div>
+      )}
     </div>
   );
 }

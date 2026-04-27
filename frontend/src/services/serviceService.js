@@ -12,6 +12,11 @@ export async function createService(data) {
   return res.data;
 }
 
+export async function updateService(id, data) {
+  const res = await axios.put(`${API}/${id}`, data, { withCredentials: true });
+  return res.data;
+}
+
 export async function deleteService(id) {
   await axios.delete(`${API}/${id}`, { withCredentials: true });
 }

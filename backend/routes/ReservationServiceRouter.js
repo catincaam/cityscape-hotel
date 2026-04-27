@@ -19,7 +19,7 @@ reservationServiceRouter.post("/", async (req, res) => {
     res.status(201).json(service);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "server error" });
+    res.status(400).json({ message: err.message || "server error" });
   }
 });
 

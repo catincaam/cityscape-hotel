@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
 import Login from "./components/Login/Login";
 import Dashboard from "./components/Dashboard/Dashboard";
 import Presentation from "./components/Presentation/Presentation";
@@ -15,13 +14,13 @@ import DayPasses from "./components/DayPasses/DayPasses";
 import Rewards from "./components/Rewards/Rewards";
 import RewardsDetails from "./components/RewardsDetails/RewardsDetails";
 import PastReservations from "./components/Reservations/PastReservations";
+import AllReservations from "./components/Reservations/AllReservations";
 import ProfileEdit from "./components/Profile/ProfileEdit";
-
 import FeedbackPage from "./components/Feedback/FeedbackPage";
 import ChatbotWidget from "./components/Chatbot/ChatbotWidget";
-
 import ProtectedRoute from "./routes/ProtectedRoute";
-
+import Experiences from "./components/Experiences/Experiences";
+import ServiceBooking from "./components/Services/ServiceBooking";
 export default function App() {
   return (
     <BrowserRouter>
@@ -100,6 +99,16 @@ export default function App() {
           }
         />
 
+        {/* SERVICE BOOKING */}
+        <Route
+          path="/services/book"
+          element={
+            <ProtectedRoute>
+              <ServiceBooking />
+            </ProtectedRoute>
+          }
+        />
+
         {/* DAY PASSES */}
         <Route
           path="/day-passes"
@@ -170,12 +179,12 @@ export default function App() {
           }
         />
 
-        {/* PAST RESERVATIONS */}
+        {/* ALL RESERVATIONS */}
         <Route
           path="/reservations"
           element={
             <ProtectedRoute>
-              <PastReservations />
+              <AllReservations />
             </ProtectedRoute>
           }
         />

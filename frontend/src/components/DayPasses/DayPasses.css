@@ -1,9 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+/* Day Passes styles - inherits Georgia from global */
 
 .day-passes-container {
   min-height: 100vh;
   background: #F9FAFB;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Georgia', serif;
 }
 
 /* Header */

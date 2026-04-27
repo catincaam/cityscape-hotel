@@ -1,132 +1,33 @@
-/* CARD MODERN pentru listă camere */
-.admin-rewards-list-card {
-  background: #ffffff;
-  border-radius: 22px;
-  padding: 36px;
-  margin-bottom: 48px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-}
-.admin-rewards-list-card h3 {
-  font-size: 1.4rem;
-  font-weight: 800;
-  margin-bottom: 28px;
-  color: #111827;
-}
-.admin-rewards-list-header {
-  margin-bottom: 20px;
-}
-.search-box {
-  position: relative;
-  display: flex;
-  align-items: center;
-  max-width: 300px;
-}
-.search-box input {
-  width: 100%;
-  padding: 10px 12px 10px 36px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  background: #f9fafb;
-  transition: all 0.2s ease;
-}
-.search-box input:focus {
-  outline: none;
-  border-color: #1f2937;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
-}
-.search-box::before {
-  content: "🔍";
-  position: absolute;
-  left: 10px;
-  font-size: 0.9rem;
-  pointer-events: none;
-}
-.actions-cell {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  justify-content: flex-end;
-}
-.delete-action-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-  opacity: 0.7;
-  transition: opacity 0.2s ease;
-  padding: 4px;
-  border-radius: 4px;
-}
-.delete-action-btn:hover {
-  opacity: 1;
-  background: #f1f5f9;
-}
-.admin-rooms {
-  max-width: 1100px;
+/* ADMIN ROOMS - ELEGANT REDESIGN */
+/* Uses the same styling as AdminRewards via import */
+
+/* STATUS BADGE STYLES */
+.preview-badge.status-available {
+  background: #d1fae5;
+  color: #065f46;
 }
 
-.card {
-  background: white;
-  border-radius: 20px;
-  padding: 30px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-  margin-bottom: 40px;
+.preview-badge.status-occupied {
+  background: #fed7aa;
+  color: #92400e;
 }
 
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+.preview-badge.status-maintenance {
+  background: #fecaca;
+  color: #7f1d1d;
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
+.reward-card-badge.status-available {
+  background: #d1fae5;
+  color: #065f46;
 }
 
-.form-group label {
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  margin-bottom: 6px;
-  color: #64748b;
+.reward-card-badge.status-occupied {
+  background: #fed7aa;
+  color: #92400e;
 }
 
-.form-group input,
-.form-group select {
-  padding: 14px;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-}
-
-.add-btn {
-  grid-column: span 3;
-  padding: 14px;
-  border-radius: 14px;
-  background: #1f2937;
-  color: white;
-  border: none;
-  font-weight: 800;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th, td {
-  padding: 14px;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.status.disponibil { color: green; }
-.status.ocupat { color: red; }
-.status.in\ intretinere { color: orange; }
-
-.delete-btn {
-  background: #fee2e2;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 8px;
+.reward-card-badge.status-maintenance {
+  background: #fecaca;
+  color: #7f1d1d;
 }

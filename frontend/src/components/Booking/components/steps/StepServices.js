@@ -16,11 +16,9 @@ export default function StepServices({
       try {
         const res = await fetch("http://localhost:9001/api/services");
         const data = await res.json();
-        // Filtrăm doar serviciile active și rezervabile online
-        const availableServices = data.filter(
-          s => s.status === "activ" && s.bookableOnline
-        );
-        setServices(availableServices);
+        console.log("🔍 Servicii din DB:", data); // DEBUG
+        // Returnăm TOATE serviciile pentru demo
+        setServices(data);
       } catch (err) {
         console.error("Eroare la încărcarea serviciilor:", err);
       }
@@ -38,7 +36,14 @@ export default function StepServices({
   function changeQty(service, delta) {
     setSelected(prev => {
       const current = prev[service.ServiceId] || 0;
-      const next = Math.max(0, current + delta);
+      
+      // Calculează max quantity
+      const isPerPerson = service.category !== "Transport";
+      const numGuests = (bookingData.adults || 0) + (bookingData.children || 0);
+      const maxQty = isPerPerson ? numGuests : 1;
+      
+      // Nu permite să depășești maxim
+      const next = Math.max(0, Math.min(current + delta, maxQty));
 
       const updated = { ...prev, [service.ServiceId]: next };
       if (next === 0) delete updated[service.ServiceId];
@@ -101,36 +106,55 @@ export default function StepServices({
             <p className="no-services">No services available in this category.</p>
           )}
           
-          {filteredServices.map(s => (
-            <div key={s.ServiceId} className="service-card">
-              {s.image && (
-              <div className="service-image-wrapper">
-                <img
-                  src={`http://localhost:9001${s.image}`}
-                  alt={s.name}
-                  className="service-image"
-                />
+          {filteredServices.map(s => {
+            const isSelected = (selected[s.ServiceId] || 0) > 0;
+            const priceType = s.category === "Transport" ? "per trip" : "per person";
+            const currentQty = selected[s.ServiceId] || 0;
+            
+            // Calculează max quantity
+            const isPerPerson = s.category !== "Transport";
+            const numGuests = (bookingData.adults || 0) + (bookingData.children || 0);
+            const maxQty = isPerPerson ? numGuests : 1;
+            const isAtMax = currentQty >= maxQty;
+            
+            return (
+              <div key={s.ServiceId} className={`service-card ${isSelected ? 'active' : ''}`}>
+                <div className="service-image-wrapper">
+                  {s.image ? (
+                    <img
+                      src={`http://localhost:9001${s.image}`}
+                      alt={s.name}
+                      className="service-image"
+                    />
+                  ) : (
+                    <div style={{ fontSize: '32px' }}>✨</div>
+                  )}
+                </div>
+                
+                <div className="service-info">
+                  <div>
+                    <h3>{s.name}</h3>
+                    <p>{s.description}</p>
+                  </div>
+                  
+                  <div className="service-footer">
+                    <div className="price-badge">
+                      <span className="price">${s.price}</span>
+                      <span className="price-label">
+                        {priceType}
+                        {isPerPerson && numGuests > 0 ? ` (max ${maxQty})` : ""}
+                      </span>
+                    </div>
+                    <div className="qty-control">
+                      <button onClick={() => changeQty(s, -1)} disabled={currentQty === 0}>−</button>
+                      <span>{currentQty}</span>
+                      <button onClick={() => changeQty(s, 1)} disabled={isAtMax}>+</button>
+                    </div>
+                  </div>
+                </div>
               </div>
-            )}
-              
-              <div className="service-info">
-                <h3>{s.name}</h3>
-                <p>{s.description}</p>
-                <span className="price">
-                  {s.price} RON{" "}
-                  <small>
-                    {s.category === "Transport" ? "/sens" : "/pers"}
-                  </small>
-                </span>
-              </div>
-
-              <div className="qty-control">
-                <button onClick={() => changeQty(s, -1)}>−</button>
-                <span>{selected[s.ServiceId] || 0}</span>
-                <button onClick={() => changeQty(s, 1)}>+</button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

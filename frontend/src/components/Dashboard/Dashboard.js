@@ -107,7 +107,7 @@ export default function Dashboard() {
 
         {/* BLOCK 5: RESERVATIONS */}
         <section className="block-reservations">
-          <h3>Your Stays</h3>
+          <h3>Your Upcoming Stays</h3>
           {data?.recentReservations && data.recentReservations.length > 0 ? (
             <div className="reservations-list">
               {data.recentReservations.map((res) => (
@@ -119,13 +119,6 @@ export default function Dashboard() {
                       {new Date(res.checkIn).toLocaleDateString("en-US", { day: 'numeric', month: 'short' })} - 
                       {new Date(res.checkOut).toLocaleDateString("en-US", { day: 'numeric', month: 'short' })}
                     </p>
-                  </div>
-                  <div className="reservation-status">
-                    <span className={`status-badge ${res.status}`}>
-                      {res.status === 'active' ? '🟢 Active' : 
-                       res.status === 'upcoming' ? '🔵 Upcoming' : 
-                       '⚪ Past'}
-                    </span>
                   </div>
                 </div>
               ))}

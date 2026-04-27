@@ -5,12 +5,28 @@ import Reservation from '../entities/Reservation.js';
 
 const router = express.Router();
 
-// GET toate recompensele
+// GET toate recompensele (doar active pentru users)
 router.get('/', async (req, res) => {
   try {
-    const rewards = await Reward.findAll();
+    const rewards = await Reward.findAll({
+      where: { active: true }
+    });
+    console.log('[GET REWARDS - USER]:', rewards.map(r => ({ RewardId: r.RewardId, title: r.title, rewardType: r.rewardType, active: r.active })));
     res.json(rewards);
   } catch (err) {
+    console.error('[GET REWARDS - USER] Error:', err);
+    res.status(500).json({ error: 'Eroare la listare recompense' });
+  }
+});
+
+// GET toate recompensele (including inactive - ADMIN ONLY)
+router.get('/admin/all', async (req, res) => {
+  try {
+    const rewards = await Reward.findAll();
+    console.log('[GET REWARDS - ADMIN]:', rewards.map(r => ({ RewardId: r.RewardId, title: r.title, active: r.active })));
+    res.json(rewards);
+  } catch (err) {
+    console.error('[GET REWARDS - ADMIN] Error:', err);
     res.status(500).json({ error: 'Eroare la listare recompense' });
   }
 });
@@ -18,7 +34,7 @@ router.get('/', async (req, res) => {
 // POST adaugă recompensă nouă
 router.post('/', async (req, res) => {
   try {
-    const { title, desc, points, image, category } = req.body;
+    const { title, desc, points, image, category, rewardType } = req.body;
 
     if (!title || !desc || !points || !category) {
       return res.status(400).json({ error: 'Titlu, descriere, puncte și categorie sunt obligatorii' });
@@ -29,7 +45,8 @@ router.post('/', async (req, res) => {
       desc: desc.trim(),
       points: parseInt(points),
       image: image || null,
-      category: category.trim()
+      category: category.trim(),
+      rewardType: rewardType || 'per_booking'
     });
 
     console.log('✅ Recompensă adăugată:', reward);
@@ -103,19 +120,23 @@ router.post('/test-add-points', async (req, res) => {
 // PUT actualizează recompensă
 router.put('/:id', async (req, res) => {
   try {
-    const { title, desc, points, image, category, active } = req.body;
-    const reward = await Reward.findByPk(req.params.id);
+    const { title, desc, points, image, category, rewardType, active } = req.body;
+    const id = req.params.id;
+    
+    const reward = await Reward.findByPk(id);
 
     if (!reward) {
       return res.status(404).json({ error: 'Recompensă nu găsită' });
     }
 
+    // Update all fields at once
     await reward.update({
       title: title !== undefined ? title.trim() : reward.title,
       desc: desc !== undefined ? desc.trim() : reward.desc,
       points: points !== undefined ? parseInt(points) : reward.points,
       image: image !== undefined ? image : reward.image,
       category: category !== undefined ? category.trim() : reward.category,
+      rewardType: rewardType !== undefined ? rewardType : reward.rewardType,
       active: active !== undefined ? active : reward.active
     });
 

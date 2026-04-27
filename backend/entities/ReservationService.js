@@ -23,7 +23,12 @@ const ReservationService = db.define("ReservationService", {
   unitPrice: {
     type: Sequelize.DECIMAL(8, 2),
     allowNull: false,
-    comment: "Preț per unitate la momentul selectării"
+    comment: "Price per unit at selection time"
+  },
+  personDetails: {
+    type: Sequelize.JSON,
+    allowNull: true,
+    comment: "People selected for per_person services"
   }
 }, {
   timestamps: false,

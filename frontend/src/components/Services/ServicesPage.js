@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../Dashboard/Navbar";
 import "./ServicesPage.css";
@@ -6,7 +6,7 @@ import "./ServicesPage.css";
 export default function ServicesPage() {
   const navigate = useNavigate();
   const [services, setServices] = useState([]);
-  const [activeCategory, setActiveCategory] = useState("Toate");
+  const [activeCategory, setActiveCategory] = useState("All");
   const [hasReservation, setHasReservation] = useState(false);
   const [bookingRef, setBookingRef] = useState("");
 
@@ -27,12 +27,27 @@ export default function ServicesPage() {
     loadServices();
   }, []);
 
-  const categories = ["Toate", ...new Set(services.map(s => s.category))];
+  const categories = useMemo(() => {
+    const serviceCategories = services
+      .map(service => service.category?.trim())
+      .filter(Boolean)
+      .filter((category, index, list) => (
+        list.findIndex(item => item.toLowerCase() === category.toLowerCase()) === index
+      ));
+
+    return ["All", ...serviceCategories];
+  }, [services]);
 
   const filteredServices =
-    activeCategory === "Toate"
+    activeCategory === "All"
       ? services
-      : services.filter(s => s.category === activeCategory);
+      : services.filter(s => s.category?.toLowerCase() === activeCategory.toLowerCase());
+
+  useEffect(() => {
+    if (activeCategory !== "All" && !categories.some(category => category.toLowerCase() === activeCategory.toLowerCase())) {
+      setActiveCategory("All");
+    }
+  }, [activeCategory, categories]);
 
   async function handleFindBooking() {
     if (!bookingRef.trim()) {

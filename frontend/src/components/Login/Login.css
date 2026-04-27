@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+/* Login styles - inherits Georgia from global */
 
 * {
   margin: 0;
@@ -7,7 +7,7 @@
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+  font-family: 'Georgia', serif;
 }
 
 /* CONTAINER */
@@ -292,27 +292,6 @@ body {
   }
 }
 
-/* SECURED BADGE */
-.secured-badge {
-  position: absolute;
-  top: 1.5rem;
-  right: 1.5rem;
-  padding: 0.25rem 0.75rem;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
-  font-size: 0.625rem;
-  font-weight: 700;
-  color: #64748b;
-  letter-spacing: 0.05em;
-  display: none;
-}
-
-@media (min-width: 768px) {
-  .secured-badge {
-    display: block;
-  }
-}
 
 /* ADMIN TOGGLE */
 .admin-toggle-modern {
@@ -335,6 +314,27 @@ body {
   background: #111827;
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(31, 41, 55, 0.4);
+}
+
+/* MINIMAL LUXURY TOGGLE */
+.admin-toggle-luxury {
+  background: #f3f4f6;
+  color: #1f2937;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 4px 14px;
+  border-radius: 999px;
+  border: none;
+  margin-bottom: 10px;
+  margin-left: 2px;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+  box-shadow: 0 1px 4px rgba(198,169,105,0.03);
+}
+
+.admin-toggle-luxury:hover {
+  background: #e5e7eb;
+  color: #c6a969;
 }
 
 /* FORM HEADER */
@@ -633,4 +633,92 @@ body {
   .hotel-name {
     font-size: 1.75rem;
   }
+}
+
+/* Luxury Login Header Styles */
+.form-header-luxury {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 2.2rem;
+  margin-top: 0.5rem;
+}
+.login-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.form-title-luxury {
+  font-size: 23px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+.form-subtitle-luxury {
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.4;
+  margin-bottom: 0.5rem;
+  margin-left: 2px;
+}
+.admin-badge-luxury {
+  background: #f3f4f6;
+  color: #1f2937;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 999px;
+  margin-bottom: 18px;
+  margin-left: 2px;
+  letter-spacing: 0.04em;
+  box-shadow: 0 1px 4px rgba(198,169,105,0.04);
+  display: inline-block;
+}
+
+/* ADMIN TOGGLE PILLS */
+.admin-toggle-modern.admin-toggle-pill {
+  position: absolute;
+  top: 1.5rem;
+  left: 1.5rem;
+  background: #f3f4f6;
+  color: #1f2937;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 5px 18px;
+  border-radius: 999px;
+  border: none;
+  box-shadow: 0 1px 4px rgba(198,169,105,0.04);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.18s, color 0.18s;
+  z-index: 2;
+}
+.admin-toggle-modern.admin-toggle-pill.admin-active {
+  background: #c6a969;
+  color: #fff;
+}
+.toggle-label {
+  transition: opacity 0.2s, color 0.2s;
+}
+.toggle-label-admin {
+  color: #c6a969;
+}
+.admin-toggle-modern.admin-active .toggle-label-admin {
+  color: #fff;
+}
+.toggle-label-user {
+  color: #6b7280;
+}
+.admin-toggle-modern:not(.admin-active) .toggle-label-user {
+  color: #c6a969;
+}
+.toggle-separator {
+  color: #bdbdbd;
+  font-size: 15px;
+  margin: 0 2px;
+  opacity: 0.7;
 }

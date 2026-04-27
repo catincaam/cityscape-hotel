@@ -1,145 +1,267 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import Navbar from "../Dashboard/Navbar";
 import "./BookingSuccess.css";
 
 export default function BookingSuccess() {
   const location = useLocation();
   const navigate = useNavigate();
   const [bookingDetails, setBookingDetails] = useState(null);
+  const [showcaseImage, setShowcaseImage] = useState(null);
+  const [roomTheme, setRoomTheme] = useState(null);
 
   useEffect(() => {
-    // Primește datele din location.state
     if (location.state?.bookingData) {
       setBookingDetails(location.state.bookingData);
     } else {
-      // Dacă nu există date, redirect la dashboard
       navigate("/dashboard");
     }
   }, [location.state, navigate]);
 
+  // Fetch showcase image based on room theme
+  useEffect(() => {
+    async function fetchRoomTheme() {
+      try {
+        // Try to get the room ID from bookingData.room
+        const roomId = bookingDetails?.room?.id || bookingDetails?.room?.roomId;
+        
+        if (roomId) {
+          console.log("🔍 Fetching room theme with ID:", roomId);
+          const res = await fetch(`http://localhost:9001/api/room-themes/${roomId}`);
+          const data = await res.json();
+          setRoomTheme(data);
+          if (data.showcaseImage) {
+            setShowcaseImage(`http://localhost:9001${data.showcaseImage}`);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching room theme:", err);
+      }
+    }
+    
+    if (bookingDetails?.room) {
+      fetchRoomTheme();
+    }
+  }, [bookingDetails?.room]);
+
   if (!bookingDetails) {
-    return <div className="loading">Se încarcă...</div>;
+    return <div className="loading">Loading...</div>;
   }
 
-  const { reservation, invoice, payment } = bookingDetails;
+  const { reservation, invoice, payment, room, services } = bookingDetails;
+  const checkInDate = new Date(reservation?.requestedCheckin);
+  const checkOutDate = new Date(reservation?.requestedCheckout);
+  const nights = bookingDetails?.costBreakdown?.nights || Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
+  const roomCost = bookingDetails?.costBreakdown?.roomTotal || 0;
+  const servicesCost = bookingDetails?.costBreakdown?.servicesTotal || 0;
+  const totalBeforeTax = roomCost + servicesCost;
+  const taxFees = (invoice?.totalAmount || 0) - totalBeforeTax;
+
+  // Download invoice PDF
+  const handleDownloadInvoice = async () => {
+    try {
+      // Extract reservation ID from different possible locations
+      let reservationId = bookingDetails?.reservation?.ReservationId 
+                        || bookingDetails?.reservation?.id
+                        || bookingDetails?.ReservationId
+                        || bookingDetails?.id;
+      
+      console.log("📋 Full bookingDetails:", bookingDetails);
+      console.log("📋 Reservation object:", bookingDetails?.reservation);
+      console.log("🔍 Extracted Reservation ID:", reservationId);
+      
+      if (!reservationId) {
+        throw new Error("Reservation ID not found in booking details");
+      }
+
+      const response = await fetch(
+        `http://localhost:9001/api/invoices/${reservationId}/download-pdf`,
+        {
+          headers: {
+            "Authorization": `Bearer ${localStorage.getItem("token")}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Download failed:", response.status, errorText);
+        throw new Error(`Failed to download invoice: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `invoice-${reservationId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      console.log("✅ Invoice downloaded successfully");
+    } catch (err) {
+      console.error("Error downloading invoice:", err);
+      alert("Failed to download invoice. Please try again.");
+    }
+  };
 
   return (
     <div className="success-page">
+      <Navbar />
+
       <div className="success-container">
-        {/* HEADER SUCCESS */}
-        <div className="success-header">
-          <div className="success-icon">✓</div>
-          <h1>Booking Confirmed!</h1>
-          <p className="success-subtitle">
-            Your payment was processed successfully. You will receive a confirmation email shortly.
-          </p>
+        {/* MAIN HEADING */}
+        <div className="confirmation-heading">
+          <h1>Your stay is confirmed</h1>
+          <p>We look forward to welcoming you to our sanctuary. A confirmation email has been sent to your inbox.</p>
         </div>
 
-        {/* RESERVATION DETAILS */}
-        <div className="success-card">
-          <h2>Booking Details</h2>
-          <div className="detail-grid">
-            <div className="detail-item">
-              <span className="label">Booking Code</span>
-              <span className="value booking-code">#{reservation?.ReservationId}</span>
-            </div>
-            <div className="detail-item">
-              <span className="label">Booking Date</span>
-              <span className="value">
-                {new Date(reservation?.reservationDate).toLocaleDateString("ro-RO")}
-              </span>
-            </div>
-            <div className="detail-item">
-              <span className="label">Check-in</span>
-              <span className="value">
-                {new Date(reservation?.requestedCheckin).toLocaleDateString("ro-RO")}
-              </span>
-            </div>
-            <div className="detail-item">
-              <span className="label">Check-out</span>
-              <span className="value">
-                {new Date(reservation?.requestedCheckout).toLocaleDateString("ro-RO")}
-              </span>
+        {/* MAIN LAYOUT */}
+        <div className="confirmation-main">
+          {/* LEFT COLUMN - ROOM IMAGE */}
+          <div className="confirmation-left">
+            <div className="room-image-section">
+              {room?.image || bookingDetails?.room?.image ? (
+                <img src={room?.image || bookingDetails?.room?.image} alt="Room" className="room-image" />
+              ) : bookingDetails?.room?.RoomImage ? (
+                <img src={bookingDetails.room.RoomImage} alt="Room" className="room-image" />
+              ) : (
+                <div className="room-image-placeholder">Room Image</div>
+              )}
             </div>
           </div>
-        </div>
 
-        {/* PAYMENT DETAILS */}
-        <div className="success-card">
-          <h2>Payment Details</h2>
-          <div className="payment-summary">
-            <div className="payment-row">
-              <span>Total Invoice</span>
-              <span className="amount">{Number(invoice?.totalAmount).toFixed(2)} EUR</span>
-            </div>
-            <div className="payment-row highlight">
-              <span>Amount Paid Now</span>
-              <span className="amount">{Number(payment?.amount).toFixed(2)} EUR</span>
-            </div>
-            {bookingDetails.remainingAmount > 0 && (
-              <div className="payment-row remaining">
-                <span>Remaining Amount</span>
-                <span className="amount">{Number(bookingDetails.remainingAmount).toFixed(2)} EUR</span>
-              </div>
-            )}
-            <div className="payment-status">
-              <span className={`status-badge ${invoice?.status}`}>
-                {invoice?.status === "paid" ? "Paid in Full" : "Partially Paid"}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* NEXT STEPS */}
-        <div className="success-card next-steps">
-          <h2>What's Next?</h2>
-          <ul>
-            <li>
-              <span className="step-icon">📧</span>
-              <div>
-                <strong>Check your email</strong>
-                <p>You will receive your booking confirmation with all details.</p>
-              </div>
-            </li>
-            <li>
-              <span className="step-icon">📱</span>
-              <div>
-                <strong>Download documents</strong>
-                <p>You can download your invoice and voucher from your account.</p>
-              </div>
-            </li>
-            {bookingDetails.remainingAmount > 0 && (
-              <li>
-                <span className="step-icon">💳</span>
-                <div>
-                  <strong>Outstanding payment</strong>
-                  <p>The remaining amount will be charged 2 weeks before check-in.</p>
+          {/* CENTER COLUMN - BOOKING INFO */}
+          <div className="confirmation-center">
+            <div className="room-info-box">
+              <span className="booking-code-label">Your booking details</span>
+              <h2 className="room-name">{room?.name || bookingDetails?.room?.name || "Luxury Suite"}</h2>
+              
+              <div className="dates-section">
+                <div className="date-item">
+                  <p className="date-label">{new Date(bookingDetails?.checkIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                  <p className="date-sublabel">Check-in</p>
                 </div>
-              </li>
-            )}
-            <li>
-              <span className="step-icon">🏨</span>
-              <div>
-                <strong>Get ready for your trip</strong>
-                <p>Check-in starts at 2:00 PM. We look forward to welcoming you!</p>
+                <div className="date-item">
+                  <p className="date-label">{new Date(bookingDetails?.checkOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                  <p className="date-sublabel">Check-out</p>
+                </div>
               </div>
-            </li>
-          </ul>
+
+              <div className="guests-section">
+                <span className="info-badge">{bookingDetails?.adults || 1} Adults</span>
+                {bookingDetails?.children > 0 && (
+                  <span className="info-badge">{bookingDetails?.children} Children</span>
+                )}
+                <span className="info-badge">{nights} Nights</span>
+              </div>
+            </div>
+
+            {/* INCLUDED EXPERIENCES */}
+            {services && Object.keys(services).length > 0 && (
+              <div className="included-box">
+                <h3>Included Experiences</h3>
+                <div className="experiences-grid">
+                  {Object.entries(services).map(([serviceId, qty], idx) => (
+                    <div key={idx} className="experience-item">
+                      <span className="experience-icon">✓</span>
+                      <span className="experience-name">{serviceId}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* RIGHT COLUMN - PAYMENT SUMMARY */}
+          <div className="confirmation-right">
+            <div className="payment-summary-box">
+              <h3>Payment Summary</h3>
+              <div className="payment-details">
+                {roomCost > 0 && (
+                  <div className="payment-line">
+                    <span>{room?.name || bookingDetails?.room?.name || "Room"} ({nights} {nights === 1 ? 'night' : 'nights'})</span>
+                    <span className="amount">€{roomCost.toFixed(2)}</span>
+                  </div>
+                )}
+                {servicesCost > 0 && (
+                  <div className="payment-line">
+                    <span>Extra Services</span>
+                    <span className="amount">€{servicesCost.toFixed(2)}</span>
+                  </div>
+                )}
+                {taxFees > 0 && (
+                  <div className="payment-line">
+                    <span>Taxes & Fees</span>
+                    <span className="amount">€{taxFees.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="payment-line total">
+                  <span>Total Amount</span>
+                  <span className="amount">€{Number(invoice?.totalAmount).toFixed(2)}</span>
+                </div>
+                <div className="payment-line paid">
+                  <span>Paid</span>
+                  <span className="amount paid-amount">€{Number(payment?.amount).toFixed(2)}</span>
+                </div>
+              </div>
+              <button className="btn-view-details">VIEW RESERVATION DETAILS</button>
+              <button 
+                className="btn-download"
+                onClick={handleDownloadInvoice}
+              >
+                DOWNLOAD INVOICE
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* ACTIONS */}
+        {/* WHAT'S NEXT */}
+        <div className="whats-next-section">
+          <h3>What's next?</h3>
+          <div className="next-steps-grid">
+            <div className="next-step">
+              <div className="step-number">01</div>
+              <p>Download the Cityscape App for a seamless contactless check-in experience.</p>
+            </div>
+            <div className="next-step">
+              <div className="step-number">02</div>
+              <p>Visit our Concierge portal if you wish to pre-book treatments or dining reservations.</p>
+            </div>
+            <div className="next-step">
+              <div className="step-number">03</div>
+              <p>Suite travels. We will reach out 48 hours prior to your arrival with final instructions.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* CITY SHOWCASE */}
+        {showcaseImage && (
+          <div className="city-showcase-section">
+            <h3>Your Destination</h3>
+            <div className="showcase-image-container">
+              <img src={showcaseImage} alt={roomTheme?.city || bookingDetails?.room?.city || "Destination"} className="showcase-image" />
+              <div className="showcase-overlay">
+                <div className="showcase-content">
+                  <h2>{roomTheme?.city || bookingDetails?.room?.city || "Destination"}</h2>
+                  <p className="showcase-theme">{roomTheme?.theme || bookingDetails?.room?.theme || "Themed Room"}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* FOOTER ACTIONS */}
         <div className="success-actions">
           <button 
-            className="btn-primary"
+            className="btn-back"
             onClick={() => navigate("/dashboard")}
           >
             Back to Dashboard
           </button>
-          <button 
-            className="btn-secondary"
-            onClick={() => navigate("/profile")}
-          >
-            View My Bookings
+          <button type="button" className="btn-link" onClick={() => navigate("/dashboard")}>
+            Back to Cityscape
           </button>
         </div>
       </div>

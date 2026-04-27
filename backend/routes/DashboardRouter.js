@@ -34,7 +34,7 @@ router.get("/dashboard", authClient, async (req, res) => {
               include: [
                 {
                   model: RoomTheme,
-                  attributes: ['city', 'name', 'theme']
+                  attributes: ['city', 'name', 'theme', 'image', 'showcaseImage']
                 }
               ]
             }
@@ -55,13 +55,15 @@ router.get("/dashboard", authClient, async (req, res) => {
     if (nextReservation && nextReservation.RoomReservations && nextReservation.RoomReservations.length > 0) {
       const room = nextReservation.RoomReservations[0]?.Room;
       const roomTheme = room?.RoomTheme;
+      const destinationImage = roomTheme?.showcaseImage || roomTheme?.image || null;
       nextDestination = {
         reservationId: nextReservation.ReservationId,
         city: roomTheme?.city || "City",
         room: roomTheme?.name || room?.name || "Room",
         checkIn: nextReservation.requestedCheckin,
         checkOut: nextReservation.requestedCheckout,
-        guests: nextReservation.nrPeople || 1
+        guests: nextReservation.nrPeople || 1,
+        image: destinationImage ? `http://localhost:9001${destinationImage}` : null
       };
     }
 
@@ -95,7 +97,10 @@ router.get("/dashboard", authClient, async (req, res) => {
           checkIn: reservation.requestedCheckin,
           checkOut: reservation.requestedCheckout,
           status: bookingStatus,
-          totalAmount: invoice?.totalAmount || 0
+          totalAmount: invoice?.totalAmount || 0,
+          image: (roomTheme?.showcaseImage || roomTheme?.image)
+            ? `http://localhost:9001${roomTheme.showcaseImage || roomTheme.image}`
+            : null
         };
       })
     );
@@ -117,7 +122,9 @@ router.get("/dashboard", authClient, async (req, res) => {
           checkOut: reservation.requestedCheckout,
           status: reservation.status || "pending",
           totalAmount: invoice?.totalAmount || 0,
-          image: roomTheme?.image ? `http://localhost:9001${roomTheme.image}` : null
+          image: (roomTheme?.showcaseImage || roomTheme?.image)
+            ? `http://localhost:9001${roomTheme.showcaseImage || roomTheme.image}`
+            : null
         };
       })
     );

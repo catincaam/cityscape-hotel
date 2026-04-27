@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./StepRooms.css";
 
-export default function StepRooms({ bookingData, onSelectRoom, onBack }) {
+export default function StepRooms({ bookingData, onSelectRoom, onBack, onNext }) {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedRoomId, setSelectedRoomId] = useState(bookingData.room?.id || null);
@@ -15,11 +15,13 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack }) {
     maxPrice: 300
   });
 
+  const [availableAmenities, setAvailableAmenities] = useState([]);
+  const [availableContinents, setAvailableContinents] = useState([]);
+
   useEffect(() => {
     async function fetchRooms() {
       try {
         // Calculez total oaspeți
-        const totalGuests = bookingData.adults + bookingData.children;
 
         // Apelez /available/search cu date și numărul de oaspeți
         const url = new URL("http://localhost:9001/api/rooms/available/search");
@@ -34,7 +36,7 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack }) {
         const mapped = data.map((r) => {
           // Ia prima imagine (cea cu isPrimary=true sau prima din array)
           const primaryImage = r.RoomTheme?.images?.[0];
-          const imageUrl = primaryImage?.imageUrl || r.RoomTheme?.image;
+          const imageUrl = r.RoomTheme?.showcaseImage || primaryImage?.imageUrl || r.RoomTheme?.image;
 
           return {
             id: r.RoomTheme?.RoomThemeId || r.RoomThemeId,
@@ -47,6 +49,7 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack }) {
             amenities: r.RoomTheme?.amenities ? (Array.isArray(r.RoomTheme.amenities) ? r.RoomTheme.amenities : JSON.parse(r.RoomTheme.amenities)) : [],
             basePrice: r.RoomTheme?.basePrice || 0,
             city: r.RoomTheme?.city || '',
+            continent: r.RoomTheme?.continent || '',
             theme: r.RoomTheme?.theme || '',
             maxGuests: r.RoomTheme?.maxGuests || 2,
             availableCount: r.availableCount || 1
@@ -54,6 +57,24 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack }) {
         });
 
         setRooms(mapped);
+
+        // Extract unique amenities from all rooms
+        const allAmenities = new Set();
+        mapped.forEach(room => {
+          if (room.amenities && Array.isArray(room.amenities)) {
+            room.amenities.forEach(a => allAmenities.add(a));
+          }
+        });
+        setAvailableAmenities(Array.from(allAmenities).sort());
+
+        // Extract unique continents from all rooms
+        const allContinents = new Set();
+        mapped.forEach(room => {
+          if (room.continent) {
+            allContinents.add(room.continent);
+          }
+        });
+        setAvailableContinents(Array.from(allContinents).sort());
       } catch (e) {
         console.error("Error fetching available rooms:", e);
       } finally {
@@ -64,38 +85,6 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack }) {
     fetchRooms();
   }, [bookingData]);
 
-  // Mapare orașe -> continente
-  const cityToContinent = {
-    "Paris": "Europe",
-    "Rome": "Europe",
-    "London": "Europe",
-    "Barcelona": "Europe",
-    "Berlin": "Europe",
-    "Amsterdam": "Europe",
-    "Prague": "Europe",
-    "Vienna": "Europe",
-    "Budapest": "Europe",
-    "Athens": "Europe",
-    "Tokyo": "Asia",
-    "Bangkok": "Asia",
-    "Dubai": "Asia",
-    "Singapore": "Asia",
-    "Seoul": "Asia",
-    "Bali": "Asia",
-    "Hong Kong": "Asia",
-    "Mumbai": "Asia",
-    "New York": "America",
-    "Los Angeles": "America",
-    "Miami": "America",
-    "Las Vegas": "America",
-    "San Francisco": "America",
-    "Chicago": "America",
-    "Toronto": "America",
-    "Mexico City": "America",
-    "Rio de Janeiro": "America",
-    "Buenos Aires": "America"
-  };
-
   const filteredRooms = rooms.filter((r) => {
     // Filtrare după amenities
     if (
@@ -104,10 +93,9 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack }) {
     )
       return false;
     
-    // Filtrare după tematică (continent)
+    // Filtrare după tematică (continent - same as Presentation)
     if (filters.theme !== "All") {
-      const continent = cityToContinent[r.city] || "Unknown";
-      if (continent !== filters.theme)
+      if (r.continent !== filters.theme)
         return false;
     }
     
@@ -183,37 +171,34 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack }) {
           </div>
 
           {/* ================= AMENITIES PILLS ================= */}
-          <div className="filter-section">
-            <label className="filter-label">Popular features</label>
-            <div className="amenities-pills">
-              {[
-                "Breakfast included",
-                "Panoramic view",
-                "Private jacuzzi",
-                "Balcony / Terrace"
-              ].map((a) => (
-                <button
-                  key={a}
-                  className={`amenity-pill ${filters.amenities.includes(a) ? 'active' : ''}`}
-                  onClick={() => toggleAmenity(a)}
-                >
-                  {a}
-                </button>
-              ))}
+          {availableAmenities.length > 0 && (
+            <div className="filter-section">
+              <label className="filter-label">Features</label>
+              <div className="amenities-pills">
+                {availableAmenities.map((a) => (
+                  <button
+                    key={a}
+                    className={`amenity-pill ${filters.amenities.includes(a) ? 'active' : ''}`}
+                    onClick={() => toggleAmenity(a)}
+                  >
+                    {a}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* ================= THEME SEGMENTED ================= */}
           <div className="filter-section">
-            <label className="filter-label">Theme</label>
+            <label className="filter-label">Continent</label>
             <div className="theme-segmented">
-              {["All", "Europe", "Asia", "America"].map((t) => (
+              {["All", ...availableContinents].map((c) => (
                 <button
-                  key={t}
-                  className={`theme-option ${filters.theme === t ? 'active' : ''}`}
-                  onClick={() => selectTheme(t)}
+                  key={c}
+                  className={`theme-option ${filters.theme === c ? 'active' : ''}`}
+                  onClick={() => selectTheme(c)}
                 >
-                  {t}
+                  {c}
                 </button>
               ))}
             </div>
@@ -223,11 +208,6 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack }) {
 
       {/* ================= LISTA CAMERE ================= */}
       <section className="rooms-list">
-        <h2>Choose the Perfect Room</h2>
-        <p className="subtitle">
-          {bookingData.checkIn} – {bookingData.checkOut} · {bookingData.adults + bookingData.children} {bookingData.adults + bookingData.children === 1 ? 'guest' : 'guests'}
-        </p>
-
         {loading && <p>Loading available rooms...</p>}
 
         {!loading && filteredRooms.length === 0 && (
@@ -250,7 +230,7 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack }) {
               className={`room-card ${selectedRoomId === room.id ? 'selected' : ''}`}
             >
               {selectedRoomId === room.id && (
-                <div className="selected-badge">Selected</div>
+                <div className="selected-badge">✓ Selected</div>
               )}
               
               <div className="room-image">
@@ -262,17 +242,14 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack }) {
                   <div>
                     <h3 className="room-title">{room.name}</h3>
                     <div className="room-badges">
-                      {room.maxGuests === bookingData.adults + bookingData.children && (
-                        <span className="recommended-badge">Perfect fit</span>
-                      )}
                       <span className="available-badge">
-                        {room.availableCount} {room.availableCount === 1 ? 'available' : 'available'}
+                        {room.availableCount} available
                       </span>
                     </div>
                   </div>
                   <div className="room-price">
-                    <span className="price-amount">{room.basePrice}</span>
-                    <span className="price-label">EUR/night</span>
+                    <span className="price-amount">€{room.basePrice}</span>
+                    <span className="price-label">/night</span>
                   </div>
                 </div>
 
@@ -351,18 +328,25 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack }) {
             <>
               <div className="summary-row">
                 <span>Price/night</span>
-                <strong>{bookingData.room.basePrice} RON</strong>
+                <strong>€{bookingData.room.basePrice}</strong>
               </div>
 
               <div className="summary-divider" />
 
               <div className="summary-total">
                 <span>Total</span>
-                <strong className="total-price">{totalPrice} RON</strong>
+                <strong className="total-price">€{totalPrice}</strong>
               </div>
             </>
           )}
         </div>
+
+        {bookingData.room && (
+          <div className="summary-actions">
+            <button className="summary-btn summary-back" onClick={onBack}>← Back</button>
+            <button className="summary-btn summary-continue" onClick={onNext}>Continue →</button>
+          </div>
+        )}
       </aside>
       </div>
     </div>

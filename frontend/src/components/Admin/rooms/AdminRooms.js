@@ -1,12 +1,17 @@
-import { useEffect, useState } from "react";
-import "../AdminPanel.css";
+import { useEffect, useState, useMemo } from "react";
+import { deleteRoom } from "../../../services/roomService";
+import "./AdminRooms.css";
 import "../rewards/AdminRewards.css";
-import "../services/AdminServices.css";
 
 export default function AdminRooms() {
   const [rooms, setRooms] = useState([]);
   const [themes, setThemes] = useState([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [deleteConfirmInfo, setDeleteConfirmInfo] = useState("");
 
   const [form, setForm] = useState({
     floor: "",
@@ -14,216 +19,390 @@ export default function AdminRooms() {
     RoomThemeId: ""
   });
 
-  /* ======================
-     LOAD DATA
-  ====================== */
-  async function loadData() {
-    try {
-      const r = await fetch("http://localhost:9001/api/rooms");
-      const t = await fetch("http://localhost:9001/api/room-themes");
-
-      setRooms(await r.json());
-      setThemes(await t.json());
-    } catch (err) {
-      console.error("Loading error:", err);
+  // Auto-hide notifications
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => setSuccess(""), 3000);
+      return () => clearTimeout(timer);
     }
-  }
+  }, [success]);
 
   useEffect(() => {
-    loadData();
+    if (error) {
+      const timer = setTimeout(() => setError(""), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
+  // Load data
+  useEffect(() => {
+    fetchData();
   }, []);
 
-  /* ======================
-     FORM HANDLERS
-  ====================== */
-  function handleChange(e) {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  async function fetchData() {
+    setLoading(true);
+    try {
+      const [roomRes, themeRes] = await Promise.all([
+        fetch("http://localhost:9001/api/rooms"),
+        fetch("http://localhost:9001/api/room-themes")
+      ]);
+      
+      const roomsData = await roomRes.json();
+      const themesData = await themeRes.json();
+      
+      setRooms(Array.isArray(roomsData) ? roomsData : []);
+      setThemes(Array.isArray(themesData) ? themesData : []);
+    } catch (err) {
+      console.error("Loading error:", err);
+      setError("Error loading data");
+      setRooms([]);
+      setThemes([]);
+    }
+    setLoading(false);
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setLoading(true);
+    setError("");
 
-    await fetch("http://localhost:9001/api/rooms", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...form,
-        HotelId: 1
-      })
-    });
+    if (!form.floor || !form.RoomThemeId) {
+      setError("All fields are required!");
+      setLoading(false);
+      return;
+    }
 
-    setForm({
-      floor: "",
-      status: "available",
-      RoomThemeId: ""
-    });
+    try {
+      const response = await fetch("http://localhost:9001/api/rooms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          floor: form.floor.trim(),
+          status: form.status,
+          RoomThemeId: parseInt(form.RoomThemeId),
+          HotelId: 1
+        })
+      });
 
-    loadData();
+      if (!response.ok) throw new Error("Failed to create room");
+
+      setSuccess("Room created successfully!");
+      setForm({
+        floor: "",
+        status: "available",
+        RoomThemeId: ""
+      });
+      await fetchData();
+    } catch (err) {
+      setError(err.message || "Error creating room!");
+    } finally {
+      setLoading(false);
+    }
   }
 
-  /* ======================
-     FILTER
-  ====================== */
-  const filteredRooms = rooms.filter(r => {
-    const theme = themes.find(t => t.RoomThemeId === r.RoomThemeId);
+  const filteredRooms = useMemo(() => {
+    if (!Array.isArray(rooms)) return [];
+    return rooms.filter(r => {
+      const theme = themes.find(t => t.RoomThemeId === r.RoomThemeId);
+      const searchLower = search.toLowerCase();
+      
+      return (
+        String(r.RoomId).includes(search) ||
+        String(r.floor).includes(search) ||
+        r.status.toLowerCase().includes(searchLower) ||
+        (theme &&
+          (
+            theme.name?.toLowerCase().includes(searchLower) ||
+            theme.city?.toLowerCase().includes(searchLower)
+          ))
+      );
+    });
+  }, [rooms, themes, search]);
 
-    return (
-      String(r.RoomId).includes(search) ||
-      String(r.floor).includes(search) ||
-      (theme &&
-        (
-          theme.name?.toLowerCase().includes(search.toLowerCase()) ||
-          theme.city?.toLowerCase().includes(search.toLowerCase())
-        ))
-    );
-  });
+  function handleDelete(roomId) {
+    const room = rooms.find(r => r.RoomId === roomId);
+    const theme = themes.find(t => t.RoomThemeId === room?.RoomThemeId);
+    setDeleteConfirmInfo(`Room #${roomId} (${theme?.name || 'Theme'})`);
+    setDeleteConfirm(roomId);
+  }
 
-  /* ======================
-     JSX
-  ====================== */
+  async function confirmDelete() {
+    if (!deleteConfirm) return;
+    
+    try {
+      setRooms(Array.isArray(rooms) ? rooms.filter(r => r.RoomId !== deleteConfirm) : []);
+      await deleteRoom(deleteConfirm);
+      setSuccess("Room deleted successfully!");
+      setDeleteConfirm(null);
+      setDeleteConfirmInfo("");
+    } catch (err) {
+      await fetchData();
+      setError(err.message || "Error deleting room");
+      setDeleteConfirm(null);
+      setDeleteConfirmInfo("");
+    }
+  }
+
+  function cancelDelete() {
+    setDeleteConfirm(null);
+    setDeleteConfirmInfo("");
+  }
+
+  const selectedTheme = themes.find(t => t.RoomThemeId === parseInt(form.RoomThemeId));
+  const statusBadgeClass = form.status === "available" 
+    ? "status-available" 
+    : form.status === "occupied" 
+      ? "status-occupied" 
+      : "status-maintenance";
+
   return (
-    <>
-      {/* ADD ROOM - MODERN CARD DESIGN */}
-      <div className="service-form-container">
-        <div className="service-form-card">
-          <h3>Add New Room</h3>
+    <div className="admin-rewards-container">
+      {/* HERO SECTION */}
+      <div className="rewards-hero">
+        <h1>Inventory Architecture</h1>
+        <p>Room Curation & Strategy</p>
+      </div>
 
-          <form onSubmit={handleSubmit}>
-            {/* ROOM DETAILS CARD */}
-            <div className="form-section">
-              <div className="section-title">Room Details</div>
-              <div className="form-grid-2col">
-                <div className="form-group">
-                  <label>Floor</label>
-                  <input
-                    name="floor"
-                    value={form.floor}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
+      {/* FORM + PREVIEW SECTION */}
+      <div className="rewards-creation-section">
+        {/* LEFT: FORM */}
+        <div className="rewards-form-wrapper">
+          <div className="form-header">
+            <h2>Register Room</h2>
+          </div>
 
-                <div className="form-group">
-                  <label>Status</label>
-                  <select
-                    name="status"
-                    value={form.status}
-                    onChange={handleChange}
-                  >
-                    <option value="available">Available</option>
-                    <option value="occupied">Occupied</option>
-                    <option value="maintenance">Maintenance</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Theme</label>
-                  <select
-                    name="RoomThemeId"
-                    value={form.RoomThemeId}
-                    onChange={handleChange}
-                    required
-                    style={{ gridColumn: 'span 2' }}
-                  >
-                    <option value="">Select theme</option>
-                    {themes.map(t => (
-                      <option key={t.RoomThemeId} value={t.RoomThemeId}>
-                        {t.name} – {t.city}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+          <form onSubmit={handleSubmit} className="rewards-form">
+            {/* FLOOR */}
+            <div className="form-field">
+              <label>Floor</label>
+              <input
+                type="text"
+                placeholder="e.g., 04"
+                value={form.floor}
+                onChange={e => setForm({ ...form, floor: e.target.value })}
+                required
+                className="form-input"
+              />
             </div>
 
-            {/* SUBMIT BUTTON */}
-            <button type="submit" className="btn-submit">Add Room</button>
+            {/* STATUS */}
+            <div className="form-field">
+              <label>Status</label>
+              <select
+                value={form.status}
+                onChange={e => setForm({ ...form, status: e.target.value })}
+                className="form-select"
+              >
+                <option value="available">Available</option>
+                <option value="occupied">Occupied</option>
+                <option value="maintenance">Maintenance</option>
+              </select>
+            </div>
+
+            {/* THEME */}
+            <div className="form-field">
+              <label>Theme</label>
+              <select
+                value={form.RoomThemeId}
+                onChange={e => setForm({ ...form, RoomThemeId: e.target.value })}
+                required
+                className="form-select"
+              >
+                <option value="">Select theme</option>
+                {themes.map(t => (
+                  <option key={t.RoomThemeId} value={t.RoomThemeId}>
+                    {t.name} – {t.city}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* ERROR MESSAGE */}
+            {error && <div className="error-message">{error}</div>}
+
+            {/* BUTTON */}
+            <div className="form-actions">
+              <button type="submit" disabled={loading} className="btn-primary">
+                Register Room
+              </button>
+            </div>
           </form>
+        </div>
+
+        {/* RIGHT: PREVIEW */}
+        <div className="rewards-preview-wrapper">
+          <div className="preview-header">
+            <span className="preview-label">Instant Preview</span>
+            {selectedTheme && <span className="preview-dot">● Visualizing live data</span>}
+          </div>
+
+          {selectedTheme ? (
+            <div className="preview-card">
+              <div className="preview-image-wrapper">
+                {selectedTheme.showcaseImage ? (
+                  <img 
+                    src={`http://localhost:9001${selectedTheme.showcaseImage}`} 
+                    alt={selectedTheme.name} 
+                    className="preview-image" 
+                  />
+                ) : selectedTheme.images && selectedTheme.images.length > 0 ? (
+                  <img 
+                    src={`http://localhost:9001${selectedTheme.images[0]}`} 
+                    alt={selectedTheme.name} 
+                    className="preview-image" 
+                  />
+                ) : (
+                  <div className="no-image-preview">[No Image]</div>
+                )}
+                <div className={`preview-badge ${statusBadgeClass}`}>{form.status}</div>
+              </div>
+
+              <div className="preview-content">
+                <div className="preview-category">{selectedTheme.city}</div>
+                <h3 className="preview-title">{selectedTheme.name}</h3>
+                <p className="preview-description">{selectedTheme.description}</p>
+                
+                <div className="preview-meta">
+                  <span className="meta-item">
+                    <span className="meta-label">Floor:</span>
+                    <span className="meta-value">{form.floor || "—"}</span>
+                  </span>
+                  <span className="meta-item">
+                    <span className="meta-label">Capacity:</span>
+                    <span className="meta-value">{selectedTheme.maxGuests} guests</span>
+                  </span>
+                  <span className="meta-item">
+                    <span className="meta-label">Size:</span>
+                    <span className="meta-value">{selectedTheme.size} m²</span>
+                  </span>
+                </div>
+
+                <button className="preview-btn" disabled>Room Details</button>
+              </div>
+            </div>
+          ) : (
+            <div className="preview-empty">
+              <div className="empty-icon">🏨</div>
+              <p>Select a theme to preview your room configuration</p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* ROOM LIST */}
-      <div className="admin-rewards-list-card">
-        <h3>Room List ({filteredRooms.length})</h3>
+      {/* EXISTING ROOMS */}
+      <div className="existing-inventory">
+        <div className="inventory-header">
+          <h2>Managed Assets: In-Rotation Total</h2>
+          <p>{filteredRooms.length} rooms</p>
+        </div>
 
-        <div className="admin-rewards-list-header">
+        {/* SEARCH */}
+        <div className="inventory-controls">
           <div className="search-box">
             <input
               type="text"
-              placeholder="Search room or theme..."
+              placeholder="Search rooms..."
               value={search}
               onChange={e => setSearch(e.target.value)}
+              className="search-input"
             />
           </div>
         </div>
 
-        <table>
-          <thead>
-            <tr>
-              <th>Room #</th>
-              <th>Floor</th>
-              <th>Status</th>
-              <th>Theme</th>
-              <th></th>
-            </tr>
-          </thead>
-
-          <tbody>
+        {/* ROOMS GRID */}
+        {loading ? (
+          <div className="loading-state">Loading...</div>
+        ) : filteredRooms.length === 0 ? (
+          <div className="empty-state">No rooms yet. Register your first one above!</div>
+        ) : (
+          <div className="rewards-grid">
             {filteredRooms.map(r => {
-              const theme = themes.find(
-                t => t.RoomThemeId === r.RoomThemeId
-              );
+              const theme = themes.find(t => t.RoomThemeId === r.RoomThemeId);
+              const statusClass = r.status === "available" 
+                ? "status-available" 
+                : r.status === "occupied" 
+                  ? "status-occupied" 
+                  : "status-maintenance";
 
               return (
-                <tr key={r.RoomId}>
-                  <td>
-                    <strong>#{r.RoomId}</strong>
-                  </td>
-
-                  <td>{r.floor || "—"}</td>
-
-                  <td>
-                    <span className={`status-badge ${r.status}`}>
-                      {r.status}
-                    </span>
-                  </td>
-
-                  <td>
-                    {theme ? (
-                      <div>
-                        <strong>{theme.name}</strong>
-                        <div className="muted">{theme.city}</div>
-                      </div>
+                <div key={r.RoomId} className="reward-card">
+                  <div className="reward-card-image">
+                    {theme?.showcaseImage ? (
+                      <img src={`http://localhost:9001${theme.showcaseImage}`} alt={theme.name} />
+                    ) : theme?.images && theme.images.length > 0 ? (
+                      <img src={`http://localhost:9001${theme.images[0]}`} alt={theme.name} />
                     ) : (
-                      "—"
+                      <div className="no-image">[No Image]</div>
                     )}
-                  </td>
+                    <div className={`reward-card-badge ${statusClass}`}>{r.status}</div>
+                  </div>
 
-                  <td className="actions-cell">
-                    <button
-                      className="delete-action-btn"
-                      title="Delete room"
-                      onClick={async () => {
-                        if (!window.confirm("Delete this room?")) return;
+                  <div className="reward-card-content">
+                    <div className="reward-card-category">Floor {r.floor}</div>
+                    <h4 className="reward-card-title">Room #{r.RoomId}</h4>
+                    <p className="reward-card-desc">{theme?.name}</p>
 
-                        try {
-                          await import("../../../services/roomService")
-                            .then(m => m.deleteRoom(r.RoomId));
-                          await loadData();
-                        } catch {
-                          alert("Delete error!");
-                        }
-                      }}
+                    <div className="reward-card-meta">
+                      <span className={`type-badge`} style={{ background: '#dbeafe', color: '#1e40af' }}>
+                        {theme?.city}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="reward-card-actions">
+                    <button 
+                      className="action-btn delete" 
+                      onClick={() => handleDelete(r.RoomId)} 
+                      title="Delete"
                     >
-                      🗑️
+                      Delete
                     </button>
-                  </td>
-                </tr>
+                  </div>
+                </div>
               );
             })}
-          </tbody>
-        </table>
+          </div>
+        )}
       </div>
-    </>
+
+      {/* DELETE CONFIRMATION MODAL */}
+      {deleteConfirm && (
+        <div className="modal-overlay">
+          <div className="modal-content delete-modal">
+            <div className="modal-header">
+              <h3>Delete Room?</h3>
+            </div>
+            <div className="modal-body">
+              <p>Are you sure you want to delete <strong>"{deleteConfirmInfo}"</strong>?</p>
+              <p className="modal-warning">This action cannot be undone.</p>
+            </div>
+            <div className="modal-actions">
+              <button className="btn-secondary" onClick={cancelDelete}>
+                Cancel
+              </button>
+              <button className="btn-delete" onClick={confirmDelete}>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUCCESS TOAST */}
+      {success && (
+        <div className="toast toast-success">
+          <div className="toast-icon">✓</div>
+          <div className="toast-message">{success}</div>
+        </div>
+      )}
+
+      {/* ERROR TOAST */}
+      {error && (
+        <div className="toast toast-error">
+          <div className="toast-icon">⚠</div>
+          <div className="toast-message">{error}</div>
+        </div>
+      )}
+    </div>
   );
 }

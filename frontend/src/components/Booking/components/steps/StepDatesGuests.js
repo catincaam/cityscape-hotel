@@ -32,11 +32,13 @@ export default function StepDatesGuests({ data, setData, onContinue }) {
                 label="Check-in"
                 value={data.checkIn}
                 onChange={(v) => update("checkIn", v)}
+                min={new Date().toISOString().split('T')[0]}
               />
               <DateField
                 label="Check-out"
                 value={data.checkOut}
                 onChange={(v) => update("checkOut", v)}
+                min={data.checkIn || new Date().toISOString().split('T')[0]}
               />
             </div>
           </section>
@@ -89,7 +91,7 @@ export default function StepDatesGuests({ data, setData, onContinue }) {
 
             <div className="summary-total">
               <span>Estimated total</span>
-              <strong>— €</strong>
+              <strong>– €</strong>
             </div>
           </div>
         </aside>
@@ -100,7 +102,7 @@ export default function StepDatesGuests({ data, setData, onContinue }) {
 
 /* SUBCOMPONENTE */
 
-function DateField({ label, value, onChange }) {
+function DateField({ label, value, onChange, min }) {
   return (
     <div className="date-field">
       <label>{label}</label>
@@ -108,6 +110,7 @@ function DateField({ label, value, onChange }) {
         type="date"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        min={min}
       />
     </div>
   );

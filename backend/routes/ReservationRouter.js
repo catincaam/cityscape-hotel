@@ -1,5 +1,6 @@
 // backend/routes/reservationRouter.js
 import express from "express";
+import { Op } from "sequelize";
 import {
   createReservation,
   getReservationById,
@@ -8,10 +9,14 @@ import {
   deleteReservation
 } from "../dataAccess/ReservationDA.js";
 import { addPendingPoints } from "../dataAccess/RewardPointDA.js";
+import Reservation from "../entities/Reservation.js";
+import RoomReservation from "../entities/RoomReservation.js";
+import Room from "../entities/Room.js";
+import RoomTheme from "../entities/RoomTheme.js";
 
 const reservationRouter = express.Router();
 
-// ⚠️ IMPORTANT: This route is for ADMIN CRUD operations ONLY!
+// IMPORTANT: This route is for ADMIN CRUD operations ONLY!
 // Clients should use POST /api/booking/complete for creating bookings
 // That endpoint properly creates Reservation + RoomReservation + Invoice + Payment
 
@@ -26,13 +31,26 @@ function calculateRewardPoints(checkIn, checkOut) {
 /* CREATE - ADMIN ONLY: Simple reservation creation without invoice/payment */
 reservationRouter.post("/", async (req, res) => {
   try {
+    // Block creation if no payment or invoice info
+    const { invoice, payment, totalAmount, paymentAmount } = req.body;
+    // Accept either direct fields or nested objects
+    const amount = totalAmount || invoice?.totalAmount;
+    const paid = paymentAmount || payment?.amount;
+    if (!amount || !paid || paid < amount * 0.2) {
+      return res.status(400).json({
+        message: "Reservation must have at least 20% payment to be saved. Incomplete/abandoned bookings are not stored.",
+        minimumRequired: amount ? amount * 0.2 : undefined,
+        totalAmount: amount
+      });
+    }
+
     const reservation = await createReservation(req.body);
-    
+
     // Auto-create pending reward points for this reservation
     if (reservation.ClientId && reservation.requestedCheckout) {
       const points = calculateRewardPoints(reservation.requestedCheckin, reservation.requestedCheckout);
       const nights = Math.ceil((new Date(reservation.requestedCheckout) - new Date(reservation.requestedCheckin)) / (1000 * 60 * 60 * 24));
-      
+
       try {
         await addPendingPoints({
           userId: reservation.ClientId,
@@ -41,13 +59,13 @@ reservationRouter.post("/", async (req, res) => {
           description: `Reservation reward - ${nights} night(s)`,
           availableAt: reservation.requestedCheckout // Points become available at checkout
         });
-        console.log(`📊 Pending points created: ${points}p for reservation #${reservation.ReservationId}`);
+        console.log(`Pending points created: ${points}p for reservation #${reservation.ReservationId}`);
       } catch (pointsErr) {
         console.error("Error creating pending points:", pointsErr);
         // Don't fail the reservation if points fail, just log it
       }
     }
-    
+
     res.status(201).json(reservation);
   } catch (err) {
     console.error(err);
@@ -65,6 +83,8 @@ reservationRouter.get("/", async (req, res) => {
     // și la 'cancelled' dacă nu s-a plătit restul cu 24h înainte de check-in
     const now = new Date();
     for (const r of reservations) {
+      // Nu modifica statusul dacă e deja 'cancelled'
+      if (r.status === 'cancelled') continue;
       // Anulare automat dacă statusul e partial și nu s-a plătit restul cu 24h înainte de check-in
       if (r.status === 'partial' && r.requestedCheckin) {
         const checkinDate = new Date(r.requestedCheckin);
@@ -80,6 +100,17 @@ reservationRouter.get("/", async (req, res) => {
         await r.save();
       }
     }
+
+    if (userId) {
+      reservations = reservations.filter(r => String(r.ClientId) === String(userId));
+    }
+    res.status(200).json(reservations);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "server error" });
+  }
+});
+
 /* CANCEL endpoint (manual, de către client) - cu penalități */
 reservationRouter.put("/:id/cancel", async (req, res) => {
   try {
@@ -133,68 +164,153 @@ reservationRouter.put("/:id/cancel", async (req, res) => {
   }
 });
 
-    if (userId) {
-      reservations = reservations.filter(r => String(r.ClientId) === String(userId));
-    }
+/* GET /user/:userId - Get ALL reservations for user with full room & theme data */
+reservationRouter.get("/user/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const Invoice = (await import("../entities/Invoice.js")).default;
+
+    const reservations = await Reservation.findAll({
+      where: { ClientId: userId },
+      include: [
+        {
+          model: RoomReservation,
+          required: false,
+          include: [
+            {
+              model: Room,
+              required: false,
+              include: [
+                {
+                  model: RoomTheme,
+                  required: false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          model: Invoice,
+          required: false,
+          attributes: ["InvoiceId", "totalAmount", "status"]
+        }
+      ],
+      order: [["requestedCheckin", "DESC"]]
+    });
+
+    console.log(`[RESERVATION] Found ${reservations.length} reservations for user ${userId}`);
     res.status(200).json(reservations);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "server error" });
+    console.error("[RESERVATION] Error getting user reservations:", err);
+    res.status(500).json({ message: "server error", error: err.message });
   }
 });
 
 /* GET /upcoming/:userId - Get next upcoming reservation for a user */
 reservationRouter.get("/upcoming/:userId", async (req, res) => {
+  console.log("[RESERVATION] GET /upcoming/:userId called with userId:", req.params.userId);
   try {
     const { userId } = req.params;
-    const reservations = await getReservations();
-    
     const now = new Date();
-    const upcomingReservations = reservations
-      .filter(r => r.ClientId === parseInt(userId) && new Date(r.requestedCheckin) > now && r.status !== 'cancelled')
-      .sort((a, b) => new Date(a.requestedCheckin) - new Date(b.requestedCheckin));
     
-    if (upcomingReservations.length === 0) {
-      return res.status(404).json({ message: "No upcoming reservations" });
-    }
-
-    const nextReservation = upcomingReservations[0];
-    const RoomReservation = require("../entities/RoomReservation.js").default;
-    const Room = require("../entities/Room.js").default;
-    const RoomTheme = require("../entities/RoomTheme.js").default;
-    
-    const roomRes = await nextReservation.getRoomReservations({
-      include: [
-        { model: Room, include: [{ model: RoomTheme }] }
-      ]
+    // Find next upcoming reservation for this user - FILTER for future dates FIRST
+    // Skip pending (incomplete) reservations - only get confirmed/paid ones with rooms assigned
+    const nextReservation = await Reservation.findOne({
+      where: {
+        ClientId: userId,
+        status: { [Op.notIn]: ["cancelled", "pending"] },  // Only get confirmed/paid reservations
+        requestedCheckin: { [Op.gt]: now }  // Only get reservations with future check-in
+      },
+      order: [["requestedCheckin", "ASC"]],
+      raw: false
     });
     
-    const fullData = {
-      ...nextReservation.toJSON(),
-      room: roomRes && roomRes.length > 0 ? roomRes[0].Room : null
-    };
-
-    res.status(200).json(fullData);
+    console.log("[RESERVATION] Found future reservation:", nextReservation?.ReservationId, "Check-in:", nextReservation?.requestedCheckin);
+    
+    if (!nextReservation) {
+      console.log("[RESERVATION] No confirmed upcoming reservations found for user", userId);
+      return res.status(404).json({ message: "No upcoming reservations" });
+    }
+    
+    // Get room data for this reservation
+    const roomRes = await RoomReservation.findOne({
+      where: { ReservationId: nextReservation.ReservationId }
+    });
+    
+    console.log("[RESERVATION] RoomReservation lookup for reservation", nextReservation.ReservationId, "result:", roomRes?.dataValues || "null");
+    
+    res.status(200).json(nextReservation);
   } catch (err) {
-    console.error("[RESERVATION] Error getting upcoming:", err);
+    console.error("[RESERVATION] Error in /upcoming/:userId:", err);
     res.status(500).json({ message: "server error", error: err.message });
   }
 });
 
-/* READ by ID */
-
-// Logging suplimentar pentru debugging
 reservationRouter.get("/:id", async (req, res) => {
   try {
     console.log(`[RESERVATION] GET /api/reservations/${req.params.id}`);
-    const reservation = await getReservationById(req.params.id);
+    
+    // Fetch cu toate relațiile necesare
+    const Reservation = (await import("../entities/Reservation.js")).default;
+    const Invoice = (await import("../entities/Invoice.js")).default;
+    
+    const reservation = await Reservation.findByPk(req.params.id, {
+      include: [
+        {
+          association: 'RoomReservations',
+          include: [
+            {
+              association: 'Room',
+              include: [
+                { 
+                  association: 'RoomTheme',
+                  include: [
+                    { association: 'images', required: false }
+                  ],
+                  required: false
+                }
+              ],
+              required: false
+            }
+          ],
+          required: false
+        },
+        { 
+          association: 'Invoice',
+          include: [
+            { association: 'payments', required: false }
+          ],
+          required: false 
+        }
+      ]
+    });
+    
+    // Log what we got back
+    if (reservation && reservation.RoomReservations && reservation.RoomReservations[0]) {
+      const room = reservation.RoomReservations[0].Room;
+      const theme = room?.RoomTheme;
+      console.log('[DEBUG] Theme images:', theme?.images);
+      if (!theme?.images) {
+        console.warn('[DEBUG] No images found in theme! Fetching manually...');
+        // If images aren't included, fetch them separately
+        if (theme) {
+          const RoomImage = (await import("../entities/RoomImage.js")).default;
+          const images = await RoomImage.findAll({ where: { RoomThemeId: theme.RoomThemeId } });
+          theme.images = images;
+          console.log('[DEBUG] Manually fetched images:', images.length);
+        }
+      }
+    }
+    
     if (!reservation) {
       console.warn(`[RESERVATION] Rezervare ${req.params.id} nu a fost găsită!`);
       return res.status(404).json({ message: "not found" });
     }
     
-    const Invoice = (await import("../entities/Invoice.js")).default;
-    const Payment = (await import("../entities/Payment.js")).default;
+    console.log(`[RESERVATION] Found reservation:`, reservation.ReservationId);
+    console.log(`[RESERVATION] Has RoomReservations:`, reservation.RoomReservations?.length || 0);
+    console.log(`[RESERVATION] Has Invoice:`, !!reservation.Invoice);
+    console.log(`[RESERVATION] Invoice Payments:`, reservation.Invoice?.payments?.length || 0);
     
     // LOGICĂ: actualizează statusul pe baza datelor check-in/check-out
     const now = new Date();
@@ -205,9 +321,10 @@ reservationRouter.get("/:id", async (req, res) => {
     
     // AUTO-CANCEL: dacă e check-in și nu e plătit 100%
     if (now >= checkin && now < checkout && reservation.status !== 'completed' && reservation.status !== 'cancelled') {
-      const invoice = await Invoice.findOne({ where: { ReservationId: reservation.ReservationId } });
+      const invoice = reservation.Invoice;
       if (invoice) {
         // Calculează suma plătită
+        const Payment = (await import("../entities/Payment.js")).default;
         const payments = await Payment.findAll({ where: { InvoiceId: invoice.InvoiceId } });
         const paidAmount = payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
         
@@ -238,7 +355,7 @@ reservationRouter.get("/:id", async (req, res) => {
     }
     
     // Log suplimentar pentru debugging
-    console.log(`[RESERVATION] Rezervare găsită:`, JSON.stringify(reservation, null, 2));
+    console.log(`[RESERVATION] Returning reservation with data`);
     res.status(200).json(reservation);
   } catch (err) {
     console.error(`[RESERVATION] Eroare la GET /api/reservations/:id`, err);

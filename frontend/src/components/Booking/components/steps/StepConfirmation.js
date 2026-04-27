@@ -215,7 +215,7 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
           requestedCheckin: bookingData.checkIn,
           requestedCheckout: bookingData.checkOut,
           ClientId: clientId || 1,
-          RoomId: bookingData.room?.id,
+          RoomId: bookingData.room?.roomId || bookingData.room?.RoomId || bookingData.room?.id,
           nrPeople: (bookingData.adults || 1) + (bookingData.children || 0),
           totalAmount: totalAmount,
           paymentAmount: amountToPay,
@@ -227,12 +227,27 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
       const data = await response.json();
       
       if (response.ok) {
-        onComplete(data);
+        // Pass both API response and booking data with cost breakdown
+        onComplete({
+          ...data,
+          room: bookingData.room,
+          adults: bookingData.adults,
+          children: bookingData.children,
+          checkIn: bookingData.checkIn,
+          checkOut: bookingData.checkOut,
+          services: bookingData.services,
+          costBreakdown: {
+            roomTotal,
+            servicesTotal,
+            nights
+          }
+        });
       } else {
+        console.error("Payment error:", data);
         alert("Payment processing error: " + (data.message || "Unknown"));
       }
     } catch (err) {
-      console.error(err);
+      console.error("Payment catch error:", err);
       alert("Connection error. Please try again.");
     } finally {
       setIsProcessing(false);
@@ -240,70 +255,20 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
   };
 
   return (
-    <div className="confirmation-page">
-      <div className="confirmation-layout">
-        {/* LEFT SIDE - MAIN CONTENT */}
-        <div className="confirmation-main">
-          <div className="confirmation-header">
-            <h1>Confirmation & Payment</h1>
-            <p className="subtitle">Check the final details and choose your payment method.</p>
-          </div>
+    <div className="confirmation-wrapper">
+      <div className="confirmation-container">
+        
+        {/* MAIN CONTENT */}
+        <div className="confirmation-content">
+          <h1 className="page-title">Finalize Reservation</h1>
+          <p className="page-subtitle">Please select your preferred payment method to confirm your stay</p>
 
-          {/* SUMAR REZERVARE */}
-          <div className="confirmation-card">
-            <h2>
-              <span className="icon">📋</span>
-              Final Reservation Summary
-            </h2>
-            
-            <div className="summary-grid">
-              <div className="summary-item">
-                <span className="label">Room</span>
-                <div className="value">{bookingData.room?.name || "—"}</div>
-                <div className="meta">{bookingData.room?.theme || ""}</div>
-              </div>
-              
-              <div className="summary-item">
-                <span className="label">Guests</span>
-                <div className="value">{bookingData.adults} {bookingData.adults === 1 ? 'Adult' : 'Adults'}</div>
-                <div className="meta">Check-in: {bookingData.checkIn}</div>
-              </div>
+          {/* PAYMENT OPTIONS SECTION */}
+          <div className="section">
+            <div className="section-header">
+              <h2 className="section-title">Payment Options</h2>
+              <p className="section-subtitle">Select your preferred payment method</p>
             </div>
-
-            {Object.keys(bookingData.services || {}).length > 0 && (
-              <div className="services-included">
-                <h3>Included Extra Services</h3>
-                <ul>
-                  {Object.entries(bookingData.services).map(([id, qty]) => {
-                    const service = services.find(s => s.ServiceId === Number(id));
-                    return qty > 0 && (
-                      <li key={id}>
-                        <span>{service?.name || `Service #${id}`}</span>
-                        <span>x{qty} = {service ? (qty * Number(service.price)).toFixed(2) : 0} RON</span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            )}
-          </div>
-
-          {/* POLITICA DE ANULARE */}
-          <div className="policy-card">
-            <div className="policy-icon">🛡️</div>
-            <div>
-              <h3>Flexible Cancellation Policy</h3>
-              <p>Free cancellation up to 48 hours before check-in. After this period, the first night will be charged.</p>
-            </div>
-          </div>
-
-          {/* OPȚIUNI DE PLATĂ */}
-          <div className="confirmation-card">
-            <h2>
-              <span className="icon">💳</span>
-              Payment Options
-            </h2>
-
             <div className="payment-options">
               <label className={`payment-option ${paymentType === "partial" ? "selected" : ""} ${partialDisabled ? "disabled" : ""}`}>
                 <input
@@ -315,13 +280,9 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
                   disabled={partialDisabled}
                 />
                 <div className="option-content">
-                  <div className="option-title">Pay 20% now, the rest later</div>
-                  <div className="option-desc">
-                    Pay a deposit of <strong>{partialAmount} RON</strong> today. The rest will be charged automatically 24 hours before arrival.
-                    {partialDisabled && (
-                      <span style={{color: '#e11d48', fontWeight: 500, display: 'block', marginTop: 4}}>Partial payment is not available for check-in today or tomorrow.</span>
-                    )}
-                  </div>
+                  <div className="option-title">20% DEPOSIT</div>
+                  <div className="option-amount">€{partialAmount}</div>
+                  <div className="option-desc">Pay deposit today. Balance charged 24h before arrival.</div>
                 </div>
               </label>
 
@@ -334,24 +295,23 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
                   onChange={(e) => setPaymentType(e.target.value)}
                 />
                 <div className="option-content">
-                  <div className="option-title">Pay full amount now</div>
-                  <div className="option-desc">
-                    Pay the total of <strong>{totalAmount.toFixed(2)} RON</strong> and relax. Receive instant confirmation.
-                  </div>
+                  <div className="option-title">FULL PAYMENT</div>
+                  <div className="option-amount">€{totalAmount.toFixed(2)}</div>
+                  <div className="option-desc">Pay full amount now. Instant confirmation.</div>
                 </div>
               </label>
             </div>
           </div>
 
-          {/* DETALII CARD */}
-          <div className="confirmation-card">
-            <h2>
-              <span className="icon">💳</span>
-              Card Details
-            </h2>
-
-            <form onSubmit={handleSubmit} className="card-form">
-              <div className="form-group">
+          {/* CARD DETAILS SECTION */}
+          <div className="section">
+            <div className="section-header">
+              <h2 className="section-title">Payment Information</h2>
+              <p className="section-subtitle">Enter your card details securely</p>
+            </div>
+            
+            <form className="card-form" onSubmit={handleSubmit}>
+              <div className="form-field">
                 <label>Card Number</label>
                 <input
                   type="text"
@@ -359,27 +319,25 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
                   value={cardNumber}
                   onChange={handleCardNumberChange}
                   maxLength="19"
-                  required
                   className={errors.cardNumber ? 'error' : ''}
                 />
-                {errors.cardNumber && <span className="error-message">{errors.cardNumber}</span>}
+                {errors.cardNumber && <span className="error">{errors.cardNumber}</span>}
               </div>
 
-              <div className="form-group">
+              <div className="form-field">
                 <label>Cardholder Name</label>
                 <input
                   type="text"
-                  placeholder="e.g. JOHN DOE"
+                  placeholder="JOHN DOE"
                   value={cardName}
                   onChange={handleCardNameChange}
-                  required
                   className={errors.cardName ? 'error' : ''}
                 />
-                {errors.cardName && <span className="error-message">{errors.cardName}</span>}
+                {errors.cardName && <span className="error">{errors.cardName}</span>}
               </div>
 
               <div className="form-row">
-                <div className="form-group">
+                <div className="form-field">
                   <label>Expiry Date</label>
                   <input
                     type="text"
@@ -387,108 +345,92 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
                     value={expiry}
                     onChange={handleExpiryChange}
                     maxLength="7"
-                    required
                     className={errors.expiry ? 'error' : ''}
                   />
-                  {errors.expiry && <span className="error-message">{errors.expiry}</span>}
+                  {errors.expiry && <span className="error">{errors.expiry}</span>}
                 </div>
 
-                <div className="form-group">
-                  <label>CVC / CVV</label>
+                <div className="form-field">
+                  <label>CVC</label>
                   <input
                     type="text"
                     placeholder="123"
                     value={cvc}
                     onChange={handleCvcChange}
                     maxLength="3"
-                    required
                     className={errors.cvc ? 'error' : ''}
                   />
-                  {errors.cvc && <span className="error-message">{errors.cvc}</span>}
+                  {errors.cvc && <span className="error">{errors.cvc}</span>}
                 </div>
               </div>
 
-              <div className="checkbox-group">
-                <input
-                  type="checkbox"
-                  id="save-card"
-                  checked={saveCard}
-                  onChange={(e) => setSaveCard(e.target.checked)}
-                />
-                <label htmlFor="save-card">
-                  Save card for secure future payments.
-                </label>
+              <div className="security-info">
+                <span>Your payment is encrypted and secure</span>
               </div>
             </form>
           </div>
-
-          <div className="confirmation-actions">
-            <button type="button" onClick={onBack} className="btn-back">
-              Back
-            </button>
-          </div>
         </div>
 
-        {/* RIGHT SIDE - PAYMENT SUMMARY */}
-        <aside className="payment-summary">
-          <div className="summary-header">Total to Pay</div>
-          
-          <div className="summary-body">
-            <div className="total-amount">{amountToPay} RON</div>
-            <p className="total-note">Includes all taxes and services</p>
+        {/* RIGHT SIDEBAR */}
+        <aside className="sidebar">
+          <div className="sidebar-header">Reservation Details</div>
+          <div className="sidebar-body">
+            <div className="guest-summary">
+              <div className="guest-count">{bookingData.adults + bookingData.children} {bookingData.adults + bookingData.children === 1 ? 'Guest' : 'Guests'}</div>
+              <div className="guest-breakdown">{bookingData.adults} Adult{bookingData.adults !== 1 ? 's' : ''}{bookingData.children > 0 && `, ${bookingData.children} Child${bookingData.children !== 1 ? 'ren' : ''}`}</div>
+            </div>
 
-            <div className="summary-details">
-              <div className="detail-row">
-                <span className="label-small">Check-in</span>
-                <div className="value-main">{bookingData.checkIn}</div>
-                <div className="value-sub">after 2:00 PM</div>
+            <div className="divider"></div>
+
+            <div className="booking-info">
+              <div className="info-row">
+                <span className="info-label">Check-in</span>
+                <span className="info-value">{bookingData.checkIn}</span>
               </div>
-
-              <div className="detail-row">
-                <span className="label-small">Check-out</span>
-                <div className="value-main">{bookingData.checkOut}</div>
-                <div className="value-sub">until 12:00 PM</div>
+              <div className="info-row">
+                <span className="info-label">Check-out</span>
+                <span className="info-value">{bookingData.checkOut}</span>
               </div>
-
-              <div className="divider"></div>
-
-              <div className="calc-row">
-                <span>Duration</span>
-                <span>{nights} {nights === 1 ? 'night' : 'nights'}</span>
-              </div>
-
-              <div className="calc-row">
-                <span>{bookingData.room?.name} x {nights}</span>
-                <span>{roomTotal.toFixed(2)} RON</span>
-              </div>
-
-              {servicesTotal > 0 && (
-                <div className="calc-row">
-                  <span>Extra Services</span>
-                  <span>{servicesTotal.toFixed(2)} RON</span>
-                </div>
-              )}
-
-              <div className="divider"></div>
-
-              <div className="total-row">
-                <span>TOTAL</span>
-                <span>{totalAmount.toFixed(2)} RON</span>
+              <div className="info-row">
+                <span className="info-label">Duration</span>
+                <span className="info-value">{nights} Night{nights !== 1 ? 's' : ''}</span>
               </div>
             </div>
 
-            <button 
-              onClick={handleSubmit}
-              disabled={isProcessing}
-              className="btn-pay"
-            >
-              {isProcessing ? "Processing..." : `Pay ${amountToPay} RON`}
-              <span className="lock-icon">🔒</span>
+            <div className="divider"></div>
+
+            <div className="cost-breakdown">
+              <div className="breakdown-row">
+                <span>{bookingData.room?.name || 'Room'}</span>
+                <span>€{roomTotal.toFixed(2)}</span>
+              </div>
+              {servicesTotal > 0 && (
+                <div className="breakdown-row">
+                  <span>Services & Add-ons</span>
+                  <span>€{servicesTotal.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="divider"></div>
+              <div className="breakdown-total">
+                <span>TOTAL</span>
+                <span>€{totalAmount.toFixed(2)}</span>
+              </div>
+            </div>
+
+            <div className="amount-to-pay">
+              <p className="pay-label">Amount to Pay Now</p>
+              <div className="total-amount">€{amountToPay}</div>
+            </div>
+
+            <button onClick={handleSubmit} disabled={isProcessing} className="btn-pay-sidebar">
+              PAY NOW
             </button>
 
-            <div className="secure-note">
-              <span className="lock-small">🔒</span>
-              Secure payment via SSL
+            <div className="policy-box">
+              <div>
+                <strong>Flexible Cancellation</strong>
+                <p>Free cancellation up to 24 hours before check-in</p>
+              </div>
             </div>
           </div>
         </aside>

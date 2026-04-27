@@ -89,7 +89,7 @@ async function DB_Init() {
     setupFKs();
 
     await db.authenticate();
-    await db.sync(); 
+    await db.sync({ alter: true }); 
     console.log("Database connected & synced safely!");
   } catch (err) {
     console.error("DB_Init ERROR:", err);

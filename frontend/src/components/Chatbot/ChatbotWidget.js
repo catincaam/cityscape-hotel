@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { MessageCircle, Send, X } from "lucide-react";
 import "./ChatbotWidget.css";
 
 const ChatbotWidget = () => {
@@ -7,7 +8,7 @@ const ChatbotWidget = () => {
   const [messages, setMessages] = useState([
     {
       id: 1,
-      text: "Hello! 👋 Ask me anything about our rooms, services, or bookings!",
+      text: "Hello. Ask me anything about our rooms, services, or bookings.",
       sender: "bot",
       timestamp: new Date()
     }
@@ -16,7 +17,6 @@ const ChatbotWidget = () => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Check if user is logged in
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsLoggedIn(!!token);
@@ -30,12 +30,11 @@ const ChatbotWidget = () => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
+  const handleSendMessage = async (event) => {
+    event.preventDefault();
 
     if (!inputValue.trim()) return;
 
-    // Add user message
     const userMessage = {
       id: messages.length + 1,
       text: inputValue,
@@ -61,8 +60,6 @@ const ChatbotWidget = () => {
       }
 
       const data = await response.json();
-
-      // Add bot message
       const botMessage = {
         id: messages.length + 2,
         text: data.reply,
@@ -91,16 +88,15 @@ const ChatbotWidget = () => {
     <>
       {isLoggedIn && (
         <>
-          {/* Chat bubble button */}
           <button
             className="chatbot-bubble"
             onClick={() => setIsOpen(!isOpen)}
-            title="Chat with us!"
+            title="Chat with Cityscape"
+            aria-label={isOpen ? "Close chat" : "Open chat"}
           >
-            💬
+            {isOpen ? <X size={22} strokeWidth={2} /> : <MessageCircle size={24} strokeWidth={1.9} />}
           </button>
 
-          {/* Chat widget */}
           {isOpen && (
             <div className="chatbot-widget">
               <div className="chatbot-header">
@@ -108,8 +104,9 @@ const ChatbotWidget = () => {
                 <button
                   className="close-btn"
                   onClick={() => setIsOpen(false)}
+                  aria-label="Close chat"
                 >
-                  ✕
+                  <X size={16} strokeWidth={2} />
                 </button>
               </div>
 
@@ -146,7 +143,7 @@ const ChatbotWidget = () => {
                 <input
                   type="text"
                   value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
+                  onChange={(event) => setInputValue(event.target.value)}
                   placeholder="Ask me something..."
                   disabled={isLoading}
                   className="chatbot-input"
@@ -155,8 +152,9 @@ const ChatbotWidget = () => {
                   type="submit"
                   disabled={isLoading || !inputValue.trim()}
                   className="send-btn"
+                  aria-label="Send message"
                 >
-                  Send
+                  <Send size={16} strokeWidth={2} />
                 </button>
               </form>
             </div>

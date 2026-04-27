@@ -25,6 +25,7 @@ export default function PastReservations() {
     fetchData();
   }, []);
 
+
   return (
     <div style={{ background: '#f6f7f8', minHeight: '100vh', padding: 0 }}>
       <div style={{ maxWidth: 1024, margin: '0 auto', padding: '2rem 0' }}>
@@ -89,7 +90,7 @@ export default function PastReservations() {
               const city = res.city || res.City || res.location || '-';
               const totalAmount = res.totalAmount || res.amount || res.price || res.total || '-';
 
-              // Imagine cameră (din backend)
+              // Imagine cameră - use the image field directly from reservation
               let roomImg = res.image || null;
 
               return (

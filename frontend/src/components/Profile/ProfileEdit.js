@@ -1,162 +1,363 @@
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Camera,
+  Check,
+  LockKeyhole,
+  Mail,
+  ShieldAlert,
+  Trash2,
+  UserRound,
+} from "lucide-react";
+import "./ProfilePage.css";
+import defaultProfilePic from "../../assets/profilePicture.jpg";
+import Navbar from "../Dashboard/Navbar";
+import { logout } from "../../services/authService";
 
+const API = "http://localhost:9001/api";
 
-
-import React, { useState, useRef } from "react";
-import './ProfilePage.css';
-import defaultProfilePic from '../../assets/profilePicture.jpg';
-import logo from '../../assets/logo.svg';
-
-export default function ProfileEdit({ user = {}, onSave = () => {}, onCancel = () => window.history.back(), onDelete = () => {} }) {
-  const [fullName, setFullName] = useState(user?.fullName || "");
-  const [email, setEmail] = useState(user?.email || "");
+export default function ProfileEdit() {
+  const navigate = useNavigate();
+  const fileInputRef = useRef(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [profilePic, setProfilePic] = useState(user?.profilePic || null);
-  const fileInputRef = useRef();
+  const [profilePic, setProfilePic] = useState(defaultProfilePic);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [hasBlockingReservations, setHasBlockingReservations] = useState(false);
 
-  function handleProfilePicChange(e) {
-    const file = e.target.files[0];
-    if (file) {
-      setProfilePic(URL.createObjectURL(file));
+  const resolveImage = useCallback((image) => {
+    if (!image) return defaultProfilePic;
+    if (image.startsWith("http")) return image;
+    if (image.startsWith("/uploads")) return `http://localhost:9001${image}`;
+    return image;
+  }, []);
+
+  const applyClient = useCallback((client) => {
+    setFirstName(client.FirstName || client.firstName || "");
+    setLastName(client.LastName || client.lastName || "");
+    setEmail(client.Email || client.email || "");
+    setProfilePic(resolveImage(client.profilePicture));
+  }, [resolveImage]);
+
+  const hasUpcomingOrActiveReservations = useCallback((reservations = []) => {
+    const now = new Date();
+    return reservations.some((reservation) => {
+      const status = String(reservation.status || "").toLowerCase();
+      const checkout = reservation.checkOut || reservation.requestedCheckout;
+
+      if (status === "cancelled" || status === "canceled") return false;
+      if (status === "upcoming" || status === "active") return true;
+      return checkout ? new Date(checkout) >= now : false;
+    });
+  }, []);
+
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const token = localStorage.getItem("token");
+        const dashboardResponse = await fetch(`${API}/dashboard`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const dashboard = dashboardResponse.ok ? await dashboardResponse.json() : null;
+
+        if (dashboard) {
+          setHasBlockingReservations(hasUpcomingOrActiveReservations(dashboard.allReservations || dashboard.recentReservations || []));
+        }
+
+        const profileResponse = await fetch(`${API}/clients/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (profileResponse.ok) {
+          const client = await profileResponse.json();
+          applyClient(client);
+          return;
+        }
+
+        if (dashboard?.client) {
+          applyClient(dashboard.client);
+          return;
+        }
+
+        throw new Error("Could not load your profile.");
+      } catch (err) {
+        setError(err.message || "Could not load your profile.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadProfile();
+  }, [applyClient, hasUpcomingOrActiveReservations]);
+
+  function handleProfilePicChange(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setSelectedFile(file);
+    setProfilePic(URL.createObjectURL(file));
+  }
+
+  async function uploadProfilePicture(token) {
+    if (!selectedFile) return null;
+
+    const formData = new FormData();
+    formData.append("image", selectedFile);
+
+    const response = await fetch(`${API}/upload`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData
+    });
+
+    if (!response.ok) throw new Error("Could not upload profile picture.");
+    const data = await response.json();
+    return data.imageUrl;
+  }
+
+  async function handleSave(event) {
+    event.preventDefault();
+    setError("");
+    setMessage("");
+
+    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+      setError("First name, last name, and email are required.");
+      return;
+    }
+
+    if (newPassword || confirmPassword) {
+      if (newPassword.length < 8) {
+        setError("New password must have at least 8 characters.");
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        setError("New password and confirmation do not match.");
+        return;
+      }
+      if (!currentPassword) {
+        setError("Current password is required to change your password.");
+        return;
+      }
+    }
+
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("token");
+      const uploadedImage = await uploadProfilePicture(token);
+      let response = await fetch(`${API}/clients/me`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email,
+          currentPassword,
+          newPassword,
+          ...(uploadedImage ? { profilePicture: uploadedImage } : {})
+        })
+      });
+
+      if (response.status === 404 && !newPassword && !currentPassword) {
+        const userId = localStorage.getItem("userId");
+        response = await fetch(`${API}/clients/${userId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            FirstName: firstName,
+            LastName: lastName,
+            Email: email,
+            ...(uploadedImage ? { profilePicture: uploadedImage } : {})
+          })
+        });
+      }
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || "Could not save profile changes.");
+
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setSelectedFile(null);
+      setProfilePic(resolveImage(data.profilePicture));
+      setMessage("Profile updated successfully.");
+    } catch (err) {
+      setError(err.message || "Could not save profile changes.");
+    } finally {
+      setSaving(false);
     }
   }
 
-  function handleSave() {
-    // TODO: Add validation and API call
-    onSave({ fullName, email, newPassword, profilePic });
+  async function handleDelete() {
+    if (hasBlockingReservations) {
+      setError("You cannot delete your account while you have upcoming or active reservations.");
+      return;
+    }
+
+    const confirmed = window.confirm("Delete your account permanently? This removes your bookings, loyalty points, and profile history.");
+    if (!confirmed) return;
+
+    setDeleting(true);
+    setError("");
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API}/clients/me`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        if (response.status === 409) {
+          throw new Error(data.message || "You cannot delete your account while you have upcoming or active reservations.");
+        }
+        throw new Error(data.message || "Could not delete account.");
+      }
+
+      logout();
+      navigate("/login");
+    } catch (err) {
+      setError(err.message || "Could not delete account.");
+      setDeleting(false);
+    }
   }
 
-  function handleDelete() {
-    if (window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
-      onDelete();
-    }
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <main className="profile-edit-page">
+          <div className="profile-edit-loading">Loading profile...</div>
+        </main>
+      </>
+    );
   }
 
   return (
-    <div className="profile-page" style={{ minHeight: '100vh', background: '#f8fafc', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
-      <header style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '0 0 0 32px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <img src={logo} alt="Cityscape Hotel" style={{ width: 36, height: 36, borderRadius: 8 }} />
-          <span style={{ fontWeight: 700, fontSize: 20, color: '#1e293b' }}>Cityscape Hotel</span>
-        </div>
-        <div style={{ marginRight: 32 }}>
-          <button className="edit-profile-btn" style={{ marginRight: 12 }} onClick={onCancel}>Cancel</button>
-          <button className="discover-btn" onClick={handleSave}>Save Changes</button>
-        </div>
-      </header>
-
-      {/* Avatar Card (avatar above card, not overlapping) */}
-      <div style={{
-        maxWidth: 480,
-        width: '100%',
-        margin: '48px auto 0 auto',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        position: 'relative',
-        zIndex: 2
-      }}>
-        <div style={{ position: 'relative', marginBottom: -70 }}>
-          <img
-            src={profilePic || user?.profilePic || defaultProfilePic}
-            alt="Profile"
-            style={{ width: 140, height: 140, borderRadius: '50%', objectFit: 'cover', border: '5px solid #e2e8f0', background: '#fff', boxShadow: '0 4px 24px #0002' }}
-          />
-          <button
-            onClick={() => fileInputRef.current && fileInputRef.current.click()}
-            style={{ position: 'absolute', bottom: 18, right: 18, background: '#1f2937', border: 'none', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px #0002', cursor: 'pointer', borderWidth: 0 }}
-            title="Change profile picture"
-          >
-            <svg width="22" height="22" fill="white" viewBox="0 0 20 20"><path d="M4 16a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2.172a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 6H16a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4zm6-7a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg>
-          </button>
-          <input ref={fileInputRef} type="file" accept="image/*" onChange={handleProfilePicChange} style={{ display: 'none' }} />
-        </div>
-        <div style={{
-          background: '#fff',
-          borderRadius: 28,
-          boxShadow: '0 8px 32px #0001',
-          padding: '80px 48px 32px 48px',
-          width: '100%',
-          marginTop: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}>
-          <h2 style={{ fontWeight: 700, fontSize: 24, margin: '0 0 2px 0', textAlign: 'center', letterSpacing: '-0.5px' }}>{fullName || user?.fullName || user?.email || 'User'}</h2>
-          <div style={{ color: '#64748b', fontSize: 16, marginTop: 0, textAlign: 'center' }}>{email || user?.email || ''}</div>
-          <div style={{ color: '#64748b', fontSize: 15, marginTop: 2, textAlign: 'center' }}>Travel Enthusiast &amp; Member since 2022</div>
-        </div>
-      </div>
-
-      {/* Main Form Card */}
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', background: '#f8fafc', padding: '0 0 0 0' }}>
-        <div style={{ background: '#fff', borderRadius: 24, boxShadow: '0 2px 16px #0001', padding: 40, maxWidth: 900, width: '100%', margin: '100px auto 0 auto', zIndex: 1, position: 'relative' }}>
-          {/* Sections */}
-          <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', justifyContent: 'center' }}>
-            {/* Personal Info */}
-            <section style={{ flex: 1, minWidth: 260 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <svg width="20" height="20" fill="#1f2937" viewBox="0 0 20 20"><path d="M10 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-4.418 0-8 1.79-8 4v2h16v-2c0-2.21-3.582-4-8-4z"/></svg>
-                <span style={{ fontWeight: 600, fontSize: 16 }}>Personal Information</span>
-              </div>
-              <div className="form-group">
-                <label style={{ fontWeight: 600 }}>Full Name</label>
-                <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} className="form-input" />
-              </div>
-              <div className="form-group">
-                <label style={{ fontWeight: 600 }}>Email Address</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="form-input" />
-              </div>
-            </section>
-
-            {/* Security */}
-            <section style={{ flex: 1, minWidth: 260 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <svg width="20" height="20" fill="#1f2937" viewBox="0 0 20 20"><path d="M10 2a6 6 0 0 1 6 6v2a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2V8a6 6 0 0 1 6-6zm0 2a4 4 0 0 0-4 4v2h8V8a4 4 0 0 0-4-4zm-4 8v4h8v-4H6z"/></svg>
-                <span style={{ fontWeight: 600, fontSize: 16 }}>Security</span>
-              </div>
-              <div className="form-group">
-                <label style={{ fontWeight: 600 }}>Current Password</label>
-                <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} className="form-input" />
-              </div>
-              <div className="form-group">
-                <label style={{ fontWeight: 600 }}>New Password</label>
-                <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="At least 8 characters" className="form-input" />
-              </div>
-              <div className="form-group">
-                <label style={{ fontWeight: 600 }}>Confirm New Password</label>
-                <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="At least 8 characters" className="form-input" />
-              </div>
-            </section>
-          </div>
-
-          {/* Account Management (neutral) */}
-          <div style={{ marginTop: 48, background: '#fff', borderRadius: 16, padding: 24, border: '1.5px solid #e5e7eb', color: '#334155', display: 'flex', alignItems: 'flex-start', gap: 16, boxShadow: '0 2px 8px #0001' }}>
-            <svg width="28" height="28" fill="#94a3b8" viewBox="0 0 20 20" style={{ flexShrink: 0, marginTop: 2 }}><path d="M10 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-4.418 0-8 1.79-8 4v2h16v-2c0-2.21-3.582-4-8-4z"/></svg>
-            <div style={{ flex: 1 }}>
-              <h4 style={{ fontWeight: 700, fontSize: 17, marginBottom: 8 }}>Account Management</h4>
-              <p style={{ marginBottom: 16, color: '#64748b', fontWeight: 400 }}>Deleting your account is a permanent action. Please note that all your bookings, loyalty points, and personal history will be removed from our systems and cannot be recovered.</p>
-              <button className="details-btn" style={{ background: 'transparent', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 8, padding: '10px 24px', fontWeight: 700, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, boxShadow: 'none' }} onClick={handleDelete}>
-                <svg width="18" height="18" fill="#ef4444" viewBox="0 0 20 20"><path d="M6 8a1 1 0 0 1 1 1v5a1 1 0 0 0 2 0V9a1 1 0 1 1 2 0v5a1 1 0 0 0 2 0V9a1 1 0 1 1 2 0v5a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V9a1 1 0 0 1 1-1z"/></svg>
-                Delete Account
+    <>
+      <Navbar />
+      <main className="profile-edit-page">
+        <form className="profile-edit-shell" onSubmit={handleSave}>
+          <header className="profile-edit-hero">
+            <div>
+              <p className="profile-kicker">Profile Settings</p>
+              <h1>Edit your account</h1>
+              <span>Keep your Cityscape identity and security details up to date.</span>
+            </div>
+            <div className="profile-edit-actions">
+              <button type="button" className="profile-edit-secondary" onClick={() => navigate("/profile")}>
+                Cancel
+              </button>
+              <button type="submit" className="profile-edit-primary" disabled={saving}>
+                {saving ? "Saving..." : "Save Changes"}
               </button>
             </div>
-          </div>
-        </div>
-      </main>
+          </header>
 
-      {/* Footer */}
-      <footer style={{ textAlign: 'center', color: '#64748b', fontSize: 14, padding: '24px 0 12px 0', background: 'transparent' }}>
-        <div style={{ marginBottom: 8 }}>
-          © 2024 Cityscape Hotel Group. All rights reserved.
-        </div>
-        <div>
-          <a href="#" style={{ color: '#c6a969', marginRight: 16, textDecoration: 'none' }}>Privacy Policy</a>
-          <a href="#" style={{ color: '#c6a969', textDecoration: 'none' }}>Terms of Service</a>
-        </div>
-      </footer>
-    </div>
+          {(message || error) && (
+            <div className={`profile-edit-alert ${error ? "error" : "success"}`}>
+              {error ? <ShieldAlert size={16} /> : <Check size={16} />}
+              {error || message}
+            </div>
+          )}
+
+          <section className="profile-edit-overview">
+            <div className="profile-edit-photo">
+              <img src={profilePic} alt="Profile" onError={(event) => { event.currentTarget.src = defaultProfilePic; }} />
+              <button type="button" onClick={() => fileInputRef.current?.click()} aria-label="Change profile picture">
+                <Camera size={18} />
+              </button>
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleProfilePicChange} />
+            </div>
+            <div>
+              <h2>{firstName || "User"} {lastName}</h2>
+              <p>{email}</p>
+              <span>Explorer Member</span>
+            </div>
+          </section>
+
+          <section className="profile-edit-card">
+            <div className="profile-edit-section">
+              <div className="profile-edit-section-title">
+                <UserRound size={18} />
+                <h3>Personal Information</h3>
+              </div>
+
+              <div className="profile-edit-grid two">
+                <label>
+                  First Name
+                  <input value={firstName} onChange={(event) => setFirstName(event.target.value)} />
+                </label>
+                <label>
+                  Last Name
+                  <input value={lastName} onChange={(event) => setLastName(event.target.value)} />
+                </label>
+              </div>
+
+              <label className="profile-edit-field">
+                Email Address
+                <div className="profile-edit-input-icon">
+                  <Mail size={16} />
+                  <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
+                </div>
+              </label>
+            </div>
+
+            <div className="profile-edit-section">
+              <div className="profile-edit-section-title">
+                <LockKeyhole size={18} />
+                <h3>Security</h3>
+              </div>
+
+              <div className="profile-edit-grid">
+                <label>
+                  Current Password
+                  <input type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} />
+                </label>
+                <label>
+                  New Password
+                  <input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="At least 8 characters" />
+                </label>
+                <label>
+                  Confirm New Password
+                  <input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Repeat new password" />
+                </label>
+              </div>
+            </div>
+
+            <div className="profile-danger-zone">
+              <div>
+                <ShieldAlert size={20} />
+                <div>
+                  <h3>Account Management</h3>
+                  <p>
+                    {hasBlockingReservations
+                      ? "You have upcoming or active reservations, so account deletion is currently unavailable."
+                      : "Deleting your account is permanent and removes bookings, loyalty points, and profile history."}
+                  </p>
+                </div>
+              </div>
+              <button type="button" onClick={handleDelete} disabled={deleting || hasBlockingReservations}>
+                <Trash2 size={16} />
+                {hasBlockingReservations ? "Locked" : deleting ? "Deleting..." : "Delete Account"}
+              </button>
+            </div>
+          </section>
+        </form>
+      </main>
+    </>
   );
 }

@@ -37,7 +37,7 @@ export async function activatePointsForReservation(reservationId) {
 
 export async function getAllRewards() {
   try {
-    const res = await fetch("http://localhost:9001/api/rewards");
+    const res = await fetch("http://localhost:9001/api/rewards/admin/all");
     if (!res.ok) throw new Error("Failed to fetch rewards");
     return await res.json();
   } catch (err) {
@@ -46,11 +46,22 @@ export async function getAllRewards() {
   }
 }
 
-export async function createReward({ title, desc, points, image, category }) {
+export async function getActiveRewards() {
+  try {
+    const res = await fetch("http://localhost:9001/api/rewards");
+    if (!res.ok) throw new Error("Failed to fetch active rewards");
+    return await res.json();
+  } catch (err) {
+    console.error("getActiveRewards error:", err);
+    return [];
+  }
+}
+
+export async function createReward({ title, desc, points, image, category, rewardType }) {
   const res = await fetch("http://localhost:9001/api/rewards", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title, desc, points: parseInt(points), image, category })
+    body: JSON.stringify({ title, desc, points: parseInt(points), image, category, rewardType: rewardType || 'per_booking' })
   });
 
   if (!res.ok) {
@@ -61,11 +72,14 @@ export async function createReward({ title, desc, points, image, category }) {
   return await res.json();
 }
 
-export async function updateReward(id, { title, desc, points, image, category, active }) {
+export async function updateReward(id, { title, desc, points, image, category, rewardType, active }) {
+  const payload = { title, desc, points: points ? parseInt(points) : undefined, image, category, rewardType, active };
+  console.log('📤 updateReward payload:', payload);
+  
   const res = await fetch(`http://localhost:9001/api/rewards/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title, desc, points: points ? parseInt(points) : undefined, image, category, active })
+    body: JSON.stringify(payload)
   });
 
   if (!res.ok) {
@@ -73,7 +87,9 @@ export async function updateReward(id, { title, desc, points, image, category, a
     throw new Error(error.error || `Server error: ${res.status}`);
   }
 
-  return await res.json();
+  const result = await res.json();
+  console.log('📥 updateReward response:', result);
+  return result;
 }
 
 export async function deleteReward(id) {
