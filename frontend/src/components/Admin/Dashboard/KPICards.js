@@ -1,37 +1,33 @@
+import React from 'react';
+import { Bed, CreditCard, Star, Ticket } from 'lucide-react';
 
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+const cards = [
+  { key: 'revenue', label: 'Total Revenue', icon: CreditCard, format: (value) => `€${Number(value || 0).toLocaleString()}`, changeKey: 'revenueChange' },
+  { key: 'occupancyRate', label: 'Occupancy Rate', icon: Bed, format: (value) => `${Number(value || 0)}%`, changeKey: 'occupancyChange' },
+  { key: 'avgBookingValue', label: 'Avg Booking Value', icon: Ticket, format: (value) => `€${Number(value || 0).toLocaleString()}`, changeKey: 'avgBookingChange' },
+  { key: 'satisfaction', label: 'Satisfaction Score', icon: Star, format: (value) => `${Number(value || 0).toFixed(1)}/5`, changeKey: 'satisfactionChange' }
+];
 
-export default function KPICards() {
-  const [kpi, setKpi] = useState({ revenue: 0, occupancy: 0, avgBookingValue: 0, satisfaction: 0 });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    async function fetchKPI() {
-      setLoading(true);
-      try {
-        const res = await axios.get('/api/admin/dashboard/kpi');
-        setKpi(res.data);
-        setError(null);
-      } catch (err) {
-        setError('Eroare la încărcarea KPI-urilor');
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchKPI();
-  }, []);
-
-  if (loading) return <div className="kpi-cards">Loading...</div>;
-  if (error) return <div className="kpi-cards">{error}</div>;
-
+export default function KPICards({ kpis, loading }) {
   return (
     <div className="kpi-cards">
-      <div className="kpi-card"><div className="kpi-label">Total Revenue</div><div className="kpi-value">€{kpi.revenue?.toLocaleString()}</div></div>
-      <div className="kpi-card"><div className="kpi-label">Occupancy Rate</div><div className="kpi-value">{kpi.occupancy}%</div></div>
-      <div className="kpi-card"><div className="kpi-label">Avg Booking Value</div><div className="kpi-value">€{kpi.avgBookingValue?.toLocaleString()}</div></div>
-      <div className="kpi-card"><div className="kpi-label">Satisfaction Score</div><div className="kpi-value">{kpi.satisfaction}/5</div></div>
+      {cards.map(({ key, label, icon: Icon, format, changeKey }) => {
+        const change = Number(kpis?.[changeKey] || 0);
+        const changePrefix = change > 0 ? '+' : '';
+
+        return (
+          <div className="kpi-card" key={key}>
+            <div className="kpi-card-top">
+              <span className="kpi-icon"><Icon size={20} /></span>
+              <span className={`kpi-change ${change < 0 ? 'negative' : ''}`}>
+                {changePrefix}{change}{key === 'satisfaction' ? '' : '%'}
+              </span>
+            </div>
+            <div className="kpi-label">{label}</div>
+            <div className="kpi-value">{loading ? '...' : format(kpis?.[key])}</div>
+          </div>
+        );
+      })}
     </div>
   );
 }

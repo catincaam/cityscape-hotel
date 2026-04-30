@@ -143,7 +143,7 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
     return service ? sum + qty * Number(service.price) : sum;
   }, 0);
 
-  const totalAmount = roomTotal + servicesTotal;
+  const totalAmount = roomTotal;
 
   const partialAmount = (totalAmount * 0.2).toFixed(2);
   const amountToPay = paymentType === "partial" ? partialAmount : totalAmount.toFixed(2);
@@ -165,7 +165,8 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
     
     // Validare finală înainte de submit
     const cardNumberDigits = cardNumber.replace(/\s/g, '');
-    const expiryDigits = expiry.replace(/\s|\/|/g, '');
+    const expiryDigits = expiry.replace(/[\s/]/g, '');
+    const normalizedExpiry = `${expiryDigits.slice(0, 2)}/${expiryDigits.slice(2)}`;
     
     const validationErrors = {};
     
@@ -217,9 +218,12 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
           ClientId: clientId || 1,
           RoomId: bookingData.room?.roomId || bookingData.room?.RoomId || bookingData.room?.id,
           nrPeople: (bookingData.adults || 1) + (bookingData.children || 0),
-          totalAmount: totalAmount,
+          totalAmount: roomTotal,
           paymentAmount: amountToPay,
           paymentType: paymentType,
+          cardNumber: cardNumberDigits,
+          cardExpiry: normalizedExpiry,
+          cardCVC: cvc,
           services: bookingData.services || {}
         })
       });
@@ -260,8 +264,11 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
         
         {/* MAIN CONTENT */}
         <div className="confirmation-content">
-          <h1 className="page-title">Finalize Reservation</h1>
-          <p className="page-subtitle">Please select your preferred payment method to confirm your stay</p>
+          <div className="confirmation-intro">
+            <span className="confirmation-eyebrow">Secure checkout</span>
+            <h1 className="page-title">Finalize Reservation</h1>
+            <p className="page-subtitle">Please select your preferred payment method to confirm your stay.</p>
+          </div>
 
           {/* PAYMENT OPTIONS SECTION */}
           <div className="section">
@@ -305,9 +312,12 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
 
           {/* CARD DETAILS SECTION */}
           <div className="section">
-            <div className="section-header">
-              <h2 className="section-title">Payment Information</h2>
-              <p className="section-subtitle">Enter your card details securely</p>
+            <div className="section-header payment-info-header">
+              <div>
+                <span className="payment-kicker">Encrypted payment</span>
+                <h2 className="section-title">Payment Information</h2>
+                <p className="section-subtitle">Enter your card details securely.</p>
+              </div>
             </div>
             
             <form className="card-form" onSubmit={handleSubmit}>
@@ -373,7 +383,7 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
 
         {/* RIGHT SIDEBAR */}
         <aside className="sidebar">
-          <div className="sidebar-header">Reservation Details</div>
+          <div className="sidebar-header">Booking Summary</div>
           <div className="sidebar-body">
             <div className="guest-summary">
               <div className="guest-count">{bookingData.adults + bookingData.children} {bookingData.adults + bookingData.children === 1 ? 'Guest' : 'Guests'}</div>
@@ -406,13 +416,13 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
               </div>
               {servicesTotal > 0 && (
                 <div className="breakdown-row">
-                  <span>Services & Add-ons</span>
+                  <span>Services due at hotel</span>
                   <span>€{servicesTotal.toFixed(2)}</span>
                 </div>
               )}
               <div className="divider"></div>
               <div className="breakdown-total">
-                <span>TOTAL</span>
+                <span>TOTAL DUE NOW</span>
                 <span>€{totalAmount.toFixed(2)}</span>
               </div>
             </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../Dashboard/Navbar';
+import { useNotification } from '../Notifications/NotificationProvider';
 import './ReservationDetail.css';
 
 const formatMoney = (value) => `${Number(value || 0).toFixed(2)} EUR`;
@@ -8,6 +9,7 @@ const formatMoney = (value) => `${Number(value || 0).toFixed(2)} EUR`;
 const ReservationDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { confirm, notify } = useNotification();
   const [loading, setLoading] = useState(true);
   const [reservation, setReservation] = useState(null);
   const [invoice, setInvoice] = useState(null);
@@ -145,22 +147,29 @@ const ReservationDetail = () => {
   };
 
   const handleCancelReservation = async () => {
-    if (!window.confirm('Are you sure you want to cancel this reservation?')) return;
+    const confirmed = await confirm({
+      title: 'Cancel reservation?',
+      message: 'Are you sure you want to cancel this reservation? This action updates the reservation status immediately.',
+      confirmText: 'Cancel stay',
+      cancelText: 'Keep stay',
+      tone: 'danger'
+    });
+    if (!confirmed) return;
     try {
       const response = await fetch(`http://localhost:9001/api/reservations/${id}/cancel`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' }
       });
       if (response.ok) {
-        alert('Reservation cancelled successfully!');
+        notify('Reservation cancelled successfully!', 'success');
         navigate('/dashboard');
       } else {
         const data = await response.json();
-        alert(data.message || 'Error cancelling reservation');
+        notify(data.message || 'Error cancelling reservation', 'error');
       }
     } catch (err) {
       console.error('Error cancelling reservation:', err);
-      alert('Error cancelling reservation');
+      notify('Error cancelling reservation', 'error');
     }
   };
 
@@ -225,9 +234,19 @@ const ReservationDetail = () => {
   const displayTotal = invoice ? parseFloat(invoice.totalAmount || 0) : accommodationTotal + servicesTotal;
   const remaining = calculateRemaining(displayTotal);
   const paymentStatus = remaining <= 0 ? 'paid' : totalPaid > 0 ? 'partial' : 'unpaid';
-  const reservationStatus = reservation.status || 'pending';
+  const reservationStatus = String(reservation.status || 'pending').toLowerCase();
   const checkInDate = new Date(reservation.requestedCheckin);
   const checkOutDate = new Date(reservation.requestedCheckout);
+  const now = new Date();
+  const reservationTimelineStatus = (() => {
+    if (reservationStatus === 'cancelled' || reservationStatus === 'canceled') return 'cancelled';
+    if (reservationStatus === 'completed' || checkOutDate < now) return 'completed';
+    if (checkInDate <= now && now < checkOutDate) return 'active';
+    if (now < checkInDate) return 'upcoming';
+    return reservationStatus;
+  })();
+  const canCancelReservation = reservationTimelineStatus === 'upcoming';
+  const canLeaveFeedback = reservationTimelineStatus === 'completed';
   const formatDate = (date) => date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   const formatTime = (date) => date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const guestCount = reservation.nrPeople || 1;
@@ -251,7 +270,6 @@ const ReservationDetail = () => {
           )}
           <div className="booking-hero-shade" />
           <div className="booking-hero-content">
-            <p className="booking-kicker">Selected Experience</p>
             <h1>{roomName}</h1>
             <div className="booking-hero-meta">
               <span>{roomTheme}</span>
@@ -355,7 +373,7 @@ const ReservationDetail = () => {
               <span>{reservation.reservationDate ? formatDate(new Date(reservation.reservationDate)) : formatDate(checkInDate)}</span>
             </div>
             {paymentStatus !== 'paid' && reservationStatus !== 'cancelled' && reservationStatus !== 'completed' ? (
-              <button className="booking-primary-btn" onClick={() => alert(`Procesare plata pentru ${formatMoney(remaining)}`)}>
+              <button className="booking-primary-btn" onClick={() => notify(`Payment processing for ${formatMoney(remaining)} will be available soon.`, 'info')}>
                 Pay {formatMoney(remaining)} now
               </button>
             ) : (
@@ -372,22 +390,23 @@ const ReservationDetail = () => {
               <span>{clientData?.Email || 'guest@example.com'}</span>
             </div>
             <div className="booking-secondary-actions">
-              {reservationStatus !== 'cancelled' && reservationStatus !== 'completed' && (
+              {canCancelReservation && (
                 <button type="button" onClick={handleCancelReservation}>Cancel Reservation</button>
               )}
-              <button
-                type="button"
-                disabled={reservationStatus !== 'completed'}
-                onClick={() => {
-                  if (reservationStatus === 'completed') {
-                    navigate(`/feedback/${reservation.ReservationId}`);
-                  } else {
-                    alert('You can only leave feedback after your stay is completed.');
-                  }
-                }}
-              >
-                Leave Feedback
-              </button>
+              {canLeaveFeedback && (
+                <button type="button" onClick={() => navigate(`/feedback/${reservation.ReservationId}`)}>
+                  Leave Feedback
+                </button>
+              )}
+              {!canCancelReservation && !canLeaveFeedback && (
+                <span className="booking-action-note">
+                  {reservationTimelineStatus === 'active'
+                    ? 'Feedback becomes available after checkout.'
+                    : reservationTimelineStatus === 'cancelled'
+                      ? 'This reservation has been cancelled.'
+                      : 'Actions are unavailable for this reservation.'}
+                </span>
+              )}
             </div>
           </div>
         </section>

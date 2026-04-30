@@ -13,11 +13,14 @@ import "./ProfilePage.css";
 import defaultProfilePic from "../../assets/profilePicture.jpg";
 import Navbar from "../Dashboard/Navbar";
 import { logout } from "../../services/authService";
+import { useNotification } from "../Notifications/NotificationProvider";
+import { isStrongPassword, isValidEmail, isValidPersonName } from "../../utils/validators";
 
 const API = "http://localhost:9001/api";
 
 export default function ProfileEdit() {
   const navigate = useNavigate();
+  const { confirm, notify } = useNotification();
   const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -128,14 +131,19 @@ export default function ProfileEdit() {
     setError("");
     setMessage("");
 
-    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
-      setError("First name, last name, and email are required.");
+    if (!isValidPersonName(firstName) || !isValidPersonName(lastName)) {
+      setError("First and last name must have at least 3 letters and cannot contain numbers or special symbols.");
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      setError("Please enter a valid email address.");
       return;
     }
 
     if (newPassword || confirmPassword) {
-      if (newPassword.length < 8) {
-        setError("New password must have at least 8 characters.");
+      if (!isStrongPassword(newPassword)) {
+        setError("New password must have at least 8 characters, one uppercase letter and one number.");
         return;
       }
       if (newPassword !== confirmPassword) {
@@ -204,10 +212,17 @@ export default function ProfileEdit() {
   async function handleDelete() {
     if (hasBlockingReservations) {
       setError("You cannot delete your account while you have upcoming or active reservations.");
+      notify("You cannot delete your account while you have upcoming or active reservations.", "warning");
       return;
     }
 
-    const confirmed = window.confirm("Delete your account permanently? This removes your bookings, loyalty points, and profile history.");
+    const confirmed = await confirm({
+      title: "Delete account?",
+      message: "This permanently removes your account, bookings, loyalty points, and profile history.",
+      confirmText: "Delete",
+      cancelText: "Keep account",
+      tone: "danger"
+    });
     if (!confirmed) return;
 
     setDeleting(true);

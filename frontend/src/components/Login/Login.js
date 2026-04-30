@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import bgImage from "../../assets/landingpagePhoto.jpg";
-import { login, register } from "../../services/authService";
+import { adminLogin, login, register } from "../../services/authService";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 import "./Login.css";
 import { EyeOpen, EyeClosed } from "./EyeIcons";
+import { isStrongPassword, isValidEmail, isValidPersonName } from "../../utils/validators";
 
 export default function Login() {
   const [mode, setMode] = useState("login"); // login | register
@@ -31,7 +32,11 @@ export default function Login() {
 
     try {
       if (mode === "login") {
-        await login(form.email, form.parola);
+        if (isAdminMode) {
+          await adminLogin(form.email, form.parola);
+        } else {
+          await login(form.email, form.parola);
+        }
 
         // 🔥 MAGIC HAPPENS HERE:
         // if login succeeded, redirect to the appropriate page
@@ -42,6 +47,20 @@ export default function Login() {
         }
       } 
       else {
+        if (!isValidPersonName(form.prenume) || !isValidPersonName(form.nume)) {
+          alert("First and last name must have at least 3 letters and cannot contain numbers or special symbols.");
+          return;
+        }
+
+        if (!isValidEmail(form.email)) {
+          alert("Please enter a valid email address.");
+          return;
+        }
+
+        if (!isStrongPassword(form.parola)) {
+          alert("Password must have at least 8 characters, one uppercase letter and one number.");
+          return;
+        }
 
         if (form.parola !== form.confirmParola) {
           alert("Passwords do not match");
@@ -205,8 +224,9 @@ export default function Login() {
                   <input
                     className="form-input"
                     name="nume"
-                    placeholder="Doe"
+                    placeholder="Marinescu"
                     onChange={handleChange}
+                    value={form.nume}
                     required
                   />
                 </div>
@@ -216,8 +236,9 @@ export default function Login() {
                   <input
                     className="form-input"
                     name="prenume"
-                    placeholder="John"
+                    placeholder="Catinca"
                     onChange={handleChange}
+                    value={form.prenume}
                     required
                   />
                 </div>
@@ -241,7 +262,7 @@ export default function Login() {
               <div className="label-row">
                 <label className="form-label">Password</label>
                 {mode === "login" && (
-                  <button type="button" className="forgot-link" onClick={() => alert('Feature coming soon')}>
+                  <button type="button" className="forgot-link" onClick={() => navigate("/forgot-password")}>
                     Forgot your password?
                   </button>
                 )}

@@ -17,6 +17,12 @@ export default function AdminBookings() {
   const sortRef = useRef(null);
     const [activeBookingsList, setActiveBookingsList] = useState([]);
     const [totalCashReceived, setTotalCashReceived] = useState(0);
+    const [bookingStats, setBookingStats] = useState({
+      totalBookings: 0,
+      activeStays: 0,
+      projectedRevenue: 0,
+      cashReceived: 0
+    });
       // Close sort dropdown on outside click
       useEffect(() => {
         function handleClickOutside(event) {
@@ -82,15 +88,33 @@ export default function AdminBookings() {
           setBookings(data.allBookings);
           setActiveBookingsList(data.activeBookings);
           setTotalCashReceived(data.totalCashReceived || 0);
+          setBookingStats(data.stats || {
+            totalBookings: data.allBookings.length,
+            activeStays: data.activeBookings.length,
+            projectedRevenue: 0,
+            cashReceived: data.totalCashReceived || 0
+          });
           console.log('[DEBUG] totalCashReceived from backend:', data.totalCashReceived);
         } else if (Array.isArray(data)) {
           setBookings(data);
           setActiveBookingsList([]);
             setTotalCashReceived(0);
+            setBookingStats({
+              totalBookings: data.length,
+              activeStays: 0,
+              projectedRevenue: 0,
+              cashReceived: 0
+            });
         } else {
           setBookings([]);
           setActiveBookingsList([]);
             setTotalCashReceived(0);
+            setBookingStats({
+              totalBookings: 0,
+              activeStays: 0,
+              projectedRevenue: 0,
+              cashReceived: 0
+            });
         }
         setLoading(false);
       })
@@ -99,6 +123,12 @@ export default function AdminBookings() {
         setError("Error loading bookings");
         setBookings([]);
         setActiveBookingsList([]);
+        setBookingStats({
+          totalBookings: 0,
+          activeStays: 0,
+          projectedRevenue: 0,
+          cashReceived: 0
+        });
         setLoading(false);
       });
   };
@@ -113,15 +143,10 @@ export default function AdminBookings() {
   // Store both lists from backend (already declared above, remove duplicate)
 
   // Statistics
-  const totalBookings = bookings.length;
-  const activeBookings = activeBookingsList.length;
-  // Projected Revenue: bookings that are not cancelled (active, completed, upcoming, etc)
-  const totalRevenue = bookings.reduce((sum, b) => {
-    if (b.status?.toLowerCase() === 'cancelled') return sum;
-    return sum + (parseFloat(b.totalPrice) || 0);
-  }, 0);
-  // Only count received cash for bookings that are completed (not cancelled) and fully paid
-    // totalCashReceived now comes from backend
+  const totalBookings = bookingStats.totalBookings || bookings.length;
+  const activeBookings = bookingStats.activeStays || activeBookingsList.length;
+  const totalRevenue = bookingStats.projectedRevenue || 0;
+  const cashReceived = bookingStats.cashReceived ?? totalCashReceived;
 
   // Filtering and sorting
   const filtered = useMemo(() => {
@@ -207,7 +232,7 @@ export default function AdminBookings() {
 
           <div className="booking-stat-card">
             <div className="booking-stat-label">Cash Received</div>
-            <div className="booking-stat-value">€{(totalCashReceived / 1000).toFixed(1)}k</div>
+            <div className="booking-stat-value">€{(cashReceived / 1000).toFixed(1)}k</div>
             <div className="booking-stat-trend">Collected</div>
           </div>
       </div>

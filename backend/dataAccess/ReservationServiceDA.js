@@ -2,6 +2,7 @@
 import ReservationService from "../entities/ReservationService.js";
 import Service from "../entities/Service.js";
 import Reservation from "../entities/Reservation.js";
+import { isPositiveInteger, isValidEmail, isValidPersonName } from "../utils/validators.js";
 
 function normalizeReservationServicePayload(data) {
   return {
@@ -19,8 +20,8 @@ function validatePersonDetails(personDetails) {
   }
 
   for (const person of personDetails) {
-    if (!person?.name?.trim() || !person?.email?.trim()) {
-      throw new Error("Each person must have name and email");
+    if (!isValidPersonName(person?.name) || !isValidEmail(person?.email)) {
+      throw new Error("Each person must have a valid full name and email");
     }
   }
 }
@@ -36,16 +37,24 @@ export async function addServiceToReservation(data) {
 
   const service = await Service.findByPk(ServiceId);
   if (!service) throw new Error("Service not found");
+  if (service.status !== "activ" || !service.bookableOnline) {
+    throw new Error("Selected service is not available");
+  }
 
   const reservation = await Reservation.findByPk(ReservationId);
   if (!reservation) throw new Error("Reservation not found");
 
   const isPerPerson = service.priceType === "per_person";
-  let quantity = Math.max(1, normalized.quantity || 1);
+  if (!isPositiveInteger(normalized.quantity)) {
+    throw new Error("Service quantity must be a positive number");
+  }
+  let quantity = normalized.quantity;
 
   if (isPerPerson) {
-    validatePersonDetails(personDetails);
-    quantity = personDetails.length;
+    if (personDetails) {
+      validatePersonDetails(personDetails);
+      quantity = personDetails.length;
+    }
 
     const maxPeople = reservation.nrPeople || 1;
     if (quantity > maxPeople) {

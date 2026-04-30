@@ -9,6 +9,10 @@ import {
   clearReservationServices,
   calculateServicesTotal
 } from "../dataAccess/ReservationServiceDA.js";
+import Client from "../entities/Client.js";
+import Reservation from "../entities/Reservation.js";
+import Service from "../entities/Service.js";
+import { sendServiceAddedEmail } from "../services/emailService.js";
 
 const reservationServiceRouter = express.Router();
 
@@ -16,7 +20,35 @@ const reservationServiceRouter = express.Router();
 reservationServiceRouter.post("/", async (req, res) => {
   try {
     const service = await addServiceToReservation(req.body);
-    res.status(201).json(service);
+
+    let emailResult = { success: false, error: "Email was not attempted." };
+    try {
+      const reservation = await Reservation.findByPk(service.ReservationId);
+      const client = reservation ? await Client.findByPk(reservation.ClientId) : null;
+      const serviceDetails = await Service.findByPk(service.ServiceId);
+
+      emailResult = await sendServiceAddedEmail({
+        client,
+        reservation,
+        service: serviceDetails,
+        reservationService: service
+      });
+
+      if (!emailResult.success) {
+        console.warn("[SERVICE EMAIL] Confirmation email not sent:", emailResult.error);
+      }
+    } catch (emailError) {
+      emailResult = { success: false, error: emailError.message };
+      console.error("[SERVICE EMAIL ERROR]", emailError);
+    }
+
+    res.status(201).json({
+      service,
+      email: {
+        sent: Boolean(emailResult.success),
+        error: emailResult.success ? undefined : emailResult.error
+      }
+    });
   } catch (err) {
     console.error(err);
     res.status(400).json({ message: err.message || "server error" });

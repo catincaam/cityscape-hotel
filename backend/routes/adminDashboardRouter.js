@@ -1,4 +1,5 @@
 import express from "express";
+import axios from "axios";
 import { Op } from "sequelize";
 import Reservation from "../entities/Reservation.js";
 import Room from "../entities/Room.js";
@@ -8,8 +9,96 @@ import Client from "../entities/Client.js";
 import Service from "../entities/Service.js";
 import Invoice from "../entities/Invoice.js";
 import Payment from "../entities/Payment.js";
+import RoomReservation from "../entities/RoomReservation.js";
+import RoomTheme from "../entities/RoomTheme.js";
+import ReservationService from "../entities/ReservationService.js";
 
 const dashboardRouter = express.Router();
+
+function getDaysBetween(start, end) {
+  return Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
+}
+
+function clampDate(date, min, max) {
+  return new Date(Math.min(Math.max(date.getTime(), min.getTime()), max.getTime()));
+}
+
+function overlaps(startA, endA, startB, endB) {
+  return startA < endB && endA > startB;
+}
+
+function formatShortDate(date) {
+  return date.toLocaleDateString("en-US", { weekday: "short" });
+}
+
+function formatDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function toNumber(value) {
+  return Number.parseFloat(value || 0) || 0;
+}
+
+function isRealBooking(reservation) {
+  const invoice = reservation.Invoice;
+  if (!invoice) return false;
+  const total = toNumber(invoice.totalAmount);
+  const paid = (invoice.payments || []).reduce((sum, payment) => sum + toNumber(payment.amount), 0);
+  return total > 0 && paid >= total * 0.2;
+}
+
+function getBusinessStatus(reservation, now = new Date()) {
+  if (reservation.status === "cancelled") return "cancelled";
+  const checkin = new Date(reservation.requestedCheckin);
+  const checkout = new Date(reservation.requestedCheckout);
+  if (checkin <= now && now <= checkout) return "active";
+  if (checkout < now) return "completed";
+  return "upcoming";
+}
+
+async function getDashboardReservations() {
+  return Reservation.findAll({
+    include: [
+      {
+        model: Client,
+        attributes: ["ClientId", "FirstName", "LastName", "Email", "profilePicture"],
+        required: false
+      },
+      {
+        model: Invoice,
+        as: "Invoice",
+        required: false,
+        include: [
+          {
+            model: Payment,
+            as: "payments",
+            required: false
+          }
+        ]
+      },
+      {
+        model: RoomReservation,
+        required: false,
+        include: [
+          {
+            model: Room,
+            required: false,
+            include: [
+              {
+                model: RoomTheme,
+                required: false
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    order: [["requestedCheckin", "ASC"]]
+  });
+}
 
 // Helper: Get date range based on period
 function getDateRange(period) {
@@ -92,6 +181,294 @@ function getDateRange(period) {
   
   return { start, end };
 }
+
+dashboardRouter.get("/overview", async (req, res) => {
+  try {
+    const period = req.query.period || "thisMonth";
+    const { start, end } = getDateRange(period);
+    const now = new Date();
+    const periodDays = getDaysBetween(start, end);
+    const previousEnd = new Date(start);
+    const previousStart = new Date(start);
+    previousStart.setDate(previousStart.getDate() - periodDays);
+
+    const [reservationsRaw, totalRooms, services, feedbacks] = await Promise.all([
+      getDashboardReservations(),
+      Room.count(),
+      Service.findAll({ attributes: ["ServiceId", "name", "category"] }),
+      Feedback.findAll({
+        include: [
+          { model: Client, attributes: ["FirstName", "LastName", "profilePicture"], required: false },
+          { model: Reservation, attributes: ["ReservationId"], required: false }
+        ],
+        order: [["submissionDate", "DESC"], ["createdAt", "DESC"]]
+      })
+    ]);
+
+    const reservations = reservationsRaw.filter(isRealBooking);
+    const periodReservations = reservations.filter((reservation) => {
+      const checkin = new Date(reservation.requestedCheckin);
+      const checkout = new Date(reservation.requestedCheckout);
+      return overlaps(checkin, checkout, start, end);
+    });
+    const previousReservations = reservations.filter((reservation) => {
+      const checkin = new Date(reservation.requestedCheckin);
+      const checkout = new Date(reservation.requestedCheckout);
+      return overlaps(checkin, checkout, previousStart, previousEnd);
+    });
+
+    const getRecognizedRevenue = (list) => list.reduce((sum, reservation) => {
+      const status = getBusinessStatus(reservation, now);
+      if (!["active", "completed"].includes(status)) return sum;
+      if (reservation.status === "cancelled") return sum;
+      return sum + (reservation.Invoice?.payments || []).reduce((paid, payment) => paid + toNumber(payment.amount), 0);
+    }, 0);
+
+    const revenue = getRecognizedRevenue(periodReservations);
+    const previousRevenue = getRecognizedRevenue(previousReservations);
+    const invoiceValues = periodReservations
+      .filter((reservation) => reservation.status !== "cancelled")
+      .map((reservation) => toNumber(reservation.Invoice?.totalAmount))
+      .filter(Boolean);
+    const previousInvoiceValues = previousReservations
+      .filter((reservation) => reservation.status !== "cancelled")
+      .map((reservation) => toNumber(reservation.Invoice?.totalAmount))
+      .filter(Boolean);
+    const avgBookingValue = invoiceValues.length
+      ? Math.round(invoiceValues.reduce((sum, value) => sum + value, 0) / invoiceValues.length)
+      : 0;
+    const previousAvgBookingValue = previousInvoiceValues.length
+      ? Math.round(previousInvoiceValues.reduce((sum, value) => sum + value, 0) / previousInvoiceValues.length)
+      : 0;
+
+    const getOccupiedRoomNights = (list, rangeStart, rangeEnd) => list.reduce((sum, reservation) => {
+      if (reservation.status === "cancelled") return sum;
+      const checkin = new Date(reservation.requestedCheckin);
+      const checkout = new Date(reservation.requestedCheckout);
+      if (!overlaps(checkin, checkout, rangeStart, rangeEnd)) return sum;
+      const overlapStart = clampDate(checkin, rangeStart, rangeEnd);
+      const overlapEnd = clampDate(checkout, rangeStart, rangeEnd);
+      const roomCount = Math.max(1, reservation.RoomReservations?.length || 1);
+      return sum + getDaysBetween(overlapStart, overlapEnd) * roomCount;
+    }, 0);
+
+    const occupiedRoomNights = getOccupiedRoomNights(periodReservations, start, end);
+    const previousOccupiedRoomNights = getOccupiedRoomNights(previousReservations, previousStart, previousEnd);
+    const capacityRoomNights = Math.max(1, totalRooms * periodDays);
+    const previousCapacityRoomNights = Math.max(1, totalRooms * periodDays);
+    const occupancyRate = Math.round((occupiedRoomNights / capacityRoomNights) * 100);
+    const previousOccupancyRate = Math.round((previousOccupiedRoomNights / previousCapacityRoomNights) * 100);
+
+    const periodFeedbacks = feedbacks.filter((feedback) => {
+      const created = new Date(feedback.createdAt);
+      return created >= start && created <= end;
+    });
+    const previousFeedbacks = feedbacks.filter((feedback) => {
+      const created = new Date(feedback.createdAt);
+      return created >= previousStart && created < previousEnd;
+    });
+    const averageRating = (list) => {
+      const ratings = list.map((feedback) => Number(feedback.overall || feedback.service || 0)).filter(Boolean);
+      return ratings.length ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length : 0;
+    };
+    const satisfaction = Number(averageRating(periodFeedbacks).toFixed(1));
+    const previousSatisfaction = Number(averageRating(previousFeedbacks).toFixed(1));
+
+    const bookingTrend = [];
+    const trendStart = new Date(end);
+    trendStart.setDate(end.getDate() - 6);
+    trendStart.setHours(0, 0, 0, 0);
+    for (let index = 0; index < 7; index += 1) {
+      const dayStart = new Date(trendStart);
+      dayStart.setDate(trendStart.getDate() + index);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(dayStart);
+      dayEnd.setDate(dayEnd.getDate() + 1);
+      const occupied = getOccupiedRoomNights(periodReservations, dayStart, dayEnd);
+      bookingTrend.push({
+        label: formatShortDate(dayStart),
+        date: formatDateKey(dayStart),
+        bookings: periodReservations.filter((reservation) => {
+          const checkin = new Date(reservation.requestedCheckin);
+          return checkin >= dayStart && checkin < dayEnd;
+        }).length,
+        occupancy: Math.round((occupied / Math.max(1, totalRooms)) * 100)
+      });
+    }
+
+    const revenueByCityMap = {};
+    periodReservations.forEach((reservation) => {
+      if (reservation.status === "cancelled") return;
+      const amount = toNumber(reservation.Invoice?.totalAmount);
+      const roomTheme = reservation.RoomReservations?.[0]?.Room?.RoomTheme;
+      const city = roomTheme?.city || "Unknown";
+      revenueByCityMap[city] = (revenueByCityMap[city] || 0) + amount;
+    });
+    const revenueByCity = Object.entries(revenueByCityMap)
+      .map(([city, amount]) => ({ city, amount: Math.round(amount) }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 5);
+
+    const heatmapStart = new Date(end);
+    heatmapStart.setDate(end.getDate() - 34);
+    heatmapStart.setHours(0, 0, 0, 0);
+    const occupancyHeatmap = [];
+    for (let index = 0; index < 35; index += 1) {
+      const dayStart = new Date(heatmapStart);
+      dayStart.setDate(heatmapStart.getDate() + index);
+      const dayEnd = new Date(dayStart);
+      dayEnd.setDate(dayEnd.getDate() + 1);
+      const occupied = getOccupiedRoomNights(reservations, dayStart, dayEnd);
+      occupancyHeatmap.push({
+        date: formatDateKey(dayStart),
+        value: Math.round((occupied / Math.max(1, totalRooms)) * 100)
+      });
+    }
+
+    const periodReservationIds = periodReservations.map((reservation) => reservation.ReservationId);
+    const reservationServices = periodReservationIds.length
+      ? await ReservationService.findAll({
+          where: { ReservationId: { [Op.in]: periodReservationIds } },
+          include: [{ model: Service, required: false }]
+        })
+      : [];
+    const serviceMap = {};
+    reservationServices.forEach((reservationService) => {
+      const service = reservationService.Service;
+      const category = service?.category || "Other";
+      const quantity = Number(reservationService.quantity || 1);
+      serviceMap[category] = (serviceMap[category] || 0) + quantity;
+    });
+    if (!Object.keys(serviceMap).length) {
+      services.forEach((service) => {
+        serviceMap[service.category || "Other"] = serviceMap[service.category || "Other"] || 0;
+      });
+    }
+    const serviceTotal = Object.values(serviceMap).reduce((sum, value) => sum + value, 0);
+    const serviceUsage = Object.entries(serviceMap)
+      .map(([category, count]) => ({
+        category,
+        count,
+        percentage: serviceTotal ? Math.round((count / serviceTotal) * 100) : 0
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    const recentFeedback = feedbacks.slice(0, 3).map((feedback) => ({
+      id: feedback.id,
+      guestName: feedback.Client ? `${feedback.Client.FirstName} ${feedback.Client.LastName}` : "Guest",
+      avatar: feedback.Client?.profilePicture || null,
+      rating: Number(feedback.overall || feedback.service || 0),
+      comment: feedback.comment || "No written comment yet.",
+      createdAt: feedback.createdAt,
+      submissionDate: feedback.submissionDate
+    }));
+
+    const pctChange = (current, previous) => {
+      if (!previous && current) return 100;
+      if (!previous) return 0;
+      return Math.round(((current - previous) / previous) * 100);
+    };
+
+    res.json({
+      period,
+      kpis: {
+        revenue: Math.round(revenue),
+        revenueChange: pctChange(revenue, previousRevenue),
+        occupancyRate,
+        occupancyChange: occupancyRate - previousOccupancyRate,
+        avgBookingValue,
+        avgBookingChange: pctChange(avgBookingValue, previousAvgBookingValue),
+        satisfaction,
+        satisfactionChange: Number((satisfaction - previousSatisfaction).toFixed(1))
+      },
+      bookingTrend,
+      revenueByCity,
+      occupancyHeatmap,
+      serviceUsage,
+      recentFeedback,
+      predictiveTodo: true
+    });
+  } catch (err) {
+    console.error("[DASHBOARD OVERVIEW ERROR]", err);
+    res.status(500).json({ message: "server error", error: err.message });
+  }
+});
+
+dashboardRouter.get("/predictions", async (req, res) => {
+  try {
+    const horizon = Number(req.query.horizon || 7);
+    const mlUrl = process.env.ML_SERVICE_URL || "http://127.0.0.1:9100/predict";
+    const now = new Date();
+    const historyStart = new Date(now);
+    historyStart.setDate(now.getDate() - 89);
+    historyStart.setHours(0, 0, 0, 0);
+
+    const [reservationsRaw, totalRooms] = await Promise.all([
+      getDashboardReservations(),
+      Room.count()
+    ]);
+    const reservations = reservationsRaw.filter(isRealBooking);
+
+    const history = [];
+    for (let index = 0; index < 90; index += 1) {
+      const dayStart = new Date(historyStart);
+      dayStart.setDate(historyStart.getDate() + index);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(dayStart);
+      dayEnd.setDate(dayEnd.getDate() + 1);
+
+      const dayReservations = reservations.filter((reservation) => {
+        const checkin = new Date(reservation.requestedCheckin);
+        return checkin >= dayStart && checkin < dayEnd;
+      });
+
+      const dayRevenue = dayReservations.reduce((sum, reservation) => {
+        if (reservation.status === "cancelled") return sum;
+        return sum + toNumber(reservation.Invoice?.totalAmount);
+      }, 0);
+
+      const occupiedRoomNights = reservations.reduce((sum, reservation) => {
+        if (reservation.status === "cancelled") return sum;
+        const checkin = new Date(reservation.requestedCheckin);
+        const checkout = new Date(reservation.requestedCheckout);
+        if (!overlaps(checkin, checkout, dayStart, dayEnd)) return sum;
+        return sum + Math.max(1, reservation.RoomReservations?.length || 1);
+      }, 0);
+
+      history.push({
+        date: formatDateKey(dayStart),
+        bookings: dayReservations.length,
+        revenue: Math.round(dayRevenue * 100) / 100,
+        occupancyRate: Math.round((occupiedRoomNights / Math.max(1, totalRooms)) * 100)
+      });
+    }
+
+    const response = await axios.post(mlUrl, {
+      horizon,
+      history,
+      meta: {
+        generatedAt: now.toISOString(),
+        totalRooms
+      }
+    }, {
+      timeout: 5000
+    });
+
+    res.json({
+      source: "python-ml-service",
+      mlUrl,
+      ...response.data
+    });
+  } catch (err) {
+    console.error("[DASHBOARD PREDICTIONS ERROR]", err.message);
+    res.status(503).json({
+      message: "Prediction service unavailable",
+      detail: err.message,
+      source: "python-ml-service"
+    });
+  }
+});
 
 // KPI: Total Revenue, Average Occupancy, Satisfaction Score, Cash Received
 // GET /api/admin/dashboard/kpi?period=thisMonth
@@ -364,8 +741,8 @@ dashboardRouter.get("/recent-feedback", async (req, res) => {
           attributes: ['ReservationId', 'requestedCheckin', 'requestedCheckout']
         }
       ],
-      order: [["createdAt", "DESC"]],
-      limit: 5
+      order: [["submissionDate", "DESC"], ["createdAt", "DESC"]],
+      limit: 3
     });
     res.json(feedbacks);
   } catch (err) {

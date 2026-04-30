@@ -153,20 +153,18 @@ export default function RoomDetails() {
             <div className="rating">Premium Experience</div>
           </div>
 
-          {/* GALLERY THUMBNAILS */}
           {images.length > 1 && (
-            <div className="image-gallery">
+            <div className="room-gallery-strip" aria-label="Room gallery">
               {images.map((img, index) => (
-                <img
+                <button
                   key={index}
-                  src={img}
-                  alt={`${room.name} ${index + 1}`}
-                  className={`thumbnail ${selectedImage === index ? 'active' : ''}`}
-                  onClick={() => {
-                    setSelectedImage(index);
-                    handleImageClick(index);
-                  }}
-                />
+                  type="button"
+                  className={`gallery-tile ${selectedImage === index ? "active" : ""}`}
+                  onClick={() => setSelectedImage(index)}
+                  onDoubleClick={() => handleImageClick(index)}
+                >
+                  <img src={img} alt={`${room.name} ${index + 1}`} />
+                </button>
               ))}
             </div>
           )}
@@ -175,22 +173,22 @@ export default function RoomDetails() {
         <div className="room-content">
           {/* LEFT CONTENT */}
           <div className="room-main">
-            <section className="section">
+            <section className="room-section">
               <h2>Your Experience</h2>
               <p className="description">{room.description}</p>
             </section>
 
-            <section className="section room-details-inline">
-              <p className="details-meta">
-                {room.city && <span>{room.city}</span>}
-                {room.maxGuests && <span>{room.maxGuests} guests</span>}
-                {room.bedType && <span>{room.bedType} bed</span>}
-                {room.size && <span>{room.size} m²</span>}
-              </p>
+            <section className="room-section room-details-inline">
+              <div className="details-meta">
+                {room.city && <div><span>Destination</span><strong>{room.city}</strong></div>}
+                {room.maxGuests && <div><span>Guests</span><strong>{room.maxGuests}</strong></div>}
+                {room.bedType && <div><span>Bed</span><strong>{room.bedType}</strong></div>}
+                {room.size && <div><span>Surface</span><strong>{room.size} sqm</strong></div>}
+              </div>
               {room.theme && <p className="details-theme">{room.theme}</p>}
             </section>
 
-            <section className="section">
+            <section className="room-section">
               <h3>What this room offers</h3>
               <div className="amenities">
                 {amenitiesList.map((a, index) => (
@@ -208,7 +206,7 @@ export default function RoomDetails() {
           <aside className="booking-box">
             <div className="price-section">
               <div className="price">
-                <strong>€{room.basePrice}</strong>
+                <strong>{room.basePrice} EUR</strong>
                 <span>/ night</span>
               </div>
             </div>
@@ -244,14 +242,3 @@ export default function RoomDetails() {
   );
 }
 
-function Spec({ label, value, icon }) {
-  return (
-    <div className="spec">
-      <span className="spec-icon">{icon}</span>
-      <div className="spec-content">
-        <span className="spec-label">{label}</span>
-        <strong className="spec-value">{value}</strong>
-      </div>
-    </div>
-  );
-}

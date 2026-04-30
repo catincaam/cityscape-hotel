@@ -7,7 +7,7 @@ export default function BookingSuccess() {
   const location = useLocation();
   const navigate = useNavigate();
   const [bookingDetails, setBookingDetails] = useState(null);
-  const [showcaseImage, setShowcaseImage] = useState(null);
+  const [roomImages, setRoomImages] = useState([]);
   const [roomTheme, setRoomTheme] = useState(null);
 
   useEffect(() => {
@@ -30,9 +30,11 @@ export default function BookingSuccess() {
           const res = await fetch(`http://localhost:9001/api/room-themes/${roomId}`);
           const data = await res.json();
           setRoomTheme(data);
-          if (data.showcaseImage) {
-            setShowcaseImage(`http://localhost:9001${data.showcaseImage}`);
-          }
+          const galleryImages = (data.images || [])
+            .filter(Boolean)
+            .map((img) => img.startsWith("http") ? img : `http://localhost:9001${img}`)
+            .filter((img) => img !== `http://localhost:9001${data.showcaseImage}`);
+          setRoomImages(galleryImages);
         }
       } catch (err) {
         console.error("Error fetching room theme:", err);
@@ -56,16 +58,15 @@ export default function BookingSuccess() {
   const servicesCost = bookingDetails?.costBreakdown?.servicesTotal || 0;
   const totalBeforeTax = roomCost + servicesCost;
   const taxFees = (invoice?.totalAmount || 0) - totalBeforeTax;
+  const reservationId = reservation?.ReservationId
+    || reservation?.id
+    || bookingDetails?.ReservationId
+    || bookingDetails?.id;
+  const emailWasSent = bookingDetails?.email?.sent;
 
   // Download invoice PDF
   const handleDownloadInvoice = async () => {
     try {
-      // Extract reservation ID from different possible locations
-      let reservationId = bookingDetails?.reservation?.ReservationId 
-                        || bookingDetails?.reservation?.id
-                        || bookingDetails?.ReservationId
-                        || bookingDetails?.id;
-      
       console.log("📋 Full bookingDetails:", bookingDetails);
       console.log("📋 Reservation object:", bookingDetails?.reservation);
       console.log("🔍 Extracted Reservation ID:", reservationId);
@@ -114,7 +115,10 @@ export default function BookingSuccess() {
         {/* MAIN HEADING */}
         <div className="confirmation-heading">
           <h1>Your stay is confirmed</h1>
-          <p>We look forward to welcoming you to our sanctuary. A confirmation email has been sent to your inbox.</p>
+          <p>
+            Your reservation is saved and ready in your dashboard.
+            {emailWasSent ? " A confirmation email has also been sent to your inbox." : ""}
+          </p>
         </div>
 
         {/* MAIN LAYOUT */}
@@ -206,7 +210,12 @@ export default function BookingSuccess() {
                   <span className="amount paid-amount">€{Number(payment?.amount).toFixed(2)}</span>
                 </div>
               </div>
-              <button className="btn-view-details">VIEW RESERVATION DETAILS</button>
+              <button
+                className="btn-view-details"
+                onClick={() => reservationId && navigate(`/reservation/${reservationId}`)}
+              >
+                VIEW RESERVATION DETAILS
+              </button>
               <button 
                 className="btn-download"
                 onClick={handleDownloadInvoice}
@@ -223,31 +232,35 @@ export default function BookingSuccess() {
           <div className="next-steps-grid">
             <div className="next-step">
               <div className="step-number">01</div>
-              <p>Download the Cityscape App for a seamless contactless check-in experience.</p>
+              <p>Open your reservation details whenever you want to review dates, payment status, or included services.</p>
             </div>
             <div className="next-step">
               <div className="step-number">02</div>
-              <p>Visit our Concierge portal if you wish to pre-book treatments or dining reservations.</p>
+              <p>You can download your invoice now or later from the reservation page.</p>
             </div>
             <div className="next-step">
               <div className="step-number">03</div>
-              <p>Suite travels. We will reach out 48 hours prior to your arrival with final instructions.</p>
+              <p>If your plans change, check the cancellation option from your reservation details.</p>
             </div>
           </div>
         </div>
 
-        {/* CITY SHOWCASE */}
-        {showcaseImage && (
-          <div className="city-showcase-section">
-            <h3>Your Destination</h3>
-            <div className="showcase-image-container">
-              <img src={showcaseImage} alt={roomTheme?.city || bookingDetails?.room?.city || "Destination"} className="showcase-image" />
-              <div className="showcase-overlay">
-                <div className="showcase-content">
-                  <h2>{roomTheme?.city || bookingDetails?.room?.city || "Destination"}</h2>
-                  <p className="showcase-theme">{roomTheme?.theme || bookingDetails?.room?.theme || "Themed Room"}</p>
-                </div>
-              </div>
+        {/* ROOM GALLERY */}
+        {roomImages.length > 0 && (
+          <div className="room-gallery-section">
+            <div className="room-gallery-header">
+              <h3>Your Room</h3>
+              <span>{roomTheme?.name || bookingDetails?.room?.name || "Selected room"}</span>
+            </div>
+            <div className={`room-gallery-grid count-${Math.min(roomImages.length, 3)}`}>
+              {roomImages.slice(0, 3).map((image, index) => (
+                <img
+                  key={`${image}-${index}`}
+                  src={image}
+                  alt={`${roomTheme?.name || "Room"} ${index + 1}`}
+                  className="room-gallery-image"
+                />
+              ))}
             </div>
           </div>
         )}
@@ -259,9 +272,6 @@ export default function BookingSuccess() {
             onClick={() => navigate("/dashboard")}
           >
             Back to Dashboard
-          </button>
-          <button type="button" className="btn-link" onClick={() => navigate("/dashboard")}>
-            Back to Cityscape
           </button>
         </div>
       </div>

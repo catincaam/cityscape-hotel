@@ -44,18 +44,26 @@ export default function ProfilePage() {
     loadPoints();
   }, [userId]);
 
-  const reservations = useMemo(() => userData?.recentReservations || [], [userData?.recentReservations]);
+  const reservations = useMemo(() => userData?.allReservations || userData?.recentReservations || [], [userData?.allReservations, userData?.recentReservations]);
+  const validReservations = useMemo(() => reservations.filter((reservation) => {
+    const status = String(reservation.status || "").toLowerCase();
+    return !["cancelled", "canceled", "pending"].includes(status);
+  }), [reservations]);
   const user = {
     firstName: userData?.client?.FirstName || "Guest",
     lastName: userData?.client?.LastName || "",
     email: userData?.client?.Email || "guest@cityscape.com",
-    level: userPoints >= 500 ? "Gold Tier Member" : "Explorer Member",
+    level: `${userData?.clientTier?.tip || userData?.client?.TypeClientTip || "Standard"} Tier Member`,
+    tier: userData?.clientTier?.tip || userData?.client?.TypeClientTip || "Standard",
+    tierBenefits: userData?.clientTier?.benefits || "Basic member access and loyalty points.",
+    tierDiscount: Number(userData?.clientTier?.discount || 0),
+    completedStayCount: Number(userData?.clientTier?.completedStayCount || 0),
     points: userPoints,
   };
 
   const favoriteCity = useMemo(() => {
-    if (!reservations.length) return "No destination yet";
-    const cityCounts = reservations.reduce((counts, reservation) => {
+    if (!validReservations.length) return "No destination yet";
+    const cityCounts = validReservations.reduce((counts, reservation) => {
       const city = reservation.city || "Cityscape";
       counts[city] = (counts[city] || 0) + 1;
       return counts;
@@ -64,14 +72,25 @@ export default function ProfilePage() {
     return Object.keys(cityCounts).reduce((favorite, city) => (
       cityCounts[city] > cityCounts[favorite] ? city : favorite
     ));
-  }, [reservations]);
+  }, [validReservations]);
 
-  const upcomingReservations = reservations
+  const upcomingReservations = validReservations
     .filter(reservation => reservation.status === "upcoming" || reservation.status === "active")
     .slice(0, 3);
-  const displayedReservations = upcomingReservations.length ? upcomingReservations : reservations.slice(0, 3);
-  const citiesVisited = new Set(reservations.map(reservation => reservation.city).filter(Boolean)).size;
-  const totalSpent = reservations.reduce((sum, reservation) => sum + (parseFloat(reservation.totalAmount) || 0), 0);
+  const displayedReservations = upcomingReservations.length ? upcomingReservations : validReservations.slice(0, 3);
+  const citiesVisited = new Set(validReservations.map(reservation => reservation.city).filter(Boolean)).size;
+  const totalSpent = reservations
+    .filter(reservation => {
+      const status = String(reservation.status || "").toLowerCase();
+      const checkout = reservation.checkOut ? new Date(reservation.checkOut) : null;
+      return status === "completed" || (checkout && checkout < new Date());
+    })
+    .reduce((sum, reservation) => sum + (parseFloat(reservation.totalAmount) || 0), 0);
+
+  const formatMoney = (value) => `${Number(value || 0).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })} EUR`;
 
   const formatDate = (date) => {
     if (!date) return "TBD";
@@ -112,7 +131,7 @@ export default function ProfilePage() {
             </button>
             <button type="button" onClick={() => navigate("/services")}>
               <Sparkles size={16} />
-              Curated Services
+              Hotel Services
             </button>
             <button type="button" onClick={() => navigate("/profile/edit")}>
               <Settings size={16} />
@@ -147,7 +166,7 @@ export default function ProfilePage() {
             </div>
             <div>
               <span>Stays</span>
-              <strong>{reservations.length}</strong>
+              <strong>{validReservations.length}</strong>
             </div>
             <div>
               <span>Cities</span>
@@ -162,8 +181,7 @@ export default function ProfilePage() {
           <section className="profile-stays-panel">
             <div className="profile-section-heading">
               <div>
-                <p>Upcoming</p>
-                <h2>Recent Stays</h2>
+                <h2>Upcoming Stays</h2>
               </div>
               <button onClick={() => navigate("/reservations")}>View All</button>
             </div>
@@ -201,7 +219,7 @@ export default function ProfilePage() {
                         </div>
                         <div>
                           <span>Total</span>
-                          <strong>{reservation.totalAmount || 0} RON</strong>
+                          <strong>{formatMoney(reservation.totalAmount)}</strong>
                         </div>
                       </div>
                       <button onClick={() => navigate(`/reservation/${reservation.reservationId}`)}>
@@ -216,15 +234,18 @@ export default function ProfilePage() {
 
           <section className="profile-insights">
             <div className="profile-insight-card">
-              <p>Member Rewards</p>
-              <h3>{user.points.toLocaleString("en-US")} pts</h3>
-              <span>Use your points for curated hotel experiences.</span>
+              <p>Member Tier</p>
+              <h3>{user.tier}</h3>
+              <span>
+                {user.completedStayCount} completed {user.completedStayCount === 1 ? "stay" : "stays"}
+                {user.tierDiscount ? ` · ${user.tierDiscount}% member benefit` : ""}
+              </span>
               <button onClick={() => navigate("/rewards")}>Open Rewards</button>
             </div>
 
             <div className="profile-insight-card muted">
               <p>Total Spend</p>
-              <h3>{totalSpent.toLocaleString("en-US", { maximumFractionDigits: 0 })} RON</h3>
+              <h3>{formatMoney(totalSpent)}</h3>
               <span>A quiet overview of your completed Cityscape journey.</span>
               <button onClick={() => navigate("/reservations")}>See Stays</button>
             </div>

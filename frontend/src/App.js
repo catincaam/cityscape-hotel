@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./components/Login/Login";
+import ForgotPassword from "./components/Login/ForgotPassword";
+import ResetPassword from "./components/Login/ResetPassword";
 import Dashboard from "./components/Dashboard/Dashboard";
 import Presentation from "./components/Presentation/Presentation";
 import Booking from "./components/Booking/Booking";
@@ -28,6 +30,8 @@ export default function App() {
         {/* LOGIN */}
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* DASHBOARD */}
         <Route

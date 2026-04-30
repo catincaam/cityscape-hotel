@@ -485,6 +485,68 @@
   letter-spacing: 0.5px;
 }
 
+/* ROOM GALLERY */
+.room-gallery-section {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  margin-bottom: 40px;
+  overflow: hidden;
+}
+
+.room-gallery-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid #e5d5c8;
+  padding-bottom: 14px;
+}
+
+.room-gallery-header h3 {
+  font-size: 1.2rem;
+  color: #1f2937;
+  margin: 0;
+  font-weight: 600;
+}
+
+.room-gallery-header span {
+  color: #b8956d;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  font-weight: 700;
+}
+
+.room-gallery-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 14px;
+  min-height: 220px;
+}
+
+.room-gallery-grid.count-1 {
+  grid-template-columns: 1fr;
+}
+
+.room-gallery-grid.count-2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.room-gallery-image {
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  object-fit: cover;
+  border-radius: 10px;
+  display: block;
+}
+
+.room-gallery-image:first-child {
+  min-height: 260px;
+}
+
 /* FOOTER ACTIONS */
 .success-actions {
   display: flex;
@@ -559,6 +621,11 @@
     grid-template-columns: 1fr;
   }
 
+  .room-gallery-grid,
+  .room-gallery-grid.count-2 {
+    grid-template-columns: 1fr;
+  }
+
   .hotel-header {
     padding: 20px 30px;
   }
@@ -587,6 +654,12 @@
 
   .success-actions {
     flex-direction: column;
+  }
+
+  .room-gallery-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .experiences-grid {

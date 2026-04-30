@@ -66,9 +66,10 @@
 ========================= */
 
 .booking-shell {
-  max-width: 1280px;
+  width: min(1500px, calc(100vw - 64px));
+  max-width: none;
   margin: 0 auto;
-  padding: 40px 24px 140px;
+  padding: 40px 0 140px;
   background: #f8f6f2;
 }
 
@@ -201,4 +202,312 @@
   background: white;
   border-radius: 20px;
   box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+}
+
+/* =========================
+   SHARED BOOKING SIDE SUMMARY
+========================= */
+
+.booking-shell :is(.summary, .rooms-summary, .services-summary, .sidebar) {
+  width: 100%;
+  max-width: 330px;
+  background: #fffdf9;
+  border: 1px solid #eadfce;
+  border-radius: 16px;
+  box-shadow: 0 18px 42px rgba(17, 24, 39, 0.07);
+  overflow: hidden;
+  color: #1f2937;
+  font-family: Arial, sans-serif;
+}
+
+.booking-shell :is(.summary, .rooms-summary, .services-summary, .sidebar)
+  :is(.summary-header, .sidebar-header),
+.booking-shell .services-summary h3 {
+  background: #fbfaf7;
+  border-bottom: 1px solid #eadfce;
+  color: #1f2937;
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  line-height: 1;
+  margin: 0;
+  padding: 18px 18px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.booking-shell :is(.summary, .rooms-summary) .summary-body,
+.booking-shell .sidebar-body {
+  padding: 18px;
+}
+
+.booking-shell .services-summary > div,
+.booking-shell .services-summary .summary-block,
+.booking-shell .services-summary .summary-line,
+.booking-shell .services-summary .summary-room,
+.booking-shell .services-summary .summary-services,
+.booking-shell .services-summary .summary-total,
+.booking-shell .services-summary .hotel-payment-note,
+.booking-shell .services-summary .summary-actions {
+  margin-left: 18px;
+  margin-right: 18px;
+}
+
+.booking-shell :is(.summary, .rooms-summary) .summary-row,
+.booking-shell .services-summary .summary-line,
+.booking-shell .sidebar .info-row,
+.booking-shell .sidebar .breakdown-row {
+  align-items: center;
+  border-bottom: 1px solid #eee6dc;
+  display: flex;
+  font-size: 12px;
+  justify-content: space-between;
+  margin: 0;
+  padding: 10px 0;
+}
+
+.booking-shell :is(.summary, .rooms-summary) .summary-row span,
+.booking-shell .services-summary :is(.summary-line span, .summary-room > span, .services-section-title, .summary-total span, .hotel-payment-note span),
+.booking-shell .sidebar :is(.info-label, .pay-label),
+.booking-shell .sidebar .breakdown-total span:first-child {
+  color: #7a8494;
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.booking-shell :is(.summary, .rooms-summary) .summary-row strong,
+.booking-shell .services-summary :is(.summary-line strong, .room-calc strong),
+.booking-shell .sidebar :is(.info-value, .breakdown-row span:last-child) {
+  color: #1f2937;
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: right;
+}
+
+.booking-shell :is(.summary, .rooms-summary, .services-summary) .summary-divider,
+.booking-shell .sidebar .divider {
+  background: transparent;
+  height: 1px;
+  margin: 6px 0;
+}
+
+.booking-shell .summary-guest {
+  background: transparent;
+  border-bottom: 1px solid #eee6dc;
+  border-radius: 0;
+  color: #1f2937;
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0;
+  padding: 10px 0;
+  text-align: left;
+}
+
+.booking-shell .services-summary .summary-block {
+  border-bottom: 1px solid #eee6dc;
+  gap: 16px;
+  padding: 14px 0 10px;
+}
+
+.booking-shell .services-summary .summary-room,
+.booking-shell .services-summary .summary-services {
+  border-bottom: 1px solid #eee6dc;
+  gap: 6px;
+  padding: 10px 0 11px;
+}
+
+.booking-shell .services-summary .summary-room > strong {
+  color: #1f2937;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.booking-shell .services-summary .room-calc {
+  align-items: center;
+  display: flex;
+  font-size: 11px;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.booking-shell .services-summary .service-summary-line {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.booking-shell .no-services-msg {
+  color: #8b98a8;
+  font-size: 10px;
+  font-style: italic;
+  margin: 2px 0 0;
+  text-align: left;
+}
+
+.booking-shell :is(.summary, .rooms-summary, .services-summary) .summary-total,
+.booking-shell .sidebar .breakdown-total {
+  align-items: center;
+  border: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0 6px;
+}
+
+.booking-shell :is(.summary, .rooms-summary, .services-summary) .summary-total strong,
+.booking-shell .rooms-summary .summary-total .total-price,
+.booking-shell .sidebar :is(.breakdown-total span:last-child, .total-amount) {
+  color: #c9a86a;
+  font-family: Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: none;
+}
+
+.booking-shell .services-summary .hotel-payment-note,
+.booking-shell .sidebar .amount-to-pay {
+  background: transparent;
+  border: 1px solid #eee6dc;
+  border-radius: 12px;
+  margin-top: 10px;
+  padding: 12px;
+  text-align: left;
+}
+
+.booking-shell .services-summary .hotel-payment-note strong {
+  color: #1f2937;
+  display: block;
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1;
+  margin-top: 6px;
+}
+
+.booking-shell .services-summary .hotel-payment-note p {
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.4;
+  margin: 7px 0 0;
+}
+
+.booking-shell :is(.rooms-summary, .services-summary) .summary-actions {
+  background: #fffdf9;
+  border-top: 1px solid #eadfce;
+  display: flex;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 18px;
+}
+
+.booking-shell :is(.summary-btn, .summary-actions .back, .summary-actions .next, .btn-pay-sidebar) {
+  align-items: center;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  font-family: Arial, sans-serif;
+  font-size: 9px;
+  font-weight: 800;
+  justify-content: center;
+  letter-spacing: 0.11em;
+  min-height: 32px;
+  padding: 8px 14px;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+}
+
+.booking-shell :is(.summary-back, .summary-actions .back) {
+  background: white;
+  border: 1px solid #d9c5aa;
+  color: #7a5d37;
+}
+
+.booking-shell :is(.summary-continue, .summary-actions .next, .btn-pay-sidebar) {
+  background: #111827;
+  border: 1px solid #111827;
+  color: white;
+  box-shadow: none;
+}
+
+.booking-shell :is(.summary-continue, .summary-actions .next, .btn-pay-sidebar):hover:not(:disabled) {
+  background: #0f1419;
+  box-shadow: 0 10px 22px rgba(15, 20, 25, 0.16);
+  transform: translateY(-1px);
+}
+
+.booking-shell .sidebar .guest-summary {
+  border-bottom: 1px solid #eee6dc;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 0 12px;
+  text-align: left;
+}
+
+.booking-shell .sidebar .guest-count {
+  color: #1f2937;
+  font-family: Georgia, serif;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.booking-shell .sidebar .guest-breakdown {
+  color: #7a8494;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.booking-shell .sidebar .booking-info,
+.booking-shell .sidebar .cost-breakdown {
+  gap: 0;
+}
+
+.booking-shell .sidebar .amount-to-pay {
+  text-align: center;
+}
+
+.booking-shell .sidebar .pay-label {
+  margin: 0 0 8px;
+}
+
+.booking-shell .sidebar .btn-pay-sidebar {
+  width: 100%;
+}
+
+.booking-shell .sidebar .policy-box {
+  background: #f7fbf7;
+  border: 1px solid #d9ead9;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.booking-shell .sidebar .policy-box strong {
+  color: #276749;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.booking-shell .sidebar .policy-box p {
+  color: #3f6f56;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+@media (max-width: 1024px) {
+  .booking-shell :is(.summary, .rooms-summary, .services-summary, .sidebar) {
+    max-width: none;
+    position: static;
+  }
 }

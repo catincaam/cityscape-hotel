@@ -14,7 +14,7 @@ export default function FeedbackForm({ reservation, status }) {
   const { id } = useParams();
 
   // Nu permite review dacă statusul nu e completed
-  if (status !== "completed" && status !== "paid") {
+  if (status !== "completed") {
     return (
       <div style={{ maxWidth: 500, margin: "80px auto", background: "#fff", borderRadius: 18, boxShadow: "0 4px 24px #0001", padding: 32, textAlign: "center" }}>
         <h2 style={{ color: "#111418", fontWeight: 900 }}>Feedback unavailable</h2>
@@ -30,6 +30,10 @@ export default function FeedbackForm({ reservation, status }) {
     setSuccess(false);
     if (!overall || !cleanliness || !service || !theme) {
       setError("Please rate all categories.");
+      return;
+    }
+    if (text.trim().length < 10) {
+      setError("Please write at least 10 characters in your comment.");
       return;
     }
     // Calculează media ratingurilor ca serviceRating (string, ex: "4.5")
@@ -51,11 +55,15 @@ export default function FeedbackForm({ reservation, status }) {
         serviceRating,
         submissionDate: new Date(),
         ClientId,
-        text,
+        overall,
+        cleanliness,
+        service,
+        theme,
+        comment: text.trim(),
       }, { withCredentials: true });
       setSuccess(true);
     } catch (err) {
-      setError("Could not submit feedback. Please try again later.");
+      setError(err.response?.data?.message || "Could not submit feedback. Please try again later.");
     }
   }
 

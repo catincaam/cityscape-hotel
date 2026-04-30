@@ -6,6 +6,7 @@ import AdminThemes from "./themes/AdminThemes";
 import AdminServices from "./services/AdminServices";
 import AdminRewards from "./rewards/AdminRewards";
 import AdminBookings from "./bookings";
+import AdminFeedback from "./feedback/AdminFeedback";
 
 // Noul dashboard premium
 import AdminDashboardV2 from "./Dashboard/AdminDashboardV2";
@@ -64,6 +65,12 @@ export default function AdminPanel() {
           >
             Rewards
           </button>
+          <button
+            className={activeTab === "feedback" ? "active" : ""}
+            onClick={() => setActiveTab("feedback")}
+          >
+            Feedback
+          </button>
         </nav>
 
         <button className="logout-btn" onClick={handleLogout}>
@@ -82,6 +89,7 @@ export default function AdminPanel() {
             {activeTab === "services" && "Manage Services"}
             {activeTab === "bookings" && "Manage Bookings"}
             {activeTab === "rewards" && "Manage Rewards"}
+            {activeTab === "feedback" && "Guest Feedback"}
           </h1>
           <div className="admin-profile">
             <div className="admin-info">
@@ -95,12 +103,13 @@ export default function AdminPanel() {
         </div>
 
         {/* Content Tabs */}
-        {activeTab === "dashboard" && <AdminDashboardV2 />}
+        {activeTab === "dashboard" && <AdminDashboardV2 onViewAllFeedback={() => setActiveTab("feedback")} />}
         {activeTab === "rooms" && <AdminRooms />}
         {activeTab === "themes" && <AdminThemes />}
         {activeTab === "services" && <AdminServices />}
         {activeTab === "bookings" && <AdminBookings />}
         {activeTab === "rewards" && <AdminRewards />}
+        {activeTab === "feedback" && <AdminFeedback />}
       </main>
     </div>
   );

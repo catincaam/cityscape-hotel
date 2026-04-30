@@ -2,6 +2,8 @@ import express from 'express';
 import Reward from '../entities/Reward.js';
 import RewardPoint from '../entities/RewardPoint.js';
 import Reservation from '../entities/Reservation.js';
+import Client from '../entities/Client.js';
+import { sendRewardRedeemedEmail } from '../services/emailService.js';
 
 const router = express.Router();
 
@@ -76,16 +78,52 @@ router.post('/apply', async (req, res) => {
       return res.status(400).json({ message: "Not enough points" });
     }
 
+    const reward = await Reward.findByPk(rewardId);
+    const reservation = await Reservation.findByPk(reservationId);
+
+    if (!reward) {
+      return res.status(404).json({ message: "Reward not found" });
+    }
+
+    if (!reservation) {
+      return res.status(404).json({ message: "Reservation not found" });
+    }
+
     // Deduct points from user
-    await RewardPoint.create({
+    const redemption = await RewardPoint.create({
       UserId: userId,
       ReservationId: reservationId,
       amount: -points,
-      description: `Reward redeemed: ${rewardId}`,
+      description: `Reward redeemed: ${reward.title}`,
       status: 'redeemed'
     });
 
-    res.json({ message: "Reward applied successfully" });
+    let emailResult = { success: false, error: "Email was not attempted." };
+    try {
+      const client = await Client.findByPk(userId);
+      emailResult = await sendRewardRedeemedEmail({
+        client,
+        reservation,
+        reward,
+        points
+      });
+
+      if (!emailResult.success) {
+        console.warn("[REWARD EMAIL] Confirmation email not sent:", emailResult.error);
+      }
+    } catch (emailError) {
+      emailResult = { success: false, error: emailError.message };
+      console.error("[REWARD EMAIL ERROR]", emailError);
+    }
+
+    res.json({
+      message: "Reward applied successfully",
+      redemption,
+      email: {
+        sent: Boolean(emailResult.success),
+        error: emailResult.success ? undefined : emailResult.error
+      }
+    });
   } catch (err) {
     console.error("Error applying reward:", err);
     res.status(500).json({ message: "server error", error: err.message });

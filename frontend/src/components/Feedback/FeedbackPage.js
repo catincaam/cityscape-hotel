@@ -76,6 +76,10 @@ const FeedbackPage = () => {
       setError('Please rate all categories.');
       return;
     }
+    if (comment.trim().length < 10) {
+      setError('Please write at least 10 characters in your comment.');
+      return;
+    }
     // Normalizează statusul: dacă e 'past', tratează ca 'completed'
     let normalizedStatus = reservation && reservation.status ? String(reservation.status).toLowerCase() : '';
     if (normalizedStatus === 'past') normalizedStatus = 'completed';
@@ -101,7 +105,7 @@ const FeedbackPage = () => {
       );
       setSuccess(true);
     } catch (err) {
-      setError('Could not submit feedback. Please try again later.');
+      setError(err.response?.data?.message || 'Could not submit feedback. Please try again later.');
       console.error(err.response?.data || err.message);
     }
   };

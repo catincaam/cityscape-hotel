@@ -6,12 +6,22 @@ import Room from "../entities/Room.js";
 import Reservation from "../entities/Reservation.js";
 import RoomReservation from "../entities/RoomReservation.js";
 import express from "express";
+import { Op } from "sequelize";
 import { createInvoice, getInvoiceByReservationId, getRemainingAmount } from "../dataAccess/InvoiceDA.js";
 import { createPayment } from "../dataAccess/PaymentDA.js";
 import { createReservation, getReservationById } from "../dataAccess/ReservationDA.js";
 import { addServiceToReservation } from "../dataAccess/ReservationServiceDA.js";
 import { getServiceById } from "../dataAccess/ServiceDA.js";
 import { createRoomReservation } from "../dataAccess/RoomReservationDA.js";
+import { sendReservationConfirmation } from "../services/emailService.js";
+import {
+  isFutureExpiry,
+  isPositiveInteger,
+  isPositiveNumber,
+  isValidCardNumber,
+  isValidCvc,
+  isValidDateRange
+} from "../utils/validators.js";
 
 const bookingRouter = express.Router();
 
@@ -113,6 +123,7 @@ bookingRouter.get("/admin/bookings", async (req, res) => {
         status = "Upcoming";
       }
       return {
+        reservationId: r.ReservationId,
         bookingId: `#BK-${String(r.ReservationId).padStart(4, "0")}`,
         guestName: client.FirstName ? `${client.FirstName} ${client.LastName}` : "-",
         guestAvatar: "/assets/profilePicture.jpg",
@@ -125,41 +136,56 @@ bookingRouter.get("/admin/bookings", async (req, res) => {
         status: status,
         paymentStatus: paymentStatus,
         depositRequired: Math.round(depositRequired * 100) / 100,
-        hoursUntilCheckin: Math.round(hoursUntilCheckin * 100) / 100
+        hoursUntilCheckin: Math.round(hoursUntilCheckin * 100) / 100,
+        createdAt: r.createdAt
       };
     })
-    // FILTER: exclude ghost bookings (price <= 0 or missing price)
+    // FILTER: exclude abandoned/ghost bookings. A real booking needs a valid
+    // invoice and at least the required 20% deposit paid.
     .filter(b => {
       const price = parseFloat(b.totalPrice);
-      return price && !isNaN(price) && price > 0;
-    });
-
-    // Only fully paid active bookings
-    const activeBookings = allBookings.filter(b => {
-      const price = parseFloat(b.totalPrice);
       const paid = parseFloat(b.totalPaid);
+      const depositRequired = parseFloat(b.depositRequired);
       return (
-        b.status === "Active" &&
+        price &&
+        !isNaN(price) &&
         price > 0 &&
-        paid >= price
+        paid >= depositRequired
       );
     });
 
-    // Cash Received: sum for completed, not cancelled, fully paid
+    // Active stays: the guest is effectively in-house now.
+    const activeBookings = allBookings.filter(b => {
+      return b.status === "Active";
+    });
+
+    // Projected revenue: total contractual value if non-cancelled stays complete.
+    const projectedRevenue = allBookings.reduce((sum, b) => {
+      if (b.status?.toLowerCase() === "cancelled") return sum;
+      return sum + (parseFloat(b.totalPrice) || 0);
+    }, 0);
+
+    // Cash received: recognize money only once the stay has started.
+    // This avoids treating deposits for future stays as earned hotel revenue.
     const totalCashReceived = allBookings.reduce((sum, b) => {
-      if (b.status?.toLowerCase() !== 'completed') return sum;
       if (b.status?.toLowerCase() === 'cancelled') return sum;
-      const price = parseFloat(b.totalPrice);
       const paid = parseFloat(b.totalPaid);
-      if (!price || !paid || paid < price) return sum;
+      if (!["active", "completed"].includes(b.status?.toLowerCase())) return sum;
+      if (!paid) return sum;
       return sum + paid;
     }, 0);
 
-    console.log("[ADMIN BOOKINGS] Returning allBookings:", allBookings.length, "activeBookings:", activeBookings.length, "totalCashReceived:", totalCashReceived);
+    console.log("[ADMIN BOOKINGS] Returning allBookings:", allBookings.length, "activeBookings:", activeBookings.length, "projectedRevenue:", projectedRevenue, "totalCashReceived:", totalCashReceived);
     res.json({
       allBookings: JSON.parse(JSON.stringify(allBookings)),
       activeBookings: JSON.parse(JSON.stringify(activeBookings)),
-      totalCashReceived
+      stats: {
+        totalBookings: allBookings.length,
+        activeStays: activeBookings.length,
+        projectedRevenue: Math.round(projectedRevenue * 100) / 100,
+        cashReceived: Math.round(totalCashReceived * 100) / 100
+      },
+      totalCashReceived: Math.round(totalCashReceived * 100) / 100
     });
   } catch (err) {
     console.error(err);
@@ -193,6 +219,60 @@ bookingRouter.post("/complete", async (req, res) => {
       return res.status(400).json({ message: "RoomId is required. You must select a room for the reservation." });
     }
 
+    if (!ClientId) {
+      return res.status(400).json({ message: "ClientId is required." });
+    }
+
+    if (!isValidDateRange(requestedCheckin, requestedCheckout)) {
+      return res.status(400).json({ message: "Check-in must be before check-out." });
+    }
+
+    if (!isPositiveInteger(nrPeople)) {
+      return res.status(400).json({ message: "Number of guests must be a positive number." });
+    }
+
+    if (!isPositiveNumber(totalAmount) || !isPositiveNumber(paymentAmount)) {
+      return res.status(400).json({ message: "Payment values must be positive numbers." });
+    }
+
+    const client = await Client.findByPk(ClientId);
+    if (!client) {
+      return res.status(404).json({ message: "Client not found." });
+    }
+
+    const room = await Room.findByPk(RoomId, { include: [RoomTheme] });
+    if (!room) {
+      return res.status(404).json({ message: "Room not found." });
+    }
+
+    const maxGuests = Number(room.RoomTheme?.maxGuests || 1);
+    if (Number(nrPeople) > maxGuests) {
+      return res.status(400).json({ message: `This room allows a maximum of ${maxGuests} guest${maxGuests === 1 ? "" : "s"}.` });
+    }
+
+    const overlappingRoomReservations = await RoomReservation.findAll({
+      where: { RoomId },
+      attributes: ["ReservationId"]
+    });
+    const overlappingReservationIds = overlappingRoomReservations.map((item) => item.ReservationId);
+
+    if (overlappingReservationIds.length > 0) {
+      const existingReservation = await Reservation.findOne({
+        where: {
+          ReservationId: { [Op.in]: overlappingReservationIds },
+          status: { [Op.notIn]: ["cancelled", "pending"] },
+          requestedCheckin: { [Op.lt]: requestedCheckout },
+          requestedCheckout: { [Op.gt]: requestedCheckin }
+        }
+      });
+
+      if (existingReservation) {
+        return res.status(409).json({
+          message: "This room is no longer available for the selected dates. Please choose another room."
+        });
+      }
+    }
+
     // ===== STEP 1: VALIDATE PAYMENT FIRST (Mock validation) =====
     console.log("[BOOKING] Processing payment for amount:", paymentAmount);
     
@@ -201,34 +281,15 @@ bookingRouter.post("/complete", async (req, res) => {
       return res.status(400).json({ message: "Card details are required" });
     }
 
-    // Basic card format validation
-    const cardNum = cardNumber.replace(/\s/g, "");
-    if (cardNum.length < 13 || cardNum.length > 19) {
+    if (!isValidCardNumber(cardNumber)) {
       return res.status(400).json({ message: "Invalid card number format" });
     }
 
-    // Validate expiry format (MM/YY)
-    const expiryRegex = /^\d{2}\/\d{2,4}$/;
-    if (!expiryRegex.test(cardExpiry)) {
-      return res.status(400).json({ message: "Invalid expiry format. Use MM/YY" });
+    if (!isFutureExpiry(cardExpiry)) {
+      return res.status(400).json({ message: "Invalid or expired card date. Use MM/YY." });
     }
 
-    // Parse expiry to check if expired
-    const [expMonth, expYear] = cardExpiry.split("/");
-    const now = new Date();
-    const currentYear = now.getFullYear() % 100;
-    const currentMonth = now.getMonth() + 1;
-    
-    const expiryYearNum = parseInt(expYear) > 100 ? parseInt(expYear) : parseInt(expYear) + 2000;
-    const expiryYearShort = expiryYearNum % 100;
-    
-    if (expiryYearShort < currentYear || (expiryYearShort === currentYear && parseInt(expMonth) < currentMonth)) {
-      return res.status(400).json({ message: "Card has expired" });
-    }
-
-    // Validate CVC
-    const cvcNum = cardCVC.replace(/\s/g, "");
-    if (cvcNum.length < 3 || cvcNum.length > 4 || isNaN(cvcNum)) {
+    if (!isValidCvc(cardCVC)) {
       return res.status(400).json({ message: "Invalid CVC format" });
     }
 
@@ -263,12 +324,22 @@ bookingRouter.post("/complete", async (req, res) => {
     const reservationServices = [];
     if (services && Object.keys(services).length > 0) {
       for (const [serviceId, quantity] of Object.entries(services)) {
-        if (quantity > 0) {
+        const normalizedQuantity = Number(quantity);
+        if (normalizedQuantity > 0) {
+          if (!isPositiveInteger(normalizedQuantity)) {
+            return res.status(400).json({ message: "Service quantity must be a positive number." });
+          }
           const serviceData = await getServiceById(serviceId);
+          if (!serviceData || serviceData.status !== "activ" || !serviceData.bookableOnline) {
+            return res.status(400).json({ message: "Selected service is not available." });
+          }
+          if (serviceData.priceType === "per_person" && normalizedQuantity > Number(nrPeople)) {
+            return res.status(400).json({ message: "Per-person services cannot exceed the number of guests." });
+          }
           const resService = await addServiceToReservation({
             ReservationId: reservation.ReservationId,
             ServiceId: parseInt(serviceId),
-            quantity: quantity,
+            quantity: normalizedQuantity,
             unitPrice: serviceData?.price || 0
           });
           reservationServices.push(resService);
@@ -296,12 +367,45 @@ bookingRouter.post("/complete", async (req, res) => {
 
     console.log("[BOOKING] Payment processed + Reservation #" + reservation.ReservationId + " created");
 
+    let emailResult = { success: false, error: "Email was not attempted." };
+    try {
+      const [client, bookedRoom] = await Promise.all([
+        Client.findByPk(ClientId),
+        Room.findByPk(RoomId)
+      ]);
+      const bookedTheme = bookedRoom?.RoomThemeId
+        ? await RoomTheme.findByPk(bookedRoom.RoomThemeId)
+        : null;
+
+      emailResult = await sendReservationConfirmation({
+        client,
+        reservation,
+        room: bookedRoom
+          ? { ...bookedRoom.toJSON(), RoomTheme: bookedTheme?.toJSON() }
+          : null,
+        invoice,
+        payment,
+        remainingAmount: totalAmount - paymentAmount
+      });
+
+      if (!emailResult.success) {
+        console.warn("[BOOKING EMAIL] Confirmation email not sent:", emailResult.error);
+      }
+    } catch (emailError) {
+      emailResult = { success: false, error: emailError.message };
+      console.error("[BOOKING EMAIL ERROR]", emailError);
+    }
+
     res.status(201).json({
       reservation,
       reservationServices,
       invoice,
       payment,
       remainingAmount: totalAmount - paymentAmount,
+      email: {
+        sent: Boolean(emailResult.success),
+        error: emailResult.success ? undefined : emailResult.error
+      },
       message: "Booking confirmed! Reservation saved."
     });
 

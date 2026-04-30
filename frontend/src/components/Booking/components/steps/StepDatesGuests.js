@@ -1,6 +1,6 @@
 import "./StepDatesGuests.css";
 
-export default function StepDatesGuests({ data, setData, onContinue }) {
+export default function StepDatesGuests({ data, setData, onContinue, error }) {
   const update = (field, value) => {
     setData({ ...data, [field]: value });
   };
@@ -73,6 +73,7 @@ export default function StepDatesGuests({ data, setData, onContinue }) {
           <button className="continue-btn" onClick={onContinue}>
             Continue to Room Selection →
           </button>
+          {error && <p className="booking-step-error">{error}</p>}
         </div>
 
         {/* DREAPTA – SUMAR */}

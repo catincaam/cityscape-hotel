@@ -1,178 +1,338 @@
 import nodemailer from "nodemailer";
 
-// 🔧 CONFIGURARE SMTP
-// Pentru Gmail:
-// 1. Intră pe https://myaccount.google.com/apppasswords
-// 2. Generează "App Password" (16 caractere)
-// 3. Pune-l în .env ca EMAIL_PASSWORD
+const APP_URL = process.env.APP_URL || "http://localhost:3000";
 
-const transporter = nodemailer.createTransport({
-  service: "gmail", // sau "yahoo", "outlook"
-  auth: {
-    user: process.env.EMAIL_USER || "cityscape.hotel@gmail.com",
-    pass: process.env.EMAIL_PASSWORD || "your-app-password-here"
+const hasEmailConfig = () => Boolean(process.env.EMAIL_USER && process.env.EMAIL_PASSWORD);
+
+const createTransporter = () => {
+  if (!hasEmailConfig()) {
+    return null;
   }
-});
 
-// 📧 Trimite email de confirmare rezervare
-export async function sendReservationConfirmation(client, reservation, room) {
-  const emailHTML = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <style>
-        body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .header { background: linear-gradient(135deg, #1e40af, #1d4ed8); color: white; padding: 32px; text-align: center; }
-        .header h1 { margin: 0; font-size: 28px; }
-        .content { padding: 32px; }
-        .detail { background: #f8fafc; padding: 16px; border-radius: 12px; margin: 16px 0; }
-        .detail-row { display: flex; justify-content: space-between; margin: 8px 0; }
-        .label { color: #64748b; font-weight: 600; }
-        .value { color: #1e293b; font-weight: 700; }
-        .footer { background: #f8fafc; padding: 24px; text-align: center; color: #64748b; font-size: 14px; }
-        .btn { display: inline-block; background: #1d4ed8; color: white; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; margin-top: 16px; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <h1>✅ Rezervare Confirmată</h1>
-          <p>Bine ai venit la Cityscape Hotel!</p>
+  return nodemailer.createTransport({
+    service: process.env.EMAIL_SERVICE || "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD
+    }
+  });
+};
+
+const formatDate = (value) => {
+  if (!value) return "-";
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  }).format(new Date(value));
+};
+
+const formatMoney = (value) => {
+  const amount = Number(value || 0);
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "EUR"
+  }).format(amount);
+};
+
+const fullName = (client) => {
+  const name = [client?.FirstName, client?.LastName].filter(Boolean).join(" ").trim();
+  return name || "Guest";
+};
+
+const roomName = (room) => {
+  const theme = room?.RoomTheme || room?.dataValues?.RoomTheme;
+  return theme?.name || room?.name || "Selected room";
+};
+
+const sendMail = async (mailOptions) => {
+  const transporter = createTransporter();
+
+  if (!transporter) {
+    return {
+      success: false,
+      error: "Email credentials are not configured. Add EMAIL_USER and EMAIL_PASSWORD in backend/.env."
+    };
+  }
+
+  try {
+    const info = await transporter.sendMail({
+      from: `"Cityscape Hotel" <${process.env.EMAIL_USER}>`,
+      ...mailOptions
+    });
+
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("[EMAIL ERROR]", error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const sendReservationConfirmation = async ({
+  client,
+  reservation,
+  room,
+  invoice,
+  payment,
+  remainingAmount
+}) => {
+  if (!client?.Email) {
+    return { success: false, error: "Client email is missing." };
+  }
+
+  const guestName = fullName(client);
+  const reservationId = reservation?.ReservationId;
+  const reservationCode = `#RES-${String(reservationId || "").padStart(4, "0")}`;
+  const detailsUrl = `${APP_URL}/reservation/${reservationId}`;
+  const paidAmount = payment?.amount || 0;
+  const totalAmount = invoice?.totalAmount || 0;
+  const balance = Number(remainingAmount || 0);
+
+  const html = `
+    <div style="margin:0;padding:32px;background:#f6f2ec;font-family:Georgia,serif;color:#122033;">
+      <div style="max-width:640px;margin:0 auto;background:#fffaf4;border:1px solid #e4d5c2;border-radius:18px;overflow:hidden;">
+        <div style="padding:30px 34px;border-bottom:1px solid #eadfce;">
+          <div style="font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#b8894a;font-weight:700;">Cityscape Hotel</div>
+          <h1 style="margin:12px 0 8px;font-size:34px;line-height:1.1;color:#111827;">Your stay is confirmed</h1>
+          <p style="margin:0;color:#5d6a7a;font-size:15px;">Hello ${guestName}, thank you for booking with us.</p>
         </div>
-        
-        <div class="content">
-          <h2>Bună ${client.FirstName}! 👋</h2>
-          <p>Rezervarea ta a fost confirmată cu succes. Ne bucurăm să te vedem!</p>
-          
-          <div class="detail">
-            <h3>Detalii Rezervare</h3>
-            <div class="detail-row">
-              <span class="label">Cod Rezervare:</span>
-              <span class="value">#${reservation.ReservationId}</span>
+
+        <div style="padding:28px 34px;">
+          <p style="margin:0 0 22px;color:#26364a;font-size:16px;">Reservation ${reservationCode} has been created successfully.</p>
+
+          <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
+            <tr>
+              <td style="padding:12px 0;border-bottom:1px solid #eadfce;color:#9a7b55;text-transform:uppercase;font-size:11px;letter-spacing:1.5px;">Room</td>
+              <td style="padding:12px 0;border-bottom:1px solid #eadfce;text-align:right;font-weight:700;">${roomName(room)}</td>
+            </tr>
+            <tr>
+              <td style="padding:12px 0;border-bottom:1px solid #eadfce;color:#9a7b55;text-transform:uppercase;font-size:11px;letter-spacing:1.5px;">Check-in</td>
+              <td style="padding:12px 0;border-bottom:1px solid #eadfce;text-align:right;font-weight:700;">${formatDate(reservation?.requestedCheckin)}</td>
+            </tr>
+            <tr>
+              <td style="padding:12px 0;border-bottom:1px solid #eadfce;color:#9a7b55;text-transform:uppercase;font-size:11px;letter-spacing:1.5px;">Check-out</td>
+              <td style="padding:12px 0;border-bottom:1px solid #eadfce;text-align:right;font-weight:700;">${formatDate(reservation?.requestedCheckout)}</td>
+            </tr>
+            <tr>
+              <td style="padding:12px 0;border-bottom:1px solid #eadfce;color:#9a7b55;text-transform:uppercase;font-size:11px;letter-spacing:1.5px;">Guests</td>
+              <td style="padding:12px 0;border-bottom:1px solid #eadfce;text-align:right;font-weight:700;">${reservation?.nrPeople || 1}</td>
+            </tr>
+          </table>
+
+          <div style="padding:18px 20px;border:1px solid #eadfce;border-radius:14px;background:#fff;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+              <span style="color:#5d6a7a;">Total amount</span>
+              <strong>${formatMoney(totalAmount)}</strong>
             </div>
-            <div class="detail-row">
-              <span class="label">Camera:</span>
-              <span class="value">${room.name || 'Standard Room'}</span>
+            <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+              <span style="color:#5d6a7a;">Paid now</span>
+              <strong>${formatMoney(paidAmount)}</strong>
             </div>
-            <div class="detail-row">
-              <span class="label">Check-in:</span>
-              <span class="value">${reservation.CheckInDate}</span>
-            </div>
-            <div class="detail-row">
-              <span class="label">Check-out:</span>
-              <span class="value">${reservation.CheckOutDate}</span>
-            </div>
-            <div class="detail-row">
-              <span class="label">Oaspeți:</span>
-              <span class="value">${reservation.NumberOfGuests}</span>
+            <div style="display:flex;justify-content:space-between;">
+              <span style="color:#5d6a7a;">Remaining balance</span>
+              <strong>${formatMoney(balance)}</strong>
             </div>
           </div>
 
-          <p>Îți vom trimite un reminder cu 24h înainte de check-in.</p>
-          
-          <center>
-            <a href="http://localhost:3000/dashboard" class="btn">Vezi Rezervarea</a>
-          </center>
-        </div>
-        
-        <div class="footer">
-          © 2025 Cityscape Hotel. Toate drepturile rezervate.<br>
-          Dacă nu ai făcut această rezervare, te rugăm să ne contactezi imediat.
+          <a href="${detailsUrl}" style="display:block;margin-top:24px;padding:14px 18px;border-radius:999px;background:#111827;color:#fff;text-align:center;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">View reservation</a>
         </div>
       </div>
-    </body>
-    </html>
+    </div>
   `;
 
-  const mailOptions = {
-    from: `Cityscape Hotel <${process.env.EMAIL_USER}>`,
+  const text = [
+    `Your Cityscape Hotel stay is confirmed.`,
+    `Reservation: ${reservationCode}`,
+    `Room: ${roomName(room)}`,
+    `Check-in: ${formatDate(reservation?.requestedCheckin)}`,
+    `Check-out: ${formatDate(reservation?.requestedCheckout)}`,
+    `Guests: ${reservation?.nrPeople || 1}`,
+    `Total: ${formatMoney(totalAmount)}`,
+    `Paid now: ${formatMoney(paidAmount)}`,
+    `Remaining balance: ${formatMoney(balance)}`,
+    `Details: ${detailsUrl}`
+  ].join("\n");
+
+  return sendMail({
     to: client.Email,
-    subject: "✅ Rezervare Confirmată - Cityscape Hotel",
-    html: emailHTML
-  };
+    subject: `Booking confirmed - Cityscape Hotel ${reservationCode}`,
+    html,
+    text
+  });
+};
 
-  try {
-    await transporter.sendMail(mailOptions);
-    console.log(`📧 Email trimis către ${client.Email}`);
-    return { success: true };
-  } catch (error) {
-    console.error("❌ Eroare trimitere email:", error);
-    return { success: false, error: error.message };
+export const sendCheckInReminder = async ({ client, reservation, room }) => {
+  if (!client?.Email) {
+    return { success: false, error: "Client email is missing." };
   }
-}
 
-// 📧 Trimite reminder check-in (24h înainte)
-export async function sendCheckInReminder(client, reservation, room) {
-  const emailHTML = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <style>
-        body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .header { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 32px; text-align: center; }
-        .content { padding: 32px; }
-        .highlight { background: #fef3c7; padding: 16px; border-radius: 12px; border-left: 4px solid #f59e0b; margin: 16px 0; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <h1>⏰ Check-in Mâine!</h1>
+  const reservationCode = `#RES-${String(reservation?.ReservationId || "").padStart(4, "0")}`;
+
+  return sendMail({
+    to: client.Email,
+    subject: `Your Cityscape stay starts soon ${reservationCode}`,
+    text: `Hello ${fullName(client)}, your stay in ${roomName(room)} starts on ${formatDate(reservation?.requestedCheckin)}.`
+  });
+};
+
+export const sendPasswordResetEmail = async ({ client, resetUrl, expiresInMinutes = 60 }) => {
+  if (!client?.Email) {
+    return { success: false, error: "Client email is missing." };
+  }
+
+  const guestName = fullName(client);
+
+  const html = `
+    <div style="margin:0;padding:32px;background:#f6f2ec;font-family:Georgia,serif;color:#122033;">
+      <div style="max-width:620px;margin:0 auto;background:#fffaf4;border:1px solid #e4d5c2;border-radius:18px;overflow:hidden;">
+        <div style="padding:30px 34px;border-bottom:1px solid #eadfce;">
+          <div style="font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#b8894a;font-weight:700;">Cityscape Hotel</div>
+          <h1 style="margin:12px 0 8px;font-size:32px;line-height:1.1;color:#111827;">Reset your password</h1>
+          <p style="margin:0;color:#5d6a7a;font-size:15px;">Hello ${guestName}, we received a request to reset your account password.</p>
         </div>
-        
-        <div class="content">
-          <h2>Bună ${client.FirstName}!</h2>
-          <p>Doar un reminder prietenos: check-in-ul tău este mâine!</p>
-          
-          <div class="highlight">
-            <strong>📅 Check-in:</strong> ${reservation.CheckInDate}<br>
-            <strong>🏨 Camera:</strong> ${room.name}<br>
-            <strong>🕒 Ora:</strong> După 14:00
-          </div>
 
-          <p>Ne pregătim camera pentru tine. Ne vedem mâine! 🎉</p>
+        <div style="padding:28px 34px;">
+          <p style="margin:0 0 18px;color:#26364a;font-size:16px;line-height:1.5;">
+            Use the button below to choose a new password. This link expires in ${expiresInMinutes} minutes.
+          </p>
+          <a href="${resetUrl}" style="display:block;margin:24px 0;padding:14px 18px;border-radius:999px;background:#111827;color:#fff;text-align:center;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Reset password</a>
+          <p style="margin:0;color:#6b7280;font-size:13px;line-height:1.5;">
+            If you did not request this, you can safely ignore this email. Your password will not change.
+          </p>
         </div>
       </div>
-    </body>
-    </html>
+    </div>
   `;
 
-  const mailOptions = {
-    from: `Cityscape Hotel <${process.env.EMAIL_USER}>`,
+  const text = [
+    "Reset your Cityscape Hotel password.",
+    `Open this link within ${expiresInMinutes} minutes:`,
+    resetUrl,
+    "If you did not request this, ignore this email."
+  ].join("\n");
+
+  return sendMail({
     to: client.Email,
-    subject: "⏰ Reminder: Check-in Mâine - Cityscape Hotel",
-    html: emailHTML
-  };
+    subject: "Reset your Cityscape Hotel password",
+    html,
+    text
+  });
+};
 
-  try {
-    await transporter.sendMail(mailOptions);
-    console.log(`📧 Reminder trimis către ${client.Email}`);
-    return { success: true };
-  } catch (error) {
-    console.error("❌ Eroare trimitere reminder:", error);
-    return { success: false, error: error.message };
+export const sendServiceAddedEmail = async ({ client, reservation, service, reservationService }) => {
+  if (!client?.Email) {
+    return { success: false, error: "Client email is missing." };
   }
-}
 
-// 🧪 Test email (pentru verificare configurare)
-export async function sendTestEmail(toEmail) {
-  const mailOptions = {
-    from: `Cityscape Hotel <${process.env.EMAIL_USER}>`,
+  const serviceName = service?.name || service?.serviceName || "Selected service";
+  const quantity = Number(reservationService?.quantity || 1);
+  const unitPrice = Number(reservationService?.unitPrice || service?.price || 0);
+  const total = quantity * unitPrice;
+  const detailsUrl = `${APP_URL}/reservation/${reservation?.ReservationId}`;
+
+  const html = `
+    <div style="margin:0;padding:32px;background:#f6f2ec;font-family:Georgia,serif;color:#122033;">
+      <div style="max-width:620px;margin:0 auto;background:#fffaf4;border:1px solid #e4d5c2;border-radius:18px;overflow:hidden;">
+        <div style="padding:30px 34px;border-bottom:1px solid #eadfce;">
+          <div style="font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#b8894a;font-weight:700;">Cityscape Hotel</div>
+          <h1 style="margin:12px 0 8px;font-size:32px;line-height:1.1;color:#111827;">Service added to your stay</h1>
+          <p style="margin:0;color:#5d6a7a;font-size:15px;">Hello ${fullName(client)}, your reservation has been updated.</p>
+        </div>
+        <div style="padding:28px 34px;">
+          <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
+            <tr>
+              <td style="padding:12px 0;border-bottom:1px solid #eadfce;color:#9a7b55;text-transform:uppercase;font-size:11px;letter-spacing:1.5px;">Service</td>
+              <td style="padding:12px 0;border-bottom:1px solid #eadfce;text-align:right;font-weight:700;">${serviceName}</td>
+            </tr>
+            <tr>
+              <td style="padding:12px 0;border-bottom:1px solid #eadfce;color:#9a7b55;text-transform:uppercase;font-size:11px;letter-spacing:1.5px;">Quantity</td>
+              <td style="padding:12px 0;border-bottom:1px solid #eadfce;text-align:right;font-weight:700;">${quantity}</td>
+            </tr>
+            <tr>
+              <td style="padding:12px 0;border-bottom:1px solid #eadfce;color:#9a7b55;text-transform:uppercase;font-size:11px;letter-spacing:1.5px;">Estimated total</td>
+              <td style="padding:12px 0;border-bottom:1px solid #eadfce;text-align:right;font-weight:700;">${formatMoney(total)}</td>
+            </tr>
+          </table>
+          <p style="margin:0 0 20px;color:#5d6a7a;font-size:14px;line-height:1.5;">This service is now attached to reservation #RES-${String(reservation?.ReservationId || "").padStart(4, "0")}.</p>
+          <a href="${detailsUrl}" style="display:block;margin-top:20px;padding:14px 18px;border-radius:999px;background:#111827;color:#fff;text-align:center;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">View reservation</a>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const text = [
+    "A service was added to your Cityscape reservation.",
+    `Service: ${serviceName}`,
+    `Quantity: ${quantity}`,
+    `Estimated total: ${formatMoney(total)}`,
+    `Reservation: ${detailsUrl}`
+  ].join("\n");
+
+  return sendMail({
+    to: client.Email,
+    subject: `Service added - ${serviceName}`,
+    html,
+    text
+  });
+};
+
+export const sendRewardRedeemedEmail = async ({ client, reservation, reward, points }) => {
+  if (!client?.Email) {
+    return { success: false, error: "Client email is missing." };
+  }
+
+  const rewardTitle = reward?.title || "Selected reward";
+  const detailsUrl = `${APP_URL}/reservation/${reservation?.ReservationId}`;
+
+  const html = `
+    <div style="margin:0;padding:32px;background:#f6f2ec;font-family:Georgia,serif;color:#122033;">
+      <div style="max-width:620px;margin:0 auto;background:#fffaf4;border:1px solid #e4d5c2;border-radius:18px;overflow:hidden;">
+        <div style="padding:30px 34px;border-bottom:1px solid #eadfce;">
+          <div style="font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#b8894a;font-weight:700;">Cityscape Hotel</div>
+          <h1 style="margin:12px 0 8px;font-size:32px;line-height:1.1;color:#111827;">Reward applied</h1>
+          <p style="margin:0;color:#5d6a7a;font-size:15px;">Hello ${fullName(client)}, your reward has been added to your stay.</p>
+        </div>
+        <div style="padding:28px 34px;">
+          <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
+            <tr>
+              <td style="padding:12px 0;border-bottom:1px solid #eadfce;color:#9a7b55;text-transform:uppercase;font-size:11px;letter-spacing:1.5px;">Reward</td>
+              <td style="padding:12px 0;border-bottom:1px solid #eadfce;text-align:right;font-weight:700;">${rewardTitle}</td>
+            </tr>
+            <tr>
+              <td style="padding:12px 0;border-bottom:1px solid #eadfce;color:#9a7b55;text-transform:uppercase;font-size:11px;letter-spacing:1.5px;">Points used</td>
+              <td style="padding:12px 0;border-bottom:1px solid #eadfce;text-align:right;font-weight:700;">${points} pts</td>
+            </tr>
+            <tr>
+              <td style="padding:12px 0;border-bottom:1px solid #eadfce;color:#9a7b55;text-transform:uppercase;font-size:11px;letter-spacing:1.5px;">Reservation</td>
+              <td style="padding:12px 0;border-bottom:1px solid #eadfce;text-align:right;font-weight:700;">#RES-${String(reservation?.ReservationId || "").padStart(4, "0")}</td>
+            </tr>
+          </table>
+          <a href="${detailsUrl}" style="display:block;margin-top:20px;padding:14px 18px;border-radius:999px;background:#111827;color:#fff;text-align:center;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">View reservation</a>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const text = [
+    "A reward was applied to your Cityscape reservation.",
+    `Reward: ${rewardTitle}`,
+    `Points used: ${points} pts`,
+    `Reservation: ${detailsUrl}`
+  ].join("\n");
+
+  return sendMail({
+    to: client.Email,
+    subject: `Reward applied - ${rewardTitle}`,
+    html,
+    text
+  });
+};
+
+export const sendTestEmail = async (toEmail) => {
+  return sendMail({
     to: toEmail,
-    subject: "🧪 Test Email - Cityscape Hotel",
-    html: `
-      <h1>✅ Email Configuration Working!</h1>
-      <p>Dacă vezi acest mesaj, sistemul de email funcționează perfect!</p>
-    `
-  };
-
-  try {
-    await transporter.sendMail(mailOptions);
-    return { success: true, message: "Email trimis cu succes!" };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-}
-
+    subject: "Cityscape Hotel email test",
+    text: "If you received this message, Cityscape Hotel email sending is configured correctly.",
+    html: "<p>If you received this message, <strong>Cityscape Hotel</strong> email sending is configured correctly.</p>"
+  });
+};

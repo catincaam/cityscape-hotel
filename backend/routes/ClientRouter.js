@@ -13,6 +13,12 @@ import {
   updateClient,
   deleteClient
 } from "../dataAccess/ClientDA.js";
+import {
+  isStrongPassword,
+  isValidEmail,
+  isValidPersonName,
+  normalizeEmail
+} from "../utils/validators.js";
 
 const clientRouter = express.Router();
 
@@ -26,6 +32,12 @@ function sanitizeClient(client) {
 /* CREATE client */
 clientRouter.post("/", async (req, res) => {
   try {
+    const email = normalizeEmail(req.body.Email || req.body.email);
+    const firstName = req.body.FirstName || req.body.firstName;
+    const lastName = req.body.LastName || req.body.lastName;
+    if (!isValidEmail(email) || !isValidPersonName(firstName) || !isValidPersonName(lastName)) {
+      return res.status(400).json({ message: "Client must have a valid first name, last name and email." });
+    }
     const client = await createClient(req.body);
     res.status(201).json(client);
   } catch (err) {
@@ -73,10 +85,23 @@ clientRouter.put("/me", authMiddleware, async (req, res) => {
     } = req.body;
 
     const updates = {};
-    if (typeof firstName === "string" && firstName.trim()) updates.FirstName = firstName.trim();
-    if (typeof lastName === "string" && lastName.trim()) updates.LastName = lastName.trim();
+    if (typeof firstName === "string" && firstName.trim()) {
+      if (!isValidPersonName(firstName)) {
+        return res.status(400).json({ message: "First name must have at least 3 letters and cannot contain numbers or special symbols." });
+      }
+      updates.FirstName = firstName.trim();
+    }
+    if (typeof lastName === "string" && lastName.trim()) {
+      if (!isValidPersonName(lastName)) {
+        return res.status(400).json({ message: "Last name must have at least 3 letters and cannot contain numbers or special symbols." });
+      }
+      updates.LastName = lastName.trim();
+    }
     if (typeof email === "string" && email.trim()) {
-      const normalizedEmail = email.trim().toLowerCase();
+      const normalizedEmail = normalizeEmail(email);
+      if (!isValidEmail(normalizedEmail)) {
+        return res.status(400).json({ message: "Please enter a valid email address." });
+      }
       const existing = await getClientByEmail(normalizedEmail);
       if (existing && String(existing.ClientId) !== String(client.ClientId)) {
         return res.status(409).json({ message: "Email is already used by another account." });
@@ -86,8 +111,8 @@ clientRouter.put("/me", authMiddleware, async (req, res) => {
     if (typeof profilePicture === "string") updates.profilePicture = profilePicture;
 
     if (newPassword) {
-      if (String(newPassword).length < 8) {
-        return res.status(400).json({ message: "New password must have at least 8 characters." });
+      if (!isStrongPassword(newPassword)) {
+        return res.status(400).json({ message: "New password must have at least 8 characters, one uppercase letter and one number." });
       }
       if (!currentPassword) {
         return res.status(400).json({ message: "Current password is required to change your password." });
@@ -163,7 +188,26 @@ clientRouter.put("/:id", authMiddleware, async (req, res) => {
     if (String(req.client.id) !== String(req.params.id)) {
       return res.status(403).json({ message: "You can only update your own profile." });
     }
-    const updated = await updateClient(req.params.id, req.body);
+    const updates = { ...req.body };
+    const firstName = updates.FirstName || updates.firstName;
+    const lastName = updates.LastName || updates.lastName;
+    const email = updates.Email || updates.email;
+    if (firstName && !isValidPersonName(firstName)) {
+      return res.status(400).json({ message: "First name must have at least 3 letters and cannot contain numbers or special symbols." });
+    }
+    if (lastName && !isValidPersonName(lastName)) {
+      return res.status(400).json({ message: "Last name must have at least 3 letters and cannot contain numbers or special symbols." });
+    }
+    if (email) {
+      const normalizedEmail = normalizeEmail(email);
+      if (!isValidEmail(normalizedEmail)) {
+        return res.status(400).json({ message: "Please enter a valid email address." });
+      }
+      updates.Email = normalizedEmail;
+      delete updates.email;
+    }
+
+    const updated = await updateClient(req.params.id, updates);
     if (!updated) return res.status(404).json({ message: "not found" });
     res.status(200).json(sanitizeClient(updated));
   } catch (err) {

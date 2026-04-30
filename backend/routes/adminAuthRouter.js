@@ -11,11 +11,12 @@ adminAuthRouter.post("/login", async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password required" });
     }
-    const admin = await Admin.findOne({ where: { email } });
+    const normalizedEmail = email.trim().toLowerCase();
+    const admin = await Admin.findOne({ where: { email: normalizedEmail } });
     if (!admin) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-    const ok = await bcrypt.compare(password, admin.password);
+    const ok = await bcrypt.compare(password.trim(), admin.password);
     if (!ok) {
       return res.status(401).json({ message: "Invalid credentials" });
     }

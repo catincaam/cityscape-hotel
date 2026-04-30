@@ -7,6 +7,7 @@ import {
   deleteRoom,
   getAvailableRooms
 } from "../dataAccess/RoomDA.js";
+import { isPositiveInteger, isValidDateRange } from "../utils/validators.js";
 
 const roomRouter = express.Router();
 
@@ -42,6 +43,13 @@ roomRouter.get("/available/search", async (req, res) => {
     }
 
     const guests = Number(adults || 0) + Number(children || 0);
+    if (!isValidDateRange(checkIn, checkOut)) {
+      return res.status(400).json({ message: "Check-in must be before check-out." });
+    }
+
+    if (!isPositiveInteger(guests)) {
+      return res.status(400).json({ message: "Guests must be a positive number." });
+    }
 
     const rooms = await getAvailableRooms({
       checkIn,

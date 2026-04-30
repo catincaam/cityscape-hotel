@@ -2058,6 +2058,15 @@
   cursor: not-allowed;
 }
 
+.booking-action-note {
+  color: #8c94a1;
+  font-size: 11px;
+  font-style: italic;
+  line-height: 1.45;
+  max-width: 220px;
+  text-align: right;
+}
+
 @media (max-width: 980px) {
   .booking-detail-page .booking-shell {
     grid-template-columns: 1fr;

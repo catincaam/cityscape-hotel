@@ -34,9 +34,8 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack, onNext })
         const data = await res.json();
 
         const mapped = data.map((r) => {
-          // Ia prima imagine (cea cu isPrimary=true sau prima din array)
-          const primaryImage = r.RoomTheme?.images?.[0];
-          const imageUrl = r.RoomTheme?.showcaseImage || primaryImage?.imageUrl || r.RoomTheme?.image;
+          const primaryImage = r.RoomTheme?.images?.find((img) => img.isPrimary) || r.RoomTheme?.images?.[0];
+          const imageUrl = r.RoomTheme?.showcaseImage || r.RoomTheme?.image || primaryImage?.imageUrl;
 
           return {
             id: r.RoomTheme?.RoomThemeId || r.RoomThemeId,
@@ -97,6 +96,11 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack, onNext })
     if (filters.theme !== "All") {
       if (r.continent !== filters.theme)
         return false;
+    }
+
+    const price = Number(r.basePrice || 0);
+    if (price < filters.minPrice || price > filters.maxPrice) {
+      return false;
     }
     
     return true;
@@ -237,7 +241,7 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack, onNext })
                 <img src={room.image} alt={room.name} />
               </div>
 
-              <div className="room-details">
+              <div className="room-card-details">
                 <div className="room-header">
                   <div>
                     <h3 className="room-title">{room.name}</h3>
@@ -343,8 +347,8 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack, onNext })
 
         {bookingData.room && (
           <div className="summary-actions">
-            <button className="summary-btn summary-back" onClick={onBack}>← Back</button>
-            <button className="summary-btn summary-continue" onClick={onNext}>Continue →</button>
+            <button className="summary-btn summary-back" onClick={onBack}>Back</button>
+            <button className="summary-btn summary-continue" onClick={onNext}>Continue</button>
           </div>
         )}
       </aside>

@@ -20,7 +20,10 @@ import Feedback from "./Feedback.js";
 import RoomReservation from "./RoomReservation.js"; // tabela de legătură M:N
 import Payment from "./Payment.js";
 import Reward from "./Reward.js";
+import RewardPoint from "./RewardPoint.js";
 import Admin from "./Admin.js";
+import PasswordResetToken from "./PasswordResetToken.js";
+import Stay from "./Stay.js";
 
 function setupFKs() {
 
@@ -82,6 +85,24 @@ function setupFKs() {
 
   Invoice.hasMany(Payment, { foreignKey: "InvoiceId", onDelete: "CASCADE", as: "payments" });
   Payment.belongsTo(Invoice, { foreignKey: "InvoiceId" });
+
+  Client.hasMany(PasswordResetToken, { foreignKey: "ClientId", onDelete: "CASCADE" });
+  PasswordResetToken.belongsTo(Client, { foreignKey: "ClientId" });
+
+  Client.hasMany(Stay, { foreignKey: "ClientId", onDelete: "CASCADE" });
+  Stay.belongsTo(Client, { foreignKey: "ClientId" });
+
+  Reservation.hasMany(Stay, { foreignKey: "ReservationId", onDelete: "CASCADE" });
+  Stay.belongsTo(Reservation, { foreignKey: "ReservationId" });
+
+  Room.hasMany(Stay, { foreignKey: "RoomId", onDelete: "CASCADE" });
+  Stay.belongsTo(Room, { foreignKey: "RoomId" });
+
+  Client.hasMany(RewardPoint, { foreignKey: "UserId", onDelete: "CASCADE" });
+  RewardPoint.belongsTo(Client, { foreignKey: "UserId" });
+
+  Reservation.hasMany(RewardPoint, { foreignKey: "ReservationId", onDelete: "CASCADE" });
+  RewardPoint.belongsTo(Reservation, { foreignKey: "ReservationId" });
 }
 
 async function DB_Init() {
@@ -89,7 +110,7 @@ async function DB_Init() {
     setupFKs();
 
     await db.authenticate();
-    await db.sync({ alter: true }); 
+    await db.sync(); 
     console.log("Database connected & synced safely!");
   } catch (err) {
     console.error("DB_Init ERROR:", err);

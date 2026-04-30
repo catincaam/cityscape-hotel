@@ -5,6 +5,7 @@ import Reservation from "../entities/Reservation.js";
 import Invoice from "../entities/Invoice.js";
 import Payment from "../entities/Payment.js";
 import { awardPointsForCompletedReservation } from "../services/rewardPointsService.js";
+import { syncClientTier } from "../services/clientTierService.js";
 
 const paymentRouter = express.Router();
 
@@ -132,11 +133,13 @@ paymentRouter.post("/pay-final", async (req, res) => {
     
     // Mark reservation as COMPLETED and award reward points
     let rewardResult = null;
+    let clientTier = null;
     if (invoiceStatus.status === "full_payment") {
       await reservation.update({ status: "completed" });
       
       // Award reward points for completed reservation
       rewardResult = await awardPointsForCompletedReservation(ReservationId, reservation.ClientId);
+      clientTier = await syncClientTier(reservation.ClientId);
       console.log(`✅ Reservation #${ReservationId} marked as completed. Points awarded:`, rewardResult);
     }
 
@@ -150,7 +153,8 @@ paymentRouter.post("/pay-final", async (req, res) => {
         points: rewardResult.points,
         breakdown: rewardResult.breakdown,
         message: `🎉 Felicitări! Ai câștigat ${rewardResult.points} puncte!`
-      } : null
+      } : null,
+      clientTier
     });
   } catch (err) {
     console.error(err);

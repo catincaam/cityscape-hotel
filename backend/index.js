@@ -89,6 +89,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 /** 4) Routes */
 app.use("/api/auth", authRouter);
 app.use("/api/auth/admin", adminAuthRouter);
+app.use("/api/admin/auth", adminAuthRouter);
 app.use("/api/clients", clientRouter);
 app.use("/api/client-types", clientTypeRouter);
 app.use("/api/hotels", hotelRouter);

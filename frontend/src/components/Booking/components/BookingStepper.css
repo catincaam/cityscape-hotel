@@ -4,11 +4,12 @@
   justify-content: center;
   gap: 0;
   margin-bottom: 48px;
-  padding: 32px;
+  padding: 28px clamp(22px, 3vw, 44px);
   background: white;
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   border: 1px solid #f0f4f8;
+  width: 100%;
 }
 
 .step-item {

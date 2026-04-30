@@ -1,4 +1,3 @@
-// backend/routes/invoiceRouter.js
 import express from "express";
 import PDFDocument from "pdfkit";
 import {
@@ -9,10 +8,39 @@ import {
   deleteInvoice
 } from "../dataAccess/InvoiceDA.js";
 import { getReservationById } from "../dataAccess/ReservationDA.js";
-import { getRoomById } from "../dataAccess/RoomDA.js";
 import { getClientById } from "../dataAccess/ClientDA.js";
 
 const invoiceRouter = express.Router();
+
+const formatDate = (value) => {
+  if (!value) return "-";
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  }).format(new Date(value));
+};
+
+const money = (value) => `${Number(value || 0).toFixed(2)} EUR`;
+
+const drawLabel = (doc, label, value, x, y, width = 140) => {
+  doc.fontSize(7).font("Helvetica-Bold").fillColor("#9a7b55")
+    .text(label.toUpperCase(), x, y, { width, characterSpacing: 1.2 });
+  doc.fontSize(10).font("Helvetica-Bold").fillColor("#111827")
+    .text(value || "-", x, y + 13, { width });
+};
+
+const drawLineItem = (doc, y, description, meta, amount, options = {}) => {
+  doc.roundedRect(54, y, 488, 46, 6).fill(options.fill || "#ffffff");
+  doc.fontSize(10).font("Helvetica-Bold").fillColor("#111827")
+    .text(description, 72, y + 12, { width: 300 });
+  if (meta) {
+    doc.fontSize(8).font("Helvetica").fillColor("#6b7280")
+      .text(meta, 72, y + 27, { width: 300 });
+  }
+  doc.fontSize(10).font("Helvetica-Bold").fillColor("#9a6f36")
+    .text(money(amount), 380, y + 18, { width: 140, align: "right" });
+};
 
 /* CREATE */
 invoiceRouter.post("/", async (req, res) => {
@@ -39,50 +67,62 @@ invoiceRouter.get("/", async (req, res) => {
 /* DOWNLOAD PDF - MUST BE BEFORE /:id route */
 invoiceRouter.get("/:reservationId/download-pdf", async (req, res) => {
   try {
-    console.log("[PDF] Starting download for reservation:", req.params.reservationId);
-    
     const reservation = await getReservationById(req.params.reservationId);
     if (!reservation) {
-      console.error("[PDF] Reservation not found");
       return res.status(404).json({ message: "Reservation not found" });
     }
-    console.log("[PDF] Reservation found:", reservation.ReservationId);
 
     const client = await getClientById(reservation.ClientId);
-    console.log("[PDF] Client:", client?.FirstName);
-    
-    // Get room via RoomReservation
+
     const RoomReservation = (await import("../entities/RoomReservation.js")).default;
-    const roomRes = await RoomReservation.findOne({
+    const Room = (await import("../entities/Room.js")).default;
+    const RoomTheme = (await import("../entities/RoomTheme.js")).default;
+    const Invoice = (await import("../entities/Invoice.js")).default;
+    const Payment = (await import("../entities/Payment.js")).default;
+    const ReservationService = (await import("../entities/ReservationService.js")).default;
+    const Service = (await import("../entities/Service.js")).default;
+
+    const roomReservation = await RoomReservation.findOne({
       where: { ReservationId: reservation.ReservationId }
     });
-    const room = roomRes ? await getRoomById(roomRes.RoomId) : null;
-    console.log("[PDF] Room:", room?.name);
+    const room = roomReservation ? await Room.findByPk(roomReservation.RoomId) : null;
+    const theme = room?.RoomThemeId ? await RoomTheme.findByPk(room.RoomThemeId) : null;
 
-    // Get invoice via reservation
-    const Invoice = (await import("../entities/Invoice.js")).default;
     const invoice = await Invoice.findOne({
       where: { ReservationId: reservation.ReservationId }
     });
 
     if (!invoice) {
-      console.error("[PDF] Invoice not found");
       return res.status(404).json({ message: "Invoice not found" });
     }
-    console.log("[PDF] Invoice:", invoice.InvoiceId);
 
-    // Get payment info
-    const Payment = (await import("../entities/Payment.js")).default;
     const payments = await Payment.findAll({
       where: { InvoiceId: invoice.InvoiceId }
     });
-    const paidAmount = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
-    console.log("[PDF] Payments:", payments.length, "Total paid:", paidAmount);
+    const paidAmount = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+    const totalAmount = Number(invoice.totalAmount || 0);
+    const remainingAmount = Math.max(0, totalAmount - paidAmount);
+    const paymentStatus = remainingAmount <= 0 ? "Fully paid" : "Partially paid";
 
-    // Create PDF
-    const doc = new PDFDocument({ size: "A4", margin: 50 });
+    const reservationServices = await ReservationService.findAll({
+      where: { ReservationId: reservation.ReservationId },
+      include: [{ model: Service, required: false }]
+    }).catch(() => []);
+    const servicesTotal = reservationServices.reduce((sum, item) => {
+      return sum + Number(item.quantity || 0) * Number(item.unitPrice || 0);
+    }, 0);
 
-    // Set response headers
+    const nights = Math.max(1, Math.ceil(
+      (new Date(reservation.requestedCheckout) - new Date(reservation.requestedCheckin)) /
+      (1000 * 60 * 60 * 24)
+    ));
+    const accommodationTotal = totalAmount;
+    const reservationCode = `RES-${String(reservation.ReservationId).padStart(4, "0")}`;
+    const roomTitle = theme?.name || "Cityscape room";
+    const guestName = [client?.FirstName, client?.LastName].filter(Boolean).join(" ") || "Guest";
+
+    const doc = new PDFDocument({ size: "A4", margin: 0 });
+
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
       "Content-Disposition",
@@ -90,182 +130,90 @@ invoiceRouter.get("/:reservationId/download-pdf", async (req, res) => {
     );
 
     doc.pipe(res);
-    console.log("[PDF] PDF creation started");
 
-    // ============ HEADER ============
-    doc.rect(0, 0, 612, 110).fill("#c9a86a");
-    
+    doc.rect(0, 0, 595, 842).fill("#f7f3ed");
+    doc.roundedRect(34, 34, 527, 774, 18).fill("#fffdf9");
+
+    doc.fontSize(9).font("Helvetica-Bold").fillColor("#9a6f36")
+      .text("CITYSCAPE HOTEL", 54, 62, { characterSpacing: 2.5 });
+    doc.fontSize(34).font("Helvetica").fillColor("#111827")
+      .text("Invoice", 54, 86);
+    doc.fontSize(9).font("Helvetica").fillColor("#6b7280")
+      .text("Reservation payment receipt", 56, 128);
+
+    doc.fontSize(9).font("Helvetica-Bold").fillColor("#9a7b55")
+      .text(`INVOICE #${String(invoice.InvoiceId).padStart(5, "0")}`, 380, 68, { width: 145, align: "right" });
+    doc.fontSize(9).font("Helvetica").fillColor("#6b7280")
+      .text(formatDate(invoice.issueDate || new Date()), 380, 84, { width: 145, align: "right" });
+    doc.fontSize(13).font("Helvetica-Bold").fillColor("#111827")
+      .text(`#${reservationCode}`, 380, 112, { width: 145, align: "right" });
+
+    doc.moveTo(54, 158).lineTo(542, 158).strokeColor("#e7d8c4").lineWidth(1).stroke();
+
+    drawLabel(doc, "Guest", guestName, 54, 184, 190);
+    drawLabel(doc, "Email", client?.Email || "-", 54, 226, 220);
+    drawLabel(doc, "Room", roomTitle, 312, 184, 210);
+    drawLabel(doc, "Guests", `${reservation.nrPeople || 1} guest${reservation.nrPeople === 1 ? "" : "s"}`, 312, 226, 160);
+
+    doc.roundedRect(54, 286, 488, 82, 10).fill("#f8f4ee");
+    drawLabel(doc, "Check-in", formatDate(reservation.requestedCheckin), 78, 310, 130);
+    drawLabel(doc, "Check-out", formatDate(reservation.requestedCheckout), 230, 310, 130);
+    drawLabel(doc, "Duration", `${nights} night${nights === 1 ? "" : "s"}`, 382, 310, 120);
+
+    doc.fontSize(9).font("Helvetica-Bold").fillColor("#9a7b55")
+      .text("BILLING DETAILS", 54, 405, { characterSpacing: 1.4 });
+
+    let rowY = 432;
+    drawLineItem(
+      doc,
+      rowY,
+      "Room accommodation",
+      `${roomTitle} - ${nights} night${nights === 1 ? "" : "s"}`,
+      accommodationTotal
+    );
+    rowY += 54;
+
+    if (reservationServices.length > 0) {
+      doc.fontSize(8).font("Helvetica-Bold").fillColor("#9a7b55")
+        .text("SERVICES RESERVED - PAYABLE AT HOTEL", 54, rowY + 4, { characterSpacing: 1.1 });
+      rowY += 26;
+
+      reservationServices.forEach((item) => {
+        const serviceName = item.Service?.name || item.Service?.serviceName || `Service #${item.ServiceId}`;
+        const quantity = Number(item.quantity || 0);
+        const unitPrice = Number(item.unitPrice || 0);
+        drawLineItem(doc, rowY, serviceName, `${quantity} x ${money(unitPrice)}`, quantity * unitPrice, {
+          fill: "#fbfaf7"
+        });
+        rowY += 54;
+      });
+    }
+
+    doc.roundedRect(54, rowY + 10, 488, 88, 10).fill("#111827");
+    doc.fontSize(9).font("Helvetica-Bold").fillColor("#d6b98b")
+      .text("TOTAL DUE NOW", 78, rowY + 34, { characterSpacing: 1.3 });
     doc.fontSize(26).font("Helvetica-Bold").fillColor("#ffffff")
-      .text("CITYSCAPE HOTEL", { align: "center", y: 25 });
-    doc.fontSize(10).font("Helvetica").fillColor("#fffbf7")
-      .text("Luxury Collection", { align: "center" });
-    
-    doc.fontSize(8).fillColor("#f5f0eb")
-      .text("Your Perfect Stay Awaits", { align: "center" });
+      .text(money(totalAmount), 300, rowY + 27, { width: 210, align: "right" });
+    doc.fontSize(9).font("Helvetica").fillColor("#d1d5db")
+      .text(`Paid: ${money(paidAmount)}   Remaining: ${money(remainingAmount)}`, 78, rowY + 60);
 
-    doc.fillColor("#000000");
-    doc.y = 120;
+    const statusY = rowY + 122;
+    doc.roundedRect(54, statusY, 488, 54, 10).fill(remainingAmount <= 0 ? "#ecfdf5" : "#fff7ed");
+    doc.fontSize(9).font("Helvetica-Bold").fillColor(remainingAmount <= 0 ? "#047857" : "#9a3412")
+      .text("PAYMENT STATUS", 78, statusY + 14, { characterSpacing: 1.3 });
+    doc.fontSize(13).font("Helvetica-Bold").fillColor(remainingAmount <= 0 ? "#065f46" : "#7c2d12")
+      .text(paymentStatus, 78, statusY + 29);
 
-    // ============ INVOICE HEADER ============
-    doc.fontSize(18).font("Helvetica-Bold").fillColor("#1f2937").text("INVOICE", 50);
-    
-    const headerY = doc.y - 16;
-    doc.fontSize(9).font("Helvetica").fillColor("#9ca3af");
-    doc.text(`Invoice #: INV-${String(reservation.ReservationId).padStart(6, "0")}`, {
-      align: "right",
-      y: headerY,
-      width: 512
-    });
-    doc.text(
-      `Date: ${new Date().toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })}`,
-      { align: "right", width: 512 }
-    );
+    doc.moveTo(54, 744).lineTo(542, 744).strokeColor("#e7d8c4").lineWidth(1).stroke();
+    doc.fontSize(8).font("Helvetica").fillColor("#6b7280")
+      .text("Thank you for choosing Cityscape Hotel.", 54, 762, { width: 488, align: "center" });
+    doc.fontSize(7).fillColor("#9ca3af")
+      .text("This invoice was generated automatically by the Cityscape Hotel reservation system.", 54, 778, {
+        width: 488,
+        align: "center"
+      });
 
-    doc.moveDown(1.5);
-
-    // ============ TWO COLUMN INFO ============
-    const col1X = 50;
-    const col2X = 320;
-
-    // Left Column - Guest
-    doc.fontSize(9).font("Helvetica-Bold").fillColor("#6b7280").text("GUEST", col1X);
-    doc.fontSize(10).font("Helvetica-Bold").fillColor("#1f2937");
-    doc.text(`${client?.FirstName || ""} ${client?.LastName || ""}`, col1X);
-    doc.fontSize(9).font("Helvetica").fillColor("#6b7280");
-    if (client?.email) doc.text(client.email, col1X);
-
-    // Right Column - Reservation
-    const leftColY = doc.y;
-    doc.fontSize(9).font("Helvetica-Bold").fillColor("#6b7280").text("RESERVATION", col2X, leftColY - 19);
-    doc.fontSize(10).font("Helvetica-Bold").fillColor("#1f2937");
-    doc.text(`ID: ${reservation.ReservationId}`, col2X, leftColY - 10);
-    doc.fontSize(9).font("Helvetica").fillColor("#6b7280");
-    doc.text(`Room: ${room?.name || "N/A"}`, col2X);
-    
-    const nights = Math.ceil(
-      (new Date(reservation.requestedCheckout) -
-        new Date(reservation.requestedCheckin)) /
-        (1000 * 60 * 60 * 24)
-    );
-    
-    doc.text(`Check-in: ${new Date(reservation.requestedCheckin).toLocaleDateString()}`, col2X);
-    doc.text(`Check-out: ${new Date(reservation.requestedCheckout).toLocaleDateString()}`, col2X);
-    doc.text(`${nights} night${nights > 1 ? "s" : ""} • ${reservation.nrPeople} guest${reservation.nrPeople > 1 ? "s" : ""}`, col2X);
-
-    doc.moveDown(2);
-
-    // ============ DIVIDER ============
-    doc.strokeColor("#e5d5c8").lineWidth(1);
-    doc.moveTo(50, doc.y).lineTo(562, doc.y).stroke();
-    doc.moveDown(1.5);
-
-    // ============ BILLING TABLE ============
-    doc.fontSize(9).font("Helvetica-Bold").fillColor("#6b7280").text("BILLING DETAILS", 50);
-    doc.moveDown(0.8);
-
-    const tableY = doc.y;
-    const tableWidth = 512;
-    const rowHeight = 30;
-
-    // Header
-    doc.fillColor("#f5f0eb");
-    doc.rect(50, tableY, tableWidth, rowHeight).fill();
-    doc.strokeColor("#e5d5c8").lineWidth(0.5);
-    doc.rect(50, tableY, tableWidth, rowHeight).stroke();
-    
-    doc.fontSize(8).font("Helvetica-Bold").fillColor("#6b7280");
-    doc.text("Description", 60, tableY + 9);
-    doc.text("Amount", 480, tableY + 9, { align: "right" });
-
-    // Calculate costs
-    const roomCost = parseFloat(invoice.totalAmount) * 0.85;
-    const tax = parseFloat(invoice.totalAmount) * 0.15;
-
-    // Row 1 - Room
-    const row1Y = tableY + rowHeight;
-    doc.fillColor("#ffffff");
-    doc.rect(50, row1Y, tableWidth, rowHeight).fill();
-    doc.strokeColor("#e5d5c8").lineWidth(0.5);
-    doc.rect(50, row1Y, tableWidth, rowHeight).stroke();
-    
-    doc.fontSize(9).font("Helvetica").fillColor("#1f2937");
-    doc.text(`Room Accommodation (${nights} night${nights > 1 ? "s" : ""})`, 60, row1Y + 9);
-    doc.font("Helvetica-Bold").fillColor("#c9a86a");
-    doc.text(`€${roomCost.toFixed(2)}`, 480, row1Y + 9, { align: "right" });
-
-    // Row 2 - Taxes
-    const row2Y = row1Y + rowHeight;
-    doc.fillColor("#fafaf9");
-    doc.rect(50, row2Y, tableWidth, rowHeight).fill();
-    doc.strokeColor("#e5d5c8").lineWidth(0.5);
-    doc.rect(50, row2Y, tableWidth, rowHeight).stroke();
-    
-    doc.fontSize(9).font("Helvetica").fillColor("#1f2937");
-    doc.text("Taxes & Service Fees", 60, row2Y + 9);
-    doc.font("Helvetica-Bold").fillColor("#c9a86a");
-    doc.text(`€${tax.toFixed(2)}`, 480, row2Y + 9, { align: "right" });
-
-    // Total Box
-    const totalY = row2Y + rowHeight;
-    doc.fillColor("#fffbf7");
-    doc.rect(50, totalY, tableWidth, 45).fill();
-    doc.strokeColor("#c9a86a").lineWidth(2);
-    doc.rect(50, totalY, tableWidth, 45).stroke();
-    
-    doc.fontSize(9).font("Helvetica-Bold").fillColor("#6b7280");
-    doc.text("TOTAL DUE", 60, totalY + 8);
-    doc.fontSize(20).font("Helvetica-Bold").fillColor("#c9a86a");
-    doc.text(`€${parseFloat(invoice.totalAmount).toFixed(2)}`, 480, totalY + 10, {
-      align: "right"
-    });
-
-    doc.y = totalY + 50;
-    doc.moveDown(1);
-
-    // ============ PAYMENT STATUS ============
-    doc.fontSize(9).font("Helvetica-Bold").fillColor("#6b7280").text("PAYMENT STATUS", 50);
-    doc.moveDown(0.6);
-
-    const statusBoxY = doc.y;
-    const statusColor = invoice.status === "paid" ? "#ecfdf5" : "#fef2f2";
-    const statusTextColor = invoice.status === "paid" ? "#065f46" : "#991b1b";
-    const statusBorderColor = invoice.status === "paid" ? "#10b981" : "#dc2626";
-
-    doc.fillColor(statusColor).rect(50, statusBoxY, 512, 35).fill();
-    doc.strokeColor(statusBorderColor).lineWidth(1.5);
-    doc.rect(50, statusBoxY, 512, 35).stroke();
-
-    doc.fontSize(9).font("Helvetica-Bold").fillColor(statusTextColor);
-    doc.text(`Amount Paid: €${paidAmount.toFixed(2)}`, 60, statusBoxY + 6);
-    doc.text(`Status: ${invoice.status === "paid" ? "FULLY PAID" : "PENDING"}`, 60, statusBoxY + 19);
-
-    doc.moveDown(3);
-
-    // ============ FOOTER ============
-    doc.strokeColor("#e5d5c8").lineWidth(0.5);
-    doc.moveTo(50, doc.y).lineTo(562, doc.y).stroke();
-    
-    doc.moveDown(1);
-    doc.fontSize(8).font("Helvetica").fillColor("#9ca3af").text(
-      "Thank you for choosing Cityscape Hotel. We look forward to welcoming you!",
-      { align: "center" }
-    );
-    doc.fontSize(8).fillColor("#d1d5db").text("reservations@cityscape-hotel.com  |  +1 (555) 123-4567", {
-      align: "center",
-    });
-    doc.fontSize(7).fillColor("#d1d5db");
-    doc.moveDown(0.5);
-    doc.text("This is an automatically generated invoice. No signature required.", {
-      align: "center",
-    });
-
-    // Finalize PDF
     doc.end();
-    console.log("[PDF] PDF finalized and sent");
   } catch (err) {
     console.error("[PDF ERROR] Full error:", err);
     console.error("[PDF ERROR] Stack:", err.stack);

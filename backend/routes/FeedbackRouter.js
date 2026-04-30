@@ -13,10 +13,11 @@ const feedbackRouter = express.Router();
 /* CREATE */
 import { addPendingPoints } from '../dataAccess/RewardPointDA.js';
 import Reservation from '../entities/Reservation.js';
+import { isValidRating } from "../utils/validators.js";
 
 feedbackRouter.post("/", async (req, res) => {
   try {
-    const { ReservationId, ClientId } = req.body;
+    const { ReservationId, ClientId, overall, cleanliness, service, theme, comment } = req.body;
     console.log("[FEEDBACK] POST request:", { ReservationId, ClientId, body: req.body });
     
     if (!ReservationId || !ClientId) {
@@ -37,14 +38,24 @@ feedbackRouter.post("/", async (req, res) => {
     }
     
     // Permite feedback doar dacă statusul e 'completed' sau 'paid'
-    if (reservation.status !== 'completed' && reservation.status !== 'paid') {
+    if (reservation.status !== 'completed') {
       console.log("[FEEDBACK] Invalid reservation status:", reservation.status);
-      return res.status(400).json({ message: "Feedback is allowed only after the stay is completed or paid." });
+      return res.status(400).json({ message: "Feedback is allowed only after the stay is completed." });
+    }
+
+    if (![overall, cleanliness, service, theme].every(isValidRating)) {
+      return res.status(400).json({ message: "All ratings must be between 1 and 5." });
+    }
+
+    const normalizedComment = String(comment || "").trim();
+    if (normalizedComment.length < 10 || normalizedComment.length > 500) {
+      return res.status(400).json({ message: "Comment must be between 10 and 500 characters." });
     }
     
     // Add submissionDate to feedback data
     const feedbackData = {
       ...req.body,
+      comment: normalizedComment,
       submissionDate: new Date()
     };
     

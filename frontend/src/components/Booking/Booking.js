@@ -11,6 +11,7 @@ import BookingStepper from "./components/BookingStepper";
 import BookingFooter from "./components/BookingFooter";
 
 import "./Booking.css";
+import { isValidDateRange } from "../../utils/validators";
 
 export default function Booking() {
   const location = useLocation();
@@ -25,6 +26,7 @@ export default function Booking() {
     room: null,
     services: {} // { serviceId: quantity }
   });
+  const [bookingError, setBookingError] = useState("");
 
   // Verificăm dacă venim de la RoomDetails cu date
   useEffect(() => {
@@ -60,8 +62,19 @@ export default function Booking() {
   function goToStep2() {
     // ❗ NU mai afișăm mesaje de eroare vizuale
     // Validarea rămâne logică, dar silențioasă
-    if (!bookingData.checkIn || !bookingData.checkOut) return;
-    if (bookingData.checkOut <= bookingData.checkIn) return;
+    setBookingError("");
+    if (!bookingData.checkIn || !bookingData.checkOut) {
+      setBookingError("Please choose both check-in and check-out dates.");
+      return;
+    }
+    if (!isValidDateRange(bookingData.checkIn, bookingData.checkOut)) {
+      setBookingError("Check-in must be before check-out.");
+      return;
+    }
+    if (Number(bookingData.adults) + Number(bookingData.children) < 1) {
+      setBookingError("Please select at least one guest.");
+      return;
+    }
 
     setStep(2);
   }
@@ -107,6 +120,7 @@ export default function Booking() {
             data={bookingData}
             setData={setBookingData}
             onContinue={goToStep2}
+            error={bookingError}
           />
         )}
 
@@ -130,7 +144,14 @@ export default function Booking() {
               bookingData={bookingData}
               onSelectRoom={selectRoom}
               onBack={() => setStep(1)}
-              onNext={() => setStep(3)}
+              onNext={() => {
+                if (!bookingData.room) {
+                  setBookingError("Please select a room before continuing.");
+                  return;
+                }
+                setBookingError("");
+                setStep(3);
+              }}
             />
           </>
         )}

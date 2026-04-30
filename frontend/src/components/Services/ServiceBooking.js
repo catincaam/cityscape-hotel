@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from "../Dashboard/Navbar";
 import "../Rewards/Rewards.css";
 import "./ServiceBooking.css";
+import { isValidEmail, isValidPersonName } from "../../utils/validators";
 
 export default function ServiceBooking() {
   const navigate = useNavigate();
@@ -96,9 +97,11 @@ export default function ServiceBooking() {
       return;
     }
     if (isPerPerson) {
-      const hasIncompletePerson = personDetails.some(person => !person.name.trim() || !person.email.trim());
-      if (hasIncompletePerson) {
-        alert("Please add full name and email for each person");
+      const hasInvalidPerson = personDetails.some(person => (
+        !isValidPersonName(person.name) || !isValidEmail(person.email)
+      ));
+      if (hasInvalidPerson) {
+        alert("Please add a valid full name and email for each person.");
         return;
       }
     }

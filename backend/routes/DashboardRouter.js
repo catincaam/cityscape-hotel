@@ -7,6 +7,7 @@ import Room from "../entities/Room.js";
 import RoomTheme from "../entities/RoomTheme.js";
 import RoomReservation from "../entities/RoomReservation.js";
 import Reservation from "../entities/Reservation.js";
+import { syncClientTier } from "../services/clientTierService.js";
 
 const router = express.Router();
 
@@ -20,6 +21,8 @@ router.get("/dashboard", authClient, async (req, res) => {
       return res.status(404).json({ message: "Client not found" });
     }
 
+    const clientTier = await syncClientTier(clientId);
+    await client.reload();
     const { Password, ...safeClient } = client.dataValues;
 
     // Găsește rezervările utilizatorului
@@ -153,6 +156,7 @@ router.get("/dashboard", authClient, async (req, res) => {
     }
     res.json({
       client: safeClient,
+      clientTier,
       cityPoints,
       nextDestination,
       recentReservations: paidReservations,
