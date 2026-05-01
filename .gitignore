@@ -33,4 +33,6 @@ Thumbs.db
 
 # Uploads / temp
 uploads/
+!backend/uploads/
+!backend/uploads/**
 tmp/

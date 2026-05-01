@@ -268,9 +268,9 @@ export async function seedDemoData() {
     const reservations = [];
     for (let index = 0; index < reservationSeeds.length; index += 1) {
       const seed = reservationSeeds[index];
-      const client = index < 5
+      const client = index < 10
         ? clients[0]
-        : clients[((index - 5) % (clients.length - 1)) + 1];
+        : clients[((index - 10) % (clients.length - 1)) + 1];
       const room = catalog.rooms[index % catalog.rooms.length];
       const reservation = await createReservationBundle({
         client,
