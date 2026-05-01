@@ -131,16 +131,7 @@ export default function AllReservations() {
   };
 
   const getStatusBadge = (reservation) => {
-    const status = String(reservation.status || "").toLowerCase();
-    const statusMap = {
-      pending: "UPCOMING",
-      partial: "UPCOMING",
-      paid: "CONFIRMED",
-      active: "ACTIVE",
-      completed: "COMPLETED",
-      cancelled: "CANCELLED"
-    };
-    return statusMap[status] || getTimelineStatus(reservation).toUpperCase();
+    return getTimelineStatus(reservation).toUpperCase();
   };
 
   const getReservationImage = (reservation) => {
