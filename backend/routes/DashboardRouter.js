@@ -50,7 +50,11 @@ router.get("/dashboard", authClient, async (req, res) => {
 
     // Găsește următoarea rezervare (viitoare)
     const now = new Date();
-    const upcomingReservations = allReservations.filter(r => new Date(r.requestedCheckin) >= now);
+    const upcomingReservations = allReservations.filter((reservation) => {
+      const status = String(reservation.status || "").toLowerCase();
+      return !["cancelled", "canceled", "pending"].includes(status)
+        && new Date(reservation.requestedCheckin) >= now;
+    });
     // Sortează crescător după check-in (cea mai apropiată prima)
     upcomingReservations.sort((a, b) => new Date(a.requestedCheckin) - new Date(b.requestedCheckin));
     const nextReservation = upcomingReservations.length > 0 ? upcomingReservations[0] : null;

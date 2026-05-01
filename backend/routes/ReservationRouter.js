@@ -313,38 +313,43 @@ reservationRouter.get("/:id", async (req, res) => {
     console.log(`[RESERVATION] Invoice Payments:`, reservation.Invoice?.payments?.length || 0);
     
     // LOGICĂ: actualizează statusul pe baza datelor check-in/check-out
+    // Statusul "cancelled" este final: nu îl recalculăm în upcoming/active/completed.
     const now = new Date();
     const checkin = new Date(reservation.requestedCheckin);
     const checkout = new Date(reservation.requestedCheckout);
     
     let newStatus = reservation.status;
     
-    // AUTO-CANCEL: dacă e check-in și nu e plătit 100%
-    if (now >= checkin && now < checkout && reservation.status !== 'completed' && reservation.status !== 'cancelled') {
-      const invoice = reservation.Invoice;
-      if (invoice) {
-        // Calculează suma plătită
-        const Payment = (await import("../entities/Payment.js")).default;
-        const payments = await Payment.findAll({ where: { InvoiceId: invoice.InvoiceId } });
-        const paidAmount = payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
-        
-        if (paidAmount < invoice.totalAmount) {
-          // Nu e plătit integral la check-in - AUTO-CANCEL
-          newStatus = 'cancelled';
-          console.log(`[AUTO-CANCEL] Reservation #${reservation.ReservationId} auto-cancelled at check-in. Paid: €${paidAmount}, Required: €${invoice.totalAmount}`);
+    if (reservation.status !== 'cancelled') {
+      // AUTO-CANCEL: dacă e check-in și nu e plătit 100%
+      if (now >= checkin && now < checkout && reservation.status !== 'completed') {
+        const invoice = reservation.Invoice;
+        if (invoice) {
+          // Calculează suma plătită
+          const Payment = (await import("../entities/Payment.js")).default;
+          const payments = await Payment.findAll({ where: { InvoiceId: invoice.InvoiceId } });
+          const paidAmount = payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+          
+          if (paidAmount < invoice.totalAmount) {
+            // Nu e plătit integral la check-in - AUTO-CANCEL
+            newStatus = 'cancelled';
+            console.log(`[AUTO-CANCEL] Reservation #${reservation.ReservationId} auto-cancelled at check-in. Paid: €${paidAmount}, Required: €${invoice.totalAmount}`);
+          } else {
+            newStatus = 'active';
+          }
         } else {
           newStatus = 'active';
         }
+      } else if (checkout < now) {
+        // După checkout = COMPLETED
+        newStatus = "completed";
+      } else if (checkin <= now && now < checkout) {
+        // În sejur (între checkin și checkout) = ACTIVE
+        newStatus = "active";
+      } else if (now < checkin) {
+        // Înainte de checkin = UPCOMING
+        newStatus = "upcoming";
       }
-    } else if (checkout < now) {
-      // După checkout = COMPLETED
-      newStatus = "completed";
-    } else if (checkin <= now && now < checkout) {
-      // În sejur (între checkin și checkout) = ACTIVE
-      newStatus = "active";
-    } else if (now < checkin) {
-      // Înainte de checkin = UPCOMING
-      newStatus = "upcoming";
     }
     
     // Actualizează dacă statusul s-a schimbat
