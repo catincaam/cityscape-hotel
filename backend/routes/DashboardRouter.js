@@ -8,6 +8,7 @@ import RoomTheme from "../entities/RoomTheme.js";
 import RoomReservation from "../entities/RoomReservation.js";
 import Reservation from "../entities/Reservation.js";
 import { syncClientTier } from "../services/clientTierService.js";
+import { publicAssetUrl } from "../utils/publicUrl.js";
 
 const router = express.Router();
 
@@ -66,7 +67,7 @@ router.get("/dashboard", authClient, async (req, res) => {
         checkIn: nextReservation.requestedCheckin,
         checkOut: nextReservation.requestedCheckout,
         guests: nextReservation.nrPeople || 1,
-        image: destinationImage ? `http://localhost:9001${destinationImage}` : null
+        image: publicAssetUrl(destinationImage)
       };
     }
 
@@ -101,9 +102,7 @@ router.get("/dashboard", authClient, async (req, res) => {
           checkOut: reservation.requestedCheckout,
           status: bookingStatus,
           totalAmount: invoice?.totalAmount || 0,
-          image: (roomTheme?.showcaseImage || roomTheme?.image)
-            ? `http://localhost:9001${roomTheme.showcaseImage || roomTheme.image}`
-            : null
+          image: publicAssetUrl(roomTheme?.showcaseImage || roomTheme?.image)
         };
       })
     );
@@ -125,9 +124,7 @@ router.get("/dashboard", authClient, async (req, res) => {
           checkOut: reservation.requestedCheckout,
           status: reservation.status || "pending",
           totalAmount: invoice?.totalAmount || 0,
-          image: (roomTheme?.showcaseImage || roomTheme?.image)
-            ? `http://localhost:9001${roomTheme.showcaseImage || roomTheme.image}`
-            : null
+          image: publicAssetUrl(roomTheme?.showcaseImage || roomTheme?.image)
         };
       })
     );

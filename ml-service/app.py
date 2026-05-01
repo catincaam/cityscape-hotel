@@ -1,10 +1,11 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
+import os
 from predictor import build_predictions
 
 
-HOST = "localhost"
-PORT = 9100
+HOST = os.environ.get("HOST", "0.0.0.0")
+PORT = int(os.environ.get("PORT", 9100))
 
 
 class PredictionHandler(BaseHTTPRequestHandler):

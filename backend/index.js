@@ -37,14 +37,6 @@ import chatbotRouter from "./routes/ChatbotRouter.js";
 
 dotenv.config();
 
-// DEBUG: Logare variabile de mediu la pornirea serverului
-console.log("[DEBUG] ENV DB_USERNAME:", process.env.DB_USERNAME);
-console.log("[DEBUG] ENV DB_PASSWORD:", process.env.DB_PASSWORD);
-console.log("[DEBUG] ENV DB_DATABASE:", process.env.DB_DATABASE);
-console.log("[DEBUG] ENV DB_HOST:", process.env.DB_HOST);
-console.log("[DEBUG] ENV DB_DIALECT:", process.env.DB_DIALECT);
-console.log("[DEBUG] ENV PORT:", process.env.PORT);
-
 
 const app = express();
 
@@ -52,27 +44,27 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-/** 1) Logging request + process.env snapshot */
+/** 1) Logging request */
 app.use((req, res, next) => {
   console.log("REQ", req.method, req.url, "Origin:", req.headers.origin);
-  console.log("[DEBUG][REQUEST] process.env snapshot:", JSON.stringify({
-    DB_USERNAME: process.env.DB_USERNAME,
-    DB_PASSWORD: process.env.DB_PASSWORD,
-    DB_DATABASE: process.env.DB_DATABASE,
-    DB_HOST: process.env.DB_HOST,
-    DB_DIALECT: process.env.DB_DIALECT,
-    PORT: process.env.PORT,
-    JWT_SECRET: process.env.JWT_SECRET
-  }, null, 2));
   next();
 });
 
 /** 2) CORS config */
+const allowedOrigins = [
+  "http://localhost:3007",
+  "http://localhost:3000",
+  process.env.FRONTEND_URL,
+  process.env.APP_URL
+].filter(Boolean);
+
 const corsOptions = {
-  origin: [
-    "http://localhost:3007", // CRA-ul tău
-    "http://localhost:3000"  // fallback
-  ],
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -136,4 +128,4 @@ app.use((err, req, res, next) => {
 DB_Init().then(() => seedAdmin()).catch((err) => console.error("DB init failed:", err));
 
 const PORT = process.env.PORT || 9001;
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

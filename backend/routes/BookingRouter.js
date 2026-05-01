@@ -14,6 +14,7 @@ import { addServiceToReservation } from "../dataAccess/ReservationServiceDA.js";
 import { getServiceById } from "../dataAccess/ServiceDA.js";
 import { createRoomReservation } from "../dataAccess/RoomReservationDA.js";
 import { sendReservationConfirmation } from "../services/emailService.js";
+import { publicAssetUrl } from "../utils/publicUrl.js";
 import {
   isFutureExpiry,
   isPositiveInteger,
@@ -128,7 +129,7 @@ bookingRouter.get("/admin/bookings", async (req, res) => {
         guestName: client.FirstName ? `${client.FirstName} ${client.LastName}` : "-",
         guestAvatar: "/assets/profilePicture.jpg",
         roomTheme: themeName,
-        roomImage: showcaseImg ? `http://localhost:9001${showcaseImg}` : null,
+        roomImage: publicAssetUrl(showcaseImg),
         dates: dates,
         totalPrice: totalPrice,
         totalPaid: Math.round(totalPaid * 100) / 100,
