@@ -122,6 +122,7 @@ router.get("/dashboard", authClient, async (req, res) => {
           city: roomTheme?.city || "City",
           checkIn: reservation.requestedCheckin,
           checkOut: reservation.requestedCheckout,
+          guests: reservation.nrPeople || 1,
           status: reservation.status || "pending",
           totalAmount: invoice?.totalAmount || 0,
           image: publicAssetUrl(roomTheme?.showcaseImage || roomTheme?.image)

@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../Dashboard/Navbar";
+import { getDashboardData } from "../../services/dashboardService";
 import "./AllReservations.css";
-
-const USER_ID = parseInt(localStorage.getItem("userId")) || 1;
 
 export default function AllReservations() {
   const navigate = useNavigate();
@@ -14,22 +13,57 @@ export default function AllReservations() {
   const [loading, setLoading] = useState(true);
 
   const TABS = ["Upcoming", "Active", "Past", "Cancelled"];
-  const reservationCounts = TABS.reduce((acc, tab) => {
-    const now = new Date();
-    let count = 0;
-    if (tab === "Upcoming") {
-      count = reservations.filter(r => new Date(r.requestedCheckin) > now && ["upcoming", "pending", "partial", "paid"].includes(r.status) && r.RoomReservations?.length > 0).length;
-    } else if (tab === "Active") {
-      count = reservations.filter(r => r.status === "active" && now >= new Date(r.requestedCheckin) && now < new Date(r.requestedCheckout) && r.RoomReservations?.length > 0).length;
-    } else if (tab === "Past") {
-      count = reservations.filter(r => {
-        const checkoutDate = new Date(r.requestedCheckout);
-        return (r.status === "completed" || (checkoutDate <= now && r.status !== "active")) && r.RoomReservations?.length > 0;
-      }).length;
-    } else if (tab === "Cancelled") {
-      count = reservations.filter(r => r.status === "cancelled").length;
+
+  const startOfDay = (value) => {
+    const date = value ? new Date(value) : new Date();
+    date.setHours(0, 0, 0, 0);
+    return date;
+  };
+
+  const getCheckIn = (reservation) => reservation.requestedCheckin || reservation.checkIn;
+  const getCheckOut = (reservation) => reservation.requestedCheckout || reservation.checkOut;
+  const getReservationId = (reservation) => reservation.ReservationId || reservation.reservationId;
+
+  const getTimelineStatus = (reservation) => {
+    const status = String(reservation.status || "").toLowerCase();
+    if (status === "cancelled") return "Cancelled";
+    if (status === "completed") return "Past";
+
+    const today = startOfDay(new Date());
+    const checkIn = startOfDay(getCheckIn(reservation));
+    const checkOut = startOfDay(getCheckOut(reservation));
+
+    if (checkIn <= today && checkOut >= today) return "Active";
+    if (checkIn > today) return "Upcoming";
+    return "Past";
+  };
+
+  const getReservationInfo = (reservation) => {
+    if (reservation.room || reservation.city) {
+      return {
+        roomName: reservation.room || "Your Sanctuary",
+        city: reservation.city || "Destination",
+        themeName: reservation.themeName || "",
+        totalAmount: Number(reservation.totalAmount || 0)
+      };
     }
-    return { ...acc, [tab]: count };
+
+    const roomRes = reservation.RoomReservations?.[0];
+    const room = roomRes?.Room;
+    const theme = room?.RoomTheme;
+    const invoice = reservation.Invoice;
+
+    return {
+      roomName: room?.RoomName || theme?.name || "Your Sanctuary",
+      city: theme?.city || "Destination",
+      themeName: theme?.name || "",
+      totalAmount: Number(invoice?.totalAmount || theme?.basePrice || 0)
+    };
+  };
+
+  const reservationCounts = TABS.reduce((acc, tab) => {
+    acc[tab] = reservations.filter((reservation) => getTimelineStatus(reservation) === tab).length;
+    return acc;
   }, {});
 
   useEffect(() => {
@@ -38,98 +72,40 @@ export default function AllReservations() {
 
   const fetchReservations = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(
-        `http://localhost:9001/api/reservations/user/${USER_ID}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch reservations");
-      }
-
-      const data = await response.json();
-      console.log("=== FULL API RESPONSE ===", data);
-      
-      const allRes = Array.isArray(data) ? data : data.reservations || [];
-      console.log("=== PROCESSED RESERVATIONS ===", allRes);
-      
-      // Log first reservation details
-      if (allRes.length > 0) {
-        console.log("=== FIRST RESERVATION DETAILS ===");
-        console.log("ReservationId:", allRes[0].ReservationId);
-        console.log("Status:", allRes[0].status);
-        console.log("RoomReservations:", allRes[0].RoomReservations);
-        console.log("Full first res:", JSON.stringify(allRes[0], null, 2));
-      }
-      
+      const data = await getDashboardData();
+      const allRes = Array.isArray(data?.allReservations) ? data.allReservations : [];
       setReservations(allRes);
       filterReservations(allRes, "Upcoming", "");
     } catch (err) {
       console.error("Error fetching reservations:", err);
       setReservations([]);
+      setFilteredReservations([]);
     } finally {
       setLoading(false);
     }
   };
 
   const filterReservations = (res, tab, search) => {
-    let filtered = res;
+    let filtered = res.filter((reservation) => getTimelineStatus(reservation) === tab);
 
-    // Filter by tab status - check actual status values from API
-    if (tab === "Upcoming") {
-      const now = new Date();
-      filtered = filtered.filter(r => {
-        const checkinDate = new Date(r.requestedCheckin);
-        // Accept status: upcoming, pending, partial, paid (future check-in)
-        const validStatuses = ["upcoming", "pending", "partial", "paid"];
-        return checkinDate > now && validStatuses.includes(r.status) && r.RoomReservations?.length > 0;
-      });
-    } else if (tab === "Active") {
-      const now = new Date();
-      filtered = filtered.filter(r => {
-        const checkinDate = new Date(r.requestedCheckin);
-        const checkoutDate = new Date(r.requestedCheckout);
-        // DOAR status 'active' și între check-in și check-out
-        return r.status === "active" && now >= checkinDate && now < checkoutDate && r.RoomReservations?.length > 0;
-      });
-    } else if (tab === "Past") {
-      const now = new Date();
-      filtered = filtered.filter(r => {
-        const checkoutDate = new Date(r.requestedCheckout);
-        // Completed: status 'completed' SAU checkout trecut (dar nu active)
-        return (r.status === "completed" || (checkoutDate <= now && r.status !== "active")) && r.RoomReservations?.length > 0;
-      });
-    } else if (tab === "Cancelled") {
-      filtered = filtered.filter(r => r.status === "cancelled");
-    }
-
-    // ALSO: Filter out reservations without room data (incomplete bookings)
-    filtered = filtered.filter(r => r.RoomReservations?.length > 0);
-
-    // Filter by search
     if (search.trim()) {
       const searchLower = search.toLowerCase();
-      filtered = filtered.filter(r => {
-        const roomRes = r.RoomReservations?.[0];
-        const room = roomRes?.Room;
-        const theme = room?.RoomTheme;
-        const city = theme?.city?.toLowerCase() || "";
-        const themeName = theme?.name?.toLowerCase() || "";
-        const roomName = room?.RoomName?.toLowerCase() || "";
-        return city.includes(searchLower) || themeName.includes(searchLower) || roomName.includes(searchLower);
+      filtered = filtered.filter((reservation) => {
+        const info = getReservationInfo(reservation);
+        return (
+          info.city.toLowerCase().includes(searchLower) ||
+          info.themeName.toLowerCase().includes(searchLower) ||
+          info.roomName.toLowerCase().includes(searchLower)
+        );
       });
     }
 
-    // Sort by check-in date
-    filtered.sort((a, b) => new Date(b.requestedCheckin) - new Date(a.requestedCheckin));
+    filtered.sort((a, b) => {
+      const aDate = new Date(getCheckIn(a));
+      const bDate = new Date(getCheckIn(b));
+      return tab === "Upcoming" ? aDate - bDate : bDate - aDate;
+    });
 
-    console.log(`[FILTER] Tab: ${tab}, Total: ${res.length}, Filtered: ${filtered.length}`);
     setFilteredReservations(filtered);
   };
 
@@ -149,12 +125,13 @@ export default function AllReservations() {
   };
 
   const getNights = (reservation) => {
-    const checkin = new Date(reservation.requestedCheckin);
-    const checkout = new Date(reservation.requestedCheckout);
+    const checkin = new Date(getCheckIn(reservation));
+    const checkout = new Date(getCheckOut(reservation));
     return Math.max(1, Math.ceil(Math.abs(checkout - checkin) / (1000 * 60 * 60 * 24)));
   };
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (reservation) => {
+    const status = String(reservation.status || "").toLowerCase();
     const statusMap = {
       pending: "UPCOMING",
       partial: "UPCOMING",
@@ -163,63 +140,39 @@ export default function AllReservations() {
       completed: "COMPLETED",
       cancelled: "CANCELLED"
     };
-    return statusMap[status] || status.toUpperCase();
+    return statusMap[status] || getTimelineStatus(reservation).toUpperCase();
   };
 
   const getReservationImage = (reservation) => {
+    if (reservation.image) return reservation.image;
+
     const roomRes = reservation.RoomReservations?.[0];
     const room = roomRes?.Room;
     const theme = room?.RoomTheme;
-    
-    console.log(`[IMG] Res #${reservation.ReservationId} - RoomRes:`, !!roomRes, "Room:", !!room, "Theme:", !!theme);
-    
-    // Priority: showcase image > room image > placeholder
+
     if (theme?.showcaseImage) {
-      const url = theme.showcaseImage.startsWith("http")
+      return theme.showcaseImage.startsWith("http")
         ? theme.showcaseImage
         : `http://localhost:9001${theme.showcaseImage}`;
-      console.log(`[IMG] Using showcase: ${url}`);
-      return url;
     }
+
     if (room?.image) {
-      const url = room.image.startsWith("http")
-        ? room.image
-        : `http://localhost:9001${room.image}`;
-      console.log(`[IMG] Using room.image: ${url}`);
-      return url;
+      return room.image.startsWith("http") ? room.image : `http://localhost:9001${room.image}`;
     }
+
     if (theme?.images?.[0]?.imageUrl) {
-      const url = theme.images[0].imageUrl.startsWith("http")
+      return theme.images[0].imageUrl.startsWith("http")
         ? theme.images[0].imageUrl
         : `http://localhost:9001${theme.images[0].imageUrl}`;
-      return url;
     }
-    console.log(`[IMG] Using placeholder`);
+
     return "https://via.placeholder.com/300x200?text=No+Image";
-  };
-
-  const getReservationInfo = (reservation) => {
-    const roomRes = reservation.RoomReservations?.[0];
-    const room = roomRes?.Room;
-    const theme = room?.RoomTheme;
-    const invoice = reservation.Invoice;
-
-    const info = {
-      roomName: room?.RoomName || theme?.name || "Your Sanctuary",
-      city: theme?.city || "DESTINATION",
-      themeName: theme?.name || "",
-      totalAmount: invoice?.totalAmount || room?.RoomTheme?.basePrice || 0
-    };
-    
-    console.log(`[INFO] Res #${reservation.ReservationId}:`, info);
-    return info;
   };
 
   return (
     <>
       <Navbar />
       <main className="all-reservations-page">
-        {/* HEADER */}
         <section className="reservations-header">
           <div className="header-content">
             <h1 className="header-title">Your Stays</h1>
@@ -229,10 +182,9 @@ export default function AllReservations() {
           </div>
         </section>
 
-        {/* TABS & SEARCH */}
         <section className="reservations-controls">
           <div className="tabs-container">
-            {TABS.map(tab => (
+            {TABS.map((tab) => (
               <button
                 key={tab}
                 className={`tab-button ${activeTab === tab ? "active" : ""}`}
@@ -257,7 +209,6 @@ export default function AllReservations() {
           </div>
         </section>
 
-        {/* RESERVATIONS GRID */}
         <section className="reservations-grid-section">
           {loading ? (
             <p className="loading-text">Loading your stays...</p>
@@ -278,48 +229,45 @@ export default function AllReservations() {
             </div>
           ) : (
             <div className="reservations-grid">
-              {filteredReservations.map(res => {
-                const info = getReservationInfo(res);
-                const image = getReservationImage(res);
-                
+              {filteredReservations.map((reservation) => {
+                const info = getReservationInfo(reservation);
+                const image = getReservationImage(reservation);
+                const reservationId = getReservationId(reservation);
+                const guests = reservation.guests || reservation.nrPeople || 1;
+
                 return (
-                  <div key={res.ReservationId} className="reservation-card">
-                    {/* Card Image */}
+                  <div key={reservationId} className="reservation-card">
                     <div className="card-image-container">
-                      <img
-                        src={image}
-                        alt={info.roomName}
-                        className="card-image"
-                      />
-                      <span className="status-badge">{getStatusBadge(res.status)}</span>
+                      <img src={image} alt={info.roomName} className="card-image" />
+                      <span className="status-badge">{getStatusBadge(reservation)}</span>
                     </div>
 
-                    {/* Card Content */}
                     <div className="card-content">
                       <h3 className="card-title">{info.roomName}</h3>
                       <p className="card-location">
                         {info.city?.toUpperCase()} {info.themeName ? "- " + info.themeName : ""}
                       </p>
 
-                      {/* Price */}
                       <p className="card-price">
-                        €{(info.totalAmount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        EUR {info.totalAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         <span className="price-label">TOTAL STAY</span>
                       </p>
 
-                      {/* Dates */}
                       <div className="card-dates">
-                        <span>{formatDate(res.requestedCheckin)}</span>
+                        <span>{formatDate(getCheckIn(reservation))}</span>
                         <span className="date-separator">-</span>
-                        <span>{formatDate(res.requestedCheckout)}</span>
+                        <span>{formatDate(getCheckOut(reservation))}</span>
                       </div>
 
                       <div className="card-meta-row">
-                        <span>{getNights(res)} {getNights(res) === 1 ? "night" : "nights"}</span>
-                        <span>{res.nrPeople || 1} {(res.nrPeople || 1) === 1 ? "guest" : "guests"}</span>
+                        <span>
+                          {getNights(reservation)} {getNights(reservation) === 1 ? "night" : "nights"}
+                        </span>
+                        <span>
+                          {guests} {guests === 1 ? "guest" : "guests"}
+                        </span>
                       </div>
 
-                      {/* Tags */}
                       {(info.city || info.themeName) && (
                         <div className="card-tags">
                           {info.city && <span className="tag">{info.city}</span>}
@@ -327,10 +275,9 @@ export default function AllReservations() {
                         </div>
                       )}
 
-                      {/* Actions */}
                       <button
                         className="view-details-btn"
-                        onClick={() => navigate(`/reservation/${res.ReservationId}`)}
+                        onClick={() => navigate(`/reservation/${reservationId}`)}
                       >
                         VIEW DETAILS
                       </button>
