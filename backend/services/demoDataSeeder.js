@@ -16,6 +16,7 @@ import RewardPoint from "../entities/RewardPoint.js";
 import { ensureClientTypes } from "./clientTierService.js";
 
 const DEMO_EMAIL_DOMAIN = "cityscape.local";
+const DEMO_TEST_EMAIL = "demo@cityscape.com";
 
 const addDays = (days) => {
   const date = new Date();
@@ -43,12 +44,19 @@ const clientSeeds = [
   FirstName,
   LastName,
   TypeClientTip,
-  Email: `demo.${index + 1}.${FirstName.toLowerCase()}.${LastName.toLowerCase()}@${DEMO_EMAIL_DOMAIN}`
+  Email: index === 0
+    ? DEMO_TEST_EMAIL
+    : `demo.${index + 1}.${FirstName.toLowerCase()}.${LastName.toLowerCase()}@${DEMO_EMAIL_DOMAIN}`
 }));
 
 async function removePreviousDemoData(transaction) {
   const demoClients = await Client.findAll({
-    where: { Email: { [Op.like]: `demo.%@${DEMO_EMAIL_DOMAIN}` } },
+    where: {
+      [Op.or]: [
+        { Email: { [Op.like]: `demo.%@${DEMO_EMAIL_DOMAIN}` } },
+        { Email: DEMO_TEST_EMAIL }
+      ]
+    },
     attributes: ["ClientId"],
     transaction
   });
@@ -252,7 +260,7 @@ export async function seedDemoData() {
     const reservations = [];
     for (let index = 0; index < reservationSeeds.length; index += 1) {
       const seed = reservationSeeds[index];
-      const client = clients[index % clients.length];
+      const client = index < 9 ? clients[0] : clients[index % clients.length];
       const room = catalog.rooms[index % catalog.rooms.length];
       const reservation = await createReservationBundle({
         client,
