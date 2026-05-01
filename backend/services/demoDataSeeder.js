@@ -254,13 +254,23 @@ export async function seedDemoData() {
       { startOffset: 32, endOffset: 35, createdOffset: -1, guests: 1, status: "cancelled", paymentRatio: 0.2, services: [] },
       { startOffset: -60, endOffset: -55, createdOffset: -75, guests: 2, status: "completed", paymentRatio: 1, services: [3, 4], feedback: { overall: 5, cleanliness: 5, service: 4, theme: 5, comment: "Luxury experience absolutely worth it." } },
       { startOffset: -48, endOffset: -44, createdOffset: -65, guests: 2, status: "completed", paymentRatio: 1, services: [2], feedback: { overall: 4, cleanliness: 4, service: 4, theme: 4, comment: "Smooth reservation flow and a memorable stay." } },
-      { startOffset: 40, endOffset: 45, createdOffset: -1, guests: 3, status: "paid", paymentRatio: 1, services: [0, 1] }
+      { startOffset: 40, endOffset: 45, createdOffset: -1, guests: 3, status: "paid", paymentRatio: 1, services: [0, 1] },
+      { startOffset: -72, endOffset: -68, createdOffset: -90, guests: 2, status: "completed", paymentRatio: 1, services: [1, 3], feedback: { overall: 5, cleanliness: 5, service: 5, theme: 4, comment: "Everything felt polished and personal." } },
+      { startOffset: -28, endOffset: -24, createdOffset: -42, guests: 1, status: "completed", paymentRatio: 1, services: [4], feedback: { overall: 4, cleanliness: 4, service: 4, theme: 5, comment: "Lovely atmosphere and easy booking experience." } },
+      { startOffset: 11, endOffset: 15, createdOffset: -4, guests: 2, status: "paid", paymentRatio: 1, services: [2] },
+      { startOffset: 18, endOffset: 23, createdOffset: -3, guests: 3, status: "partial", paymentRatio: 0.2, services: [0] },
+      { startOffset: 27, endOffset: 31, createdOffset: -2, guests: 2, status: "paid", paymentRatio: 1, services: [1, 4] },
+      { startOffset: 36, endOffset: 39, createdOffset: -1, guests: 2, status: "cancelled", paymentRatio: 0.2, services: [] },
+      { startOffset: -12, endOffset: -7, createdOffset: -25, guests: 4, status: "completed", paymentRatio: 1, services: [0, 2], feedback: { overall: 5, cleanliness: 4, service: 5, theme: 5, comment: "The themed room made the trip feel special." } },
+      { startOffset: 48, endOffset: 53, createdOffset: -1, guests: 2, status: "paid", paymentRatio: 1, services: [3] }
     ];
 
     const reservations = [];
     for (let index = 0; index < reservationSeeds.length; index += 1) {
       const seed = reservationSeeds[index];
-      const client = index < 9 ? clients[0] : clients[index % clients.length];
+      const client = index < 5
+        ? clients[0]
+        : clients[((index - 5) % (clients.length - 1)) + 1];
       const room = catalog.rooms[index % catalog.rooms.length];
       const reservation = await createReservationBundle({
         client,
