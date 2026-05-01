@@ -1991,6 +1991,15 @@
   background: #16a34a;
 }
 
+.booking-summary-card.cancelled {
+  background: #fffaf8;
+  border-color: #ead4ca;
+}
+
+.booking-summary-card.cancelled .booking-progress-track div {
+  background: #c2b7ac;
+}
+
 .booking-payment-status {
   color: #8c94a1;
   font-size: 11px;
@@ -2012,12 +2021,42 @@
   background: #22c55e;
 }
 
+.booking-status-dot.cancelled {
+  background: #9ca3af;
+}
+
 .booking-payment-status strong {
   margin-right: auto;
   color: #16a34a;
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+.booking-summary-card.cancelled .booking-payment-status strong {
+  color: #7c4d3a;
+}
+
+.booking-cancelled-note {
+  display: grid;
+  gap: 6px;
+  padding: 15px 16px;
+  border: 1px solid #ead4ca;
+  border-radius: 14px;
+  background: #fff7f2;
+}
+
+.booking-cancelled-note strong {
+  color: #6f3f30;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.booking-cancelled-note span {
+  color: #7f6b5f;
+  font-size: 12px;
+  line-height: 1.55;
 }
 
 .booking-primary-btn {

@@ -233,8 +233,9 @@ const ReservationDetail = () => {
   const accommodationTotal = roomTotal || Math.max(0, parseFloat(invoice?.totalAmount || 0) - servicesTotal);
   const displayTotal = invoice ? parseFloat(invoice.totalAmount || 0) : accommodationTotal + servicesTotal;
   const remaining = calculateRemaining(displayTotal);
-  const paymentStatus = remaining <= 0 ? 'paid' : totalPaid > 0 ? 'partial' : 'unpaid';
   const reservationStatus = String(reservation.status || 'pending').toLowerCase();
+  const isCancelled = reservationStatus === 'cancelled' || reservationStatus === 'canceled';
+  const paymentStatus = isCancelled ? 'cancelled' : remaining <= 0 ? 'paid' : totalPaid > 0 ? 'partial' : 'unpaid';
   const checkInDate = new Date(reservation.requestedCheckin);
   const checkOutDate = new Date(reservation.requestedCheckout);
   const now = new Date();
@@ -325,7 +326,7 @@ const ReservationDetail = () => {
 
           <div className="booking-section-heading">
             <p>Included Services</p>
-            <button type="button" onClick={() => navigate('/services')}>Add Service</button>
+            {!isCancelled && <button type="button" onClick={() => navigate('/services')}>Add Service</button>}
           </div>
 
           {reservationServices.length > 0 ? (
@@ -347,11 +348,11 @@ const ReservationDetail = () => {
           ) : (
             <div className="booking-empty-services">
               <p>No additional services booked.</p>
-              <button type="button" onClick={() => navigate('/services')}>Discover services</button>
+              {!isCancelled && <button type="button" onClick={() => navigate('/services')}>Discover services</button>}
             </div>
           )}
 
-          <div className="booking-summary-card">
+          <div className={`booking-summary-card ${isCancelled ? 'cancelled' : ''}`}>
             <div className="booking-summary-line">
               <span>Accommodation ({nights} {nights === 1 ? 'night' : 'nights'})</span>
               <strong>{formatMoney(accommodationTotal)}</strong>
@@ -365,14 +366,33 @@ const ReservationDetail = () => {
               <strong>{formatMoney(displayTotal)}</strong>
             </div>
             <div className="booking-progress-track">
-              <div style={{ width: `${progressPercent}%` }} />
+              <div style={{ width: `${isCancelled ? 100 : progressPercent}%` }} />
             </div>
             <div className="booking-payment-status">
               <span className={`booking-status-dot ${paymentStatus}`}></span>
-              <strong>{paymentStatus === 'paid' ? 'Full paid' : paymentStatus === 'partial' ? 'Partially paid' : 'Payment pending'}</strong>
+              <strong>
+                {paymentStatus === 'cancelled'
+                  ? totalPaid > 0
+                    ? 'Cancelled - payment no longer active'
+                    : 'Cancelled - no payment due'
+                  : paymentStatus === 'paid'
+                    ? 'Full paid'
+                    : paymentStatus === 'partial'
+                      ? 'Partially paid'
+                      : 'Payment pending'}
+              </strong>
               <span>{reservation.reservationDate ? formatDate(new Date(reservation.reservationDate)) : formatDate(checkInDate)}</span>
             </div>
-            {paymentStatus !== 'paid' && reservationStatus !== 'cancelled' && reservationStatus !== 'completed' ? (
+            {isCancelled ? (
+              <div className="booking-cancelled-note">
+                <strong>Reservation cancelled</strong>
+                <span>
+                  {totalPaid > 0
+                    ? `This stay is no longer active. Paid amount recorded: ${formatMoney(totalPaid)}.`
+                    : 'You cancelled this stay before completing payment.'}
+                </span>
+              </div>
+            ) : paymentStatus !== 'paid' && reservationStatus !== 'completed' ? (
               <button className="booking-primary-btn" onClick={() => notify(`Payment processing for ${formatMoney(remaining)} will be available soon.`, 'info')}>
                 Pay {formatMoney(remaining)} now
               </button>
