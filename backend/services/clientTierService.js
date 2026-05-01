@@ -24,7 +24,7 @@ const CLIENT_TIERS = [
   }
 ];
 
-async function ensureClientTypes() {
+export async function ensureClientTypes() {
   await Promise.all(
     CLIENT_TIERS.map((tier) =>
       ClientType.findOrCreate({

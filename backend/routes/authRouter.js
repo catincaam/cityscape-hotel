@@ -6,6 +6,7 @@ import { getClientByEmail, createClient } from "../dataAccess/ClientDA.js";
 import Client from "../entities/Client.js";
 import PasswordResetToken from "../entities/PasswordResetToken.js";
 import { sendPasswordResetEmail } from "../services/emailService.js";
+import { ensureClientTypes } from "../services/clientTierService.js";
 import {
   isStrongPassword,
   isValidEmail,
@@ -30,6 +31,7 @@ authRouter.post("/register", async (req, res) => {
   try {
     const { email, password, firstName, lastName, typeClientTip } = req.body;
     const normalizedEmail = normalizeEmail(email);
+    await ensureClientTypes();
 
     if (!email || !password || !firstName || !lastName) {
       return res.status(400).json({ message: "Email, password, first and last name required" });
@@ -248,12 +250,13 @@ authRouter.post("/google", async (req, res) => {
     // Find or create user
     let client = await getClientByEmail(payload.email);
     if (!client) {
+      await ensureClientTypes();
       client = await createClient({
         Email: payload.email,
         FirstName: payload.given_name || "GoogleUser",
         LastName: payload.family_name || "",
         Password: "", // No password for OAuth
-        TypeClientTip: "Google",
+        TypeClientTip: "Standard",
         profilePicture: "https://img.freepik.com/premium-vector/cute-frog-explorer-boy-vector-illustration_456699-1187.jpg?w=740"
       });
     }
@@ -287,12 +290,13 @@ authRouter.post("/facebook", async (req, res) => {
     // Find or create user
     let client = await getClientByEmail(fbData.email);
     if (!client) {
+      await ensureClientTypes();
       client = await createClient({
         Email: fbData.email,
         FirstName: fbData.first_name || "FacebookUser",
         LastName: fbData.last_name || "",
         Password: "", // No password for OAuth
-        TypeClientTip: "Facebook",
+        TypeClientTip: "Standard",
         profilePicture: "https://img.freepik.com/premium-vector/cute-frog-explorer-boy-vector-illustration_456699-1187.jpg?w=740"
       });
     }
