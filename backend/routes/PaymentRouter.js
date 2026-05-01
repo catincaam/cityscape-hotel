@@ -135,12 +135,16 @@ paymentRouter.post("/pay-final", async (req, res) => {
     let rewardResult = null;
     let clientTier = null;
     if (invoiceStatus.status === "full_payment") {
-      await reservation.update({ status: "completed" });
+      const checkoutDate = new Date(reservation.requestedCheckout);
+      const nextStatus = checkoutDate < new Date() ? "completed" : "paid";
+      await reservation.update({ status: nextStatus });
       
       // Award reward points for completed reservation
-      rewardResult = await awardPointsForCompletedReservation(ReservationId, reservation.ClientId);
-      clientTier = await syncClientTier(reservation.ClientId);
-      console.log(`✅ Reservation #${ReservationId} marked as completed. Points awarded:`, rewardResult);
+      if (nextStatus === "completed") {
+        rewardResult = await awardPointsForCompletedReservation(ReservationId, reservation.ClientId);
+        clientTier = await syncClientTier(reservation.ClientId);
+      }
+      console.log(`Reservation #${ReservationId} payment completed. Status: ${reservation.status}. Points awarded:`, rewardResult);
     }
 
     res.status(201).json({
@@ -148,7 +152,7 @@ paymentRouter.post("/pay-final", async (req, res) => {
       payment,
       totalPaid: totalAmount,
       invoiceStatus: invoiceStatus.status,
-      reservationStatus: "completed",
+      reservationStatus: reservation.status,
       rewardPoints: rewardResult ? {
         points: rewardResult.points,
         breakdown: rewardResult.breakdown,

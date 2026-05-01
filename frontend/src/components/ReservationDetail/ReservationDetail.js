@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../Dashboard/Navbar';
 import { useNotification } from '../Notifications/NotificationProvider';
+import { API_BASE_URL } from '../../config/runtimeUrls';
 import './ReservationDetail.css';
 
 const formatMoney = (value) => `${Number(value || 0).toFixed(2)} EUR`;
@@ -18,6 +19,7 @@ const ReservationDetail = () => {
   const [clientData, setClientData] = useState(null);
   const [error, setError] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [payingRemaining, setPayingRemaining] = useState(false);
 
   const fetchReservationDetails = useCallback(async () => {
     try {
@@ -170,6 +172,42 @@ const ReservationDetail = () => {
     } catch (err) {
       console.error('Error cancelling reservation:', err);
       notify('Error cancelling reservation', 'error');
+    }
+  };
+
+  const handlePayRemaining = async () => {
+    if (!reservation || remaining <= 0) return;
+
+    const confirmed = await confirm({
+      title: 'Pay remaining balance?',
+      message: `This will record the remaining payment of ${formatMoney(remaining)} for your reservation.`,
+      confirmText: 'Pay balance',
+      cancelText: 'Not now',
+      tone: 'default'
+    });
+    if (!confirmed) return;
+
+    try {
+      setPayingRemaining(true);
+      const response = await fetch(`${API_BASE_URL}/api/payments/pay-final`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ReservationId: reservation.ReservationId })
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        notify(data.message || 'Could not process the remaining payment.', 'error');
+        return;
+      }
+
+      notify('Remaining balance paid successfully.', 'success');
+      await fetchReservationDetails();
+    } catch (err) {
+      console.error('Error paying remaining balance:', err);
+      notify('Could not process the remaining payment.', 'error');
+    } finally {
+      setPayingRemaining(false);
     }
   };
 
@@ -393,8 +431,8 @@ const ReservationDetail = () => {
                 </span>
               </div>
             ) : paymentStatus !== 'paid' && reservationStatus !== 'completed' ? (
-              <button className="booking-primary-btn" onClick={() => notify(`Payment processing for ${formatMoney(remaining)} will be available soon.`, 'info')}>
-                Pay {formatMoney(remaining)} now
+              <button className="booking-primary-btn" onClick={handlePayRemaining} disabled={payingRemaining}>
+                {payingRemaining ? 'Processing...' : `Pay ${formatMoney(remaining)} now`}
               </button>
             ) : (
               <button className="booking-primary-btn" onClick={handleDownloadReceipt}>

@@ -2073,6 +2073,11 @@
   cursor: pointer;
 }
 
+.booking-primary-btn:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+  
 .booking-footer-actions {
   align-items: flex-start;
   margin-top: 28px;
