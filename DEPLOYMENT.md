@@ -78,6 +78,21 @@ Invoke-WebRequest `
 
 The demo seed only replaces generated users with emails ending in `@cityscape.local`.
 
+To move the admin catalog from the local database to production without generating new admin content:
+
+```powershell
+cd backend
+npm run export:catalog
+
+$catalog = Get-Content .\catalog-export.json -Raw
+Invoke-WebRequest `
+  -Uri "https://your-backend-domain/api/admin/dashboard/import-catalog" `
+  -Method POST `
+  -Headers @{ "x-demo-seed-token" = "your-demo-seed-token" } `
+  -ContentType "application/json" `
+  -Body $catalog
+```
+
 ## 3. ML Service
 
 Deploy the `ml-service` folder as a Python web service.

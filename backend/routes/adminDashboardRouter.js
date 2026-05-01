@@ -13,21 +13,31 @@ import RoomReservation from "../entities/RoomReservation.js";
 import RoomTheme from "../entities/RoomTheme.js";
 import ReservationService from "../entities/ReservationService.js";
 import { seedDemoData } from "../services/demoDataSeeder.js";
+import db from "../dbConfig.js";
+import { importCatalogData } from "../services/catalogTransferService.js";
 
 const dashboardRouter = express.Router();
 
+function validateDemoSeedToken(req, res) {
+  const configuredToken = process.env.DEMO_SEED_TOKEN;
+  const providedToken = req.headers["x-demo-seed-token"];
+
+  if (!configuredToken) {
+    res.status(404).json({ message: "Demo seeding is disabled." });
+    return false;
+  }
+
+  if (providedToken !== configuredToken) {
+    res.status(401).json({ message: "Invalid demo seed token." });
+    return false;
+  }
+
+  return true;
+}
+
 dashboardRouter.post("/seed-demo-data", async (req, res) => {
   try {
-    const configuredToken = process.env.DEMO_SEED_TOKEN;
-    const providedToken = req.headers["x-demo-seed-token"];
-
-    if (!configuredToken) {
-      return res.status(404).json({ message: "Demo seeding is disabled." });
-    }
-
-    if (providedToken !== configuredToken) {
-      return res.status(401).json({ message: "Invalid demo seed token." });
-    }
+    if (!validateDemoSeedToken(req, res)) return;
 
     const summary = await seedDemoData();
     res.status(201).json({
@@ -36,6 +46,24 @@ dashboardRouter.post("/seed-demo-data", async (req, res) => {
     });
   } catch (err) {
     console.error("Demo data seed error:", err);
+    res.status(500).json({ message: "server error", error: err.message });
+  }
+});
+
+dashboardRouter.post("/import-catalog", async (req, res) => {
+  try {
+    if (!validateDemoSeedToken(req, res)) return;
+
+    const summary = await db.transaction((transaction) =>
+      importCatalogData(req.body, transaction)
+    );
+
+    res.status(201).json({
+      message: "Catalog imported successfully.",
+      summary
+    });
+  } catch (err) {
+    console.error("Catalog import error:", err);
     res.status(500).json({ message: "server error", error: err.message });
   }
 });

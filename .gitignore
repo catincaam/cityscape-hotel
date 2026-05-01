@@ -21,6 +21,7 @@ logs/
 # Python
 __pycache__/
 *.pyc
+catalog-export.json
 
 # OS
 .DS_Store

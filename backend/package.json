@@ -10,7 +10,8 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "seed": "node seed.js",
-    "seed:demo": "node seedDemoData.js"
+    "seed:demo": "node seedDemoData.js",
+    "export:catalog": "node exportCatalogData.js"
   },
   "keywords": [],
   "author": "",

@@ -85,7 +85,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 /** 3) Body parsing */
-app.use(express.json());
+app.use(express.json({ limit: "5mb" }));
 
 /** 3.5) Servim folderul uploads ca static */
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
