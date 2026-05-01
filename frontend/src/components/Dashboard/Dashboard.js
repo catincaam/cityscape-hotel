@@ -40,6 +40,20 @@ export default function Dashboard() {
     );
   }
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const upcomingStays = (data?.allReservations || [])
+    .filter((reservation) => {
+      const checkIn = new Date(reservation.checkIn);
+      checkIn.setHours(0, 0, 0, 0);
+      const status = String(reservation.status || "").toLowerCase();
+
+      return checkIn > today && !["cancelled", "completed", "past"].includes(status);
+    })
+    .sort((a, b) => new Date(a.checkIn) - new Date(b.checkIn))
+    .slice(0, 3);
+
   return (
     <>
       <Navbar />
@@ -107,10 +121,16 @@ export default function Dashboard() {
 
         {/* BLOCK 5: RESERVATIONS */}
         <section className="block-reservations">
-          <h3>Your Upcoming Stays</h3>
-          {data?.recentReservations && data.recentReservations.length > 0 ? (
+          <div className="reservations-heading">
+            <h3>Your Upcoming Stays</h3>
+            <button className="subtle-link" onClick={() => navigate("/reservations")}>
+              View all your stays
+            </button>
+          </div>
+
+          {upcomingStays.length > 0 ? (
             <div className="reservations-list">
-              {data.recentReservations.map((res) => (
+              {upcomingStays.map((res) => (
                 <div key={res.reservationId} className="reservation-item">
                   <div className="reservation-info">
                     <h4>{res.room}</h4>
@@ -125,13 +145,13 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="empty-state-block">
-              <h4>Your stays will appear here</h4>
-              <p>Explore rooms and start building your journey</p>
+              <h4>No upcoming stays</h4>
+              <p>Your future reservations will appear here once you book your next stay.</p>
               <button 
                 className="btn-secondary"
-                onClick={() => navigate("/explore")}
+                onClick={() => navigate("/booking")}
               >
-                Explore rooms →
+                Book a stay
               </button>
             </div>
           )}
