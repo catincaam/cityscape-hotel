@@ -57,12 +57,26 @@ FRONTEND_URL=https://your-frontend-domain.vercel.app
 APP_URL=https://your-frontend-domain.vercel.app
 API_PUBLIC_URL=https://your-backend-domain.onrender.com
 ML_SERVICE_URL=https://your-ml-service-domain.onrender.com/predict
+DEMO_SEED_TOKEN=change-this-demo-token
 GOOGLE_CLIENT_ID=...
 GEMINI_API_KEY=...
 EMAIL_SERVICE=gmail
 EMAIL_USER=...
 EMAIL_PASSWORD=...
 ```
+
+## Optional: demo data
+
+For a richer live demo, set `DEMO_SEED_TOKEN` on the backend service and call:
+
+```powershell
+Invoke-WebRequest `
+  -Uri "https://your-backend-domain/api/admin/dashboard/seed-demo-data" `
+  -Method POST `
+  -Headers @{ "x-demo-seed-token" = "your-demo-seed-token" }
+```
+
+The demo seed only replaces generated users with emails ending in `@cityscape.local`.
 
 ## 3. ML Service
 
