@@ -132,7 +132,7 @@ const sendMail = async (mailOptions) => {
 
     const transporter = createTransporter();
     const info = await transporter.sendMail({
-      from: `"Cityscape Hotel" <${process.env.EMAIL_USER}>`,
+      from: `"${process.env.EMAIL_FROM_NAME || "Cityscape Hotel"}" <${process.env.EMAIL_FROM_ADDRESS || process.env.EMAIL_USER}>`,
       ...mailOptions
     });
 
