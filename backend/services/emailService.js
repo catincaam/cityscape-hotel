@@ -2,10 +2,57 @@ import nodemailer from "nodemailer";
 
 const APP_URL = process.env.APP_URL || "http://localhost:3000";
 
-const hasEmailConfig = () => Boolean(process.env.EMAIL_USER && process.env.EMAIL_PASSWORD);
+const hasSmtpConfig = () => Boolean(process.env.EMAIL_USER && process.env.EMAIL_PASSWORD);
+const hasBrevoConfig = () => Boolean(process.env.BREVO_API_KEY);
+
+const normalizeRecipients = (to) => {
+  const recipients = Array.isArray(to) ? to : [to];
+  return recipients
+    .filter(Boolean)
+    .map((email) => (typeof email === "string" ? { email } : email));
+};
+
+const sendWithBrevo = async (mailOptions) => {
+  const senderEmail = process.env.EMAIL_FROM_ADDRESS || process.env.EMAIL_USER;
+
+  if (!senderEmail) {
+    return {
+      success: false,
+      error: "Brevo sender is not configured. Add EMAIL_FROM_ADDRESS or EMAIL_USER."
+    };
+  }
+
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "api-key": process.env.BREVO_API_KEY,
+      "Content-Type": "application/json",
+      Accept: "application/json"
+    },
+    body: JSON.stringify({
+      sender: {
+        name: process.env.EMAIL_FROM_NAME || "Cityscape Hotel",
+        email: senderEmail
+      },
+      to: normalizeRecipients(mailOptions.to),
+      subject: mailOptions.subject,
+      htmlContent: mailOptions.html,
+      textContent: mailOptions.text
+    })
+  });
+
+  const body = await response.text();
+
+  if (!response.ok) {
+    throw new Error(`Brevo email error ${response.status}: ${body}`);
+  }
+
+  const parsed = body ? JSON.parse(body) : {};
+  return { success: true, messageId: parsed.messageId || parsed.messageIds?.[0] };
+};
 
 const createTransporter = () => {
-  if (!hasEmailConfig()) {
+  if (!hasSmtpConfig()) {
     return null;
   }
 
@@ -71,16 +118,19 @@ const roomName = (room) => {
 };
 
 const sendMail = async (mailOptions) => {
-  const transporter = createTransporter();
-
-  if (!transporter) {
+  if (!hasBrevoConfig() && !hasSmtpConfig()) {
     return {
       success: false,
-      error: "Email credentials are not configured. Add EMAIL_USER and EMAIL_PASSWORD in backend/.env."
+      error: "Email credentials are not configured. Add BREVO_API_KEY or EMAIL_USER and EMAIL_PASSWORD."
     };
   }
 
   try {
+    if (hasBrevoConfig()) {
+      return await sendWithBrevo(mailOptions);
+    }
+
+    const transporter = createTransporter();
     const info = await transporter.sendMail({
       from: `"Cityscape Hotel" <${process.env.EMAIL_USER}>`,
       ...mailOptions
