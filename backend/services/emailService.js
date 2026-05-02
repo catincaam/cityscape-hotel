@@ -9,17 +9,25 @@ const createTransporter = () => {
     return null;
   }
 
+  const emailPort = Number(process.env.EMAIL_PORT || 587);
+  const emailSecure =
+    String(process.env.EMAIL_SECURE || "").toLowerCase() === "true" || emailPort === 465;
+
   const gmailTransport = {
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
+    host: process.env.EMAIL_HOST || "smtp.gmail.com",
+    port: emailPort,
+    secure: emailSecure,
     auth: {
       user: process.env.EMAIL_USER,
       pass: String(process.env.EMAIL_PASSWORD || "").replace(/\s/g, "")
     },
+    requireTLS: !emailSecure,
     connectionTimeout: 10000,
     greetingTimeout: 10000,
-    socketTimeout: 15000
+    socketTimeout: 15000,
+    tls: {
+      minVersion: "TLSv1.2"
+    }
   };
 
   if ((process.env.EMAIL_SERVICE || "gmail").toLowerCase() === "gmail") {
