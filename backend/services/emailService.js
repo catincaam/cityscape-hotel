@@ -9,12 +9,29 @@ const createTransporter = () => {
     return null;
   }
 
-  return nodemailer.createTransport({
-    service: process.env.EMAIL_SERVICE || "gmail",
+  const gmailTransport = {
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
     auth: {
       user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD
-    }
+      pass: String(process.env.EMAIL_PASSWORD || "").replace(/\s/g, "")
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000
+  };
+
+  if ((process.env.EMAIL_SERVICE || "gmail").toLowerCase() === "gmail") {
+    return nodemailer.createTransport(gmailTransport);
+  }
+
+  return nodemailer.createTransport({
+    service: process.env.EMAIL_SERVICE,
+    auth: gmailTransport.auth,
+    connectionTimeout: gmailTransport.connectionTimeout,
+    greetingTimeout: gmailTransport.greetingTimeout,
+    socketTimeout: gmailTransport.socketTimeout
   });
 };
 
