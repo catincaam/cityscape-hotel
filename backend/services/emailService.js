@@ -77,7 +77,7 @@ const createTransporter = () => {
     }
   };
 
-  if ((process.env.EMAIL_SERVICE || "gmail").toLowerCase() === "gmail") {
+  if (process.env.EMAIL_HOST || (process.env.EMAIL_SERVICE || "gmail").toLowerCase() === "gmail") {
     return nodemailer.createTransport(gmailTransport);
   }
 
