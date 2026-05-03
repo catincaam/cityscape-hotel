@@ -4,6 +4,7 @@ const APP_URL = process.env.APP_URL || "http://localhost:3000";
 
 const hasSmtpConfig = () => Boolean(process.env.EMAIL_USER && process.env.EMAIL_PASSWORD);
 const hasBrevoConfig = () => Boolean(process.env.BREVO_API_KEY);
+const hasResendConfig = () => Boolean(process.env.RESEND_API_KEY);
 
 const normalizeRecipients = (to) => {
   const recipients = Array.isArray(to) ? to : [to];
@@ -49,6 +50,35 @@ const sendWithBrevo = async (mailOptions) => {
 
   const parsed = body ? JSON.parse(body) : {};
   return { success: true, messageId: parsed.messageId || parsed.messageIds?.[0] };
+};
+
+const sendWithResend = async (mailOptions) => {
+  const fromAddress = process.env.EMAIL_FROM_ADDRESS || "onboarding@resend.dev";
+  const fromName = process.env.EMAIL_FROM_NAME || "Cityscape Hotel";
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      from: `${fromName} <${fromAddress}>`,
+      to: normalizeRecipients(mailOptions.to).map((recipient) => recipient.email),
+      subject: mailOptions.subject,
+      html: mailOptions.html,
+      text: mailOptions.text
+    })
+  });
+
+  const body = await response.text();
+
+  if (!response.ok) {
+    throw new Error(`Resend email error ${response.status}: ${body}`);
+  }
+
+  const parsed = body ? JSON.parse(body) : {};
+  return { success: true, messageId: parsed.id };
 };
 
 const createTransporter = () => {
@@ -118,14 +148,18 @@ const roomName = (room) => {
 };
 
 const sendMail = async (mailOptions) => {
-  if (!hasBrevoConfig() && !hasSmtpConfig()) {
+  if (!hasResendConfig() && !hasBrevoConfig() && !hasSmtpConfig()) {
     return {
       success: false,
-      error: "Email credentials are not configured. Add BREVO_API_KEY or EMAIL_USER and EMAIL_PASSWORD."
+      error: "Email credentials are not configured. Add RESEND_API_KEY, BREVO_API_KEY or EMAIL_USER and EMAIL_PASSWORD."
     };
   }
 
   try {
+    if (hasResendConfig()) {
+      return await sendWithResend(mailOptions);
+    }
+
     if (hasBrevoConfig()) {
       return await sendWithBrevo(mailOptions);
     }
