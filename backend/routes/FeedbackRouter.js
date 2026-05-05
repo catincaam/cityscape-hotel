@@ -15,18 +15,13 @@ import { addPendingPoints } from '../dataAccess/RewardPointDA.js';
 import Reservation from '../entities/Reservation.js';
 import RewardPoint from "../entities/RewardPoint.js";
 import { isValidRating } from "../utils/validators.js";
+import { syncReservationStatus } from "../services/reservationStatusService.js";
 
 function canLeaveFeedback(reservation) {
   if (!reservation) return false;
 
   const status = String(reservation.status || "").trim().toLowerCase();
-  if (["completed", "past"].includes(status)) return true;
-
-  if (["paid", "partial", "active"].includes(status) && reservation.requestedCheckout) {
-    return new Date(reservation.requestedCheckout) < new Date();
-  }
-
-  return false;
+  return ["completed", "past"].includes(status);
 }
 
 feedbackRouter.post("/", async (req, res) => {
@@ -45,6 +40,7 @@ feedbackRouter.post("/", async (req, res) => {
       console.log("[FEEDBACK] Reservation not found:", ReservationId);
       return res.status(404).json({ message: "Reservation not found." });
     }
+    await syncReservationStatus(reservation);
     
     if (String(reservation.ClientId) !== String(ClientId)) {
       console.log("[FEEDBACK] ClientId mismatch:", { reservationClientId: reservation.ClientId, providedClientId: ClientId });

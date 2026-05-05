@@ -13,6 +13,7 @@ import Reservation from "../entities/Reservation.js";
 import RoomReservation from "../entities/RoomReservation.js";
 import Room from "../entities/Room.js";
 import RoomTheme from "../entities/RoomTheme.js";
+import { syncReservationStatus, syncReservationStatuses } from "../services/reservationStatusService.js";
 
 const reservationRouter = express.Router();
 
@@ -79,27 +80,7 @@ reservationRouter.get("/", async (req, res) => {
     const { userId } = req.query;
     let reservations = await getReservations();
 
-    // LOGICĂ: actualizează statusul la 'completed' dacă check-out-ul a trecut
-    // și la 'cancelled' dacă nu s-a plătit restul cu 24h înainte de check-in
-    const now = new Date();
-    for (const r of reservations) {
-      // Nu modifica statusul dacă e deja 'cancelled'
-      if (r.status === 'cancelled') continue;
-      // Anulare automat dacă statusul e partial și nu s-a plătit restul cu 24h înainte de check-in
-      if (r.status === 'partial' && r.requestedCheckin) {
-        const checkinDate = new Date(r.requestedCheckin);
-        const diffHours = (checkinDate - now) / (1000 * 60 * 60);
-        if (diffHours <= 24 && r.status !== 'cancelled' && r.status !== 'completed') {
-          r.status = 'cancelled';
-          await r.save();
-        }
-      }
-      // Finalizare automat dacă check-out-ul a trecut și statusul e paid sau partial
-      if (r.requestedCheckout && new Date(r.requestedCheckout) < now && (r.status === 'paid' || r.status === 'partial')) {
-        r.status = 'completed';
-        await r.save();
-      }
-    }
+    await syncReservationStatuses(reservations);
 
     if (userId) {
       reservations = reservations.filter(r => String(r.ClientId) === String(userId));
@@ -116,6 +97,7 @@ reservationRouter.put("/:id/cancel", async (req, res) => {
   try {
     const reservation = await getReservationById(req.params.id);
     if (!reservation) return res.status(404).json({ message: "not found" });
+    await syncReservationStatus(reservation);
     
     if (reservation.status === 'completed' || reservation.status === 'cancelled') {
       return res.status(400).json({ message: "Cannot cancel a completed or already cancelled reservation." });
@@ -198,6 +180,8 @@ reservationRouter.get("/user/:userId", async (req, res) => {
       order: [["requestedCheckin", "DESC"]]
     });
 
+    await syncReservationStatuses(reservations);
+
     console.log(`[RESERVATION] Found ${reservations.length} reservations for user ${userId}`);
     res.status(200).json(reservations);
   } catch (err) {
@@ -212,13 +196,16 @@ reservationRouter.get("/upcoming/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
     const now = new Date();
+
+    const userReservations = await Reservation.findAll({ where: { ClientId: userId } });
+    await syncReservationStatuses(userReservations, now);
     
     // Find next upcoming reservation for this user - FILTER for future dates FIRST
     // Skip pending (incomplete) reservations - only get confirmed/paid ones with rooms assigned
     const nextReservation = await Reservation.findOne({
       where: {
         ClientId: userId,
-        status: { [Op.notIn]: ["cancelled", "pending"] },  // Only get confirmed/paid reservations
+        status: "upcoming",
         requestedCheckin: { [Op.gt]: now }  // Only get reservations with future check-in
       },
       order: [["requestedCheckin", "ASC"]],
@@ -312,53 +299,8 @@ reservationRouter.get("/:id", async (req, res) => {
     console.log(`[RESERVATION] Has Invoice:`, !!reservation.Invoice);
     console.log(`[RESERVATION] Invoice Payments:`, reservation.Invoice?.payments?.length || 0);
     
-    // LOGICĂ: actualizează statusul pe baza datelor check-in/check-out
-    // Statusul "cancelled" este final: nu îl recalculăm în upcoming/active/completed.
-    const now = new Date();
-    const checkin = new Date(reservation.requestedCheckin);
-    const checkout = new Date(reservation.requestedCheckout);
-    
-    let newStatus = reservation.status;
-    
-    if (reservation.status !== 'cancelled') {
-      // AUTO-CANCEL: dacă e check-in și nu e plătit 100%
-      if (now >= checkin && now < checkout && reservation.status !== 'completed') {
-        const invoice = reservation.Invoice;
-        if (invoice) {
-          // Calculează suma plătită
-          const Payment = (await import("../entities/Payment.js")).default;
-          const payments = await Payment.findAll({ where: { InvoiceId: invoice.InvoiceId } });
-          const paidAmount = payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
-          
-          if (paidAmount < invoice.totalAmount) {
-            // Nu e plătit integral la check-in - AUTO-CANCEL
-            newStatus = 'cancelled';
-            console.log(`[AUTO-CANCEL] Reservation #${reservation.ReservationId} auto-cancelled at check-in. Paid: €${paidAmount}, Required: €${invoice.totalAmount}`);
-          } else {
-            newStatus = 'active';
-          }
-        } else {
-          newStatus = 'active';
-        }
-      } else if (checkout < now) {
-        // După checkout = COMPLETED
-        newStatus = "completed";
-      } else if (checkin <= now && now < checkout) {
-        // În sejur (între checkin și checkout) = ACTIVE
-        newStatus = "active";
-      } else if (now < checkin) {
-        // Înainte de checkin = UPCOMING
-        newStatus = "upcoming";
-      }
-    }
-    
-    // Actualizează dacă statusul s-a schimbat
-    if (newStatus !== reservation.status) {
-      reservation.status = newStatus;
-      await reservation.save();
-      console.log(`[RESERVATION] Status actualizat la '${newStatus}' pentru rezervarea ${reservation.ReservationId}`);
-    }
-    
+    await syncReservationStatus(reservation);
+
     // Log suplimentar pentru debugging
     console.log(`[RESERVATION] Returning reservation with data`);
     res.status(200).json(reservation);

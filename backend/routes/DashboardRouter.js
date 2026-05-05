@@ -8,6 +8,7 @@ import RoomTheme from "../entities/RoomTheme.js";
 import RoomReservation from "../entities/RoomReservation.js";
 import Reservation from "../entities/Reservation.js";
 import { syncClientTier } from "../services/clientTierService.js";
+import { syncReservationStatuses } from "../services/reservationStatusService.js";
 import { publicAssetUrl } from "../utils/publicUrl.js";
 
 const router = express.Router();
@@ -47,6 +48,7 @@ router.get("/dashboard", authClient, async (req, res) => {
       ],
       order: [['requestedCheckin', 'DESC']]
     });
+    await syncReservationStatuses(allReservations);
 
     // Găsește următoarea rezervare (viitoare)
     const now = new Date();

@@ -15,6 +15,7 @@ import ReservationService from "../entities/ReservationService.js";
 import { seedDemoData } from "../services/demoDataSeeder.js";
 import db from "../dbConfig.js";
 import { importCatalogData } from "../services/catalogTransferService.js";
+import { syncReservationStatuses } from "../services/reservationStatusService.js";
 
 const dashboardRouter = express.Router();
 
@@ -113,7 +114,7 @@ function getBusinessStatus(reservation, now = new Date()) {
 }
 
 async function getDashboardReservations() {
-  return Reservation.findAll({
+  const reservations = await Reservation.findAll({
     include: [
       {
         model: Client,
@@ -151,6 +152,8 @@ async function getDashboardReservations() {
     ],
     order: [["requestedCheckin", "ASC"]]
   });
+  await syncReservationStatuses(reservations);
+  return reservations;
 }
 
 // Helper: Get date range based on period
