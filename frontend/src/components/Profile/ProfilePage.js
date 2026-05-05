@@ -49,9 +49,14 @@ export default function ProfilePage() {
     const status = String(reservation.status || "").toLowerCase();
     return !["cancelled", "canceled", "pending"].includes(status);
   }), [reservations]);
-  const countedReservations = useMemo(() => reservations.filter((reservation) => {
+  const completedReservations = useMemo(() => reservations.filter((reservation) => {
     const status = String(reservation.status || "").toLowerCase();
-    return status !== "pending";
+    const checkout = reservation.checkOut ? new Date(reservation.checkOut) : null;
+    return status === "completed" || (
+      !["cancelled", "canceled", "pending"].includes(status) &&
+      checkout &&
+      checkout < new Date()
+    );
   }), [reservations]);
   const user = {
     firstName: userData?.client?.FirstName || "Guest",
@@ -66,8 +71,8 @@ export default function ProfilePage() {
   };
 
   const favoriteCity = useMemo(() => {
-    if (!validReservations.length) return "No destination yet";
-    const cityCounts = validReservations.reduce((counts, reservation) => {
+    if (!completedReservations.length) return "No destination yet";
+    const cityCounts = completedReservations.reduce((counts, reservation) => {
       const city = reservation.city || "Cityscape";
       counts[city] = (counts[city] || 0) + 1;
       return counts;
@@ -76,19 +81,14 @@ export default function ProfilePage() {
     return Object.keys(cityCounts).reduce((favorite, city) => (
       cityCounts[city] > cityCounts[favorite] ? city : favorite
     ));
-  }, [validReservations]);
+  }, [completedReservations]);
 
   const upcomingReservations = validReservations
     .filter(reservation => reservation.status === "upcoming" || reservation.status === "active")
     .slice(0, 3);
   const displayedReservations = upcomingReservations.length ? upcomingReservations : validReservations.slice(0, 3);
-  const citiesVisited = new Set(validReservations.map(reservation => reservation.city).filter(Boolean)).size;
-  const totalSpent = reservations
-    .filter(reservation => {
-      const status = String(reservation.status || "").toLowerCase();
-      const checkout = reservation.checkOut ? new Date(reservation.checkOut) : null;
-      return status === "completed" || (checkout && checkout < new Date());
-    })
+  const citiesVisited = new Set(completedReservations.map(reservation => reservation.city).filter(Boolean)).size;
+  const totalSpent = completedReservations
     .reduce((sum, reservation) => sum + (parseFloat(reservation.totalAmount) || 0), 0);
 
   const formatMoney = (value) => `${Number(value || 0).toLocaleString("en-US", {
@@ -170,7 +170,7 @@ export default function ProfilePage() {
             </div>
             <div>
               <span>Stays</span>
-              <strong>{countedReservations.length}</strong>
+              <strong>{validReservations.length}</strong>
             </div>
             <div>
               <span>Cities</span>
