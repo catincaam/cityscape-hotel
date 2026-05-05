@@ -13,7 +13,21 @@ const feedbackRouter = express.Router();
 /* CREATE */
 import { addPendingPoints } from '../dataAccess/RewardPointDA.js';
 import Reservation from '../entities/Reservation.js';
+import RewardPoint from "../entities/RewardPoint.js";
 import { isValidRating } from "../utils/validators.js";
+
+function canLeaveFeedback(reservation) {
+  if (!reservation) return false;
+
+  const status = String(reservation.status || "").trim().toLowerCase();
+  if (["completed", "past"].includes(status)) return true;
+
+  if (["paid", "partial", "active"].includes(status) && reservation.requestedCheckout) {
+    return new Date(reservation.requestedCheckout) < new Date();
+  }
+
+  return false;
+}
 
 feedbackRouter.post("/", async (req, res) => {
   try {
@@ -32,13 +46,13 @@ feedbackRouter.post("/", async (req, res) => {
       return res.status(404).json({ message: "Reservation not found." });
     }
     
-    if (reservation.ClientId !== ClientId) {
+    if (String(reservation.ClientId) !== String(ClientId)) {
       console.log("[FEEDBACK] ClientId mismatch:", { reservationClientId: reservation.ClientId, providedClientId: ClientId });
       return res.status(403).json({ message: "You can only leave feedback for your own reservation." });
     }
     
     // Permite feedback doar dacă statusul e 'completed' sau 'paid'
-    if (reservation.status !== 'completed') {
+    if (!canLeaveFeedback(reservation)) {
       console.log("[FEEDBACK] Invalid reservation status:", reservation.status);
       return res.status(400).json({ message: "Feedback is allowed only after the stay is completed." });
     }
@@ -63,7 +77,7 @@ feedbackRouter.post("/", async (req, res) => {
     console.log("[FEEDBACK] Feedback created:", feedback);
     
     // Award points only if not already awarded for this reservation
-    const existing = await Reservation.sequelize.models.RewardPoint.findOne({
+    const existing = await RewardPoint.findOne({
       where: { ReservationId: ReservationId, UserId: ClientId }
     });
     if (!existing) {
