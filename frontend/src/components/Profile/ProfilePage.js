@@ -49,6 +49,10 @@ export default function ProfilePage() {
     const status = String(reservation.status || "").toLowerCase();
     return !["cancelled", "canceled", "pending"].includes(status);
   }), [reservations]);
+  const countedReservations = useMemo(() => reservations.filter((reservation) => {
+    const status = String(reservation.status || "").toLowerCase();
+    return status !== "pending";
+  }), [reservations]);
   const user = {
     firstName: userData?.client?.FirstName || "Guest",
     lastName: userData?.client?.LastName || "",
@@ -166,7 +170,7 @@ export default function ProfilePage() {
             </div>
             <div>
               <span>Stays</span>
-              <strong>{validReservations.length}</strong>
+              <strong>{countedReservations.length}</strong>
             </div>
             <div>
               <span>Cities</span>
