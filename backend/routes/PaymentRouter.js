@@ -6,6 +6,7 @@ import Invoice from "../entities/Invoice.js";
 import Payment from "../entities/Payment.js";
 import { awardPointsForCompletedReservation } from "../services/rewardPointsService.js";
 import { syncClientTier } from "../services/clientTierService.js";
+import { syncReservationStatus } from "../services/reservationStatusService.js";
 
 const paymentRouter = express.Router();
 
@@ -45,6 +46,13 @@ paymentRouter.post("/pay-deposit", async (req, res) => {
     
     if (!reservation) {
       return res.status(404).json({ message: "Reservation not found" });
+    }
+    await syncReservationStatus(reservation);
+
+    if (reservation.status === "cancelled") {
+      return res.status(400).json({
+        message: "This reservation was cancelled because the final payment deadline has passed."
+      });
     }
     
     const invoice = reservation.Invoice;
@@ -103,8 +111,9 @@ paymentRouter.post("/pay-final", async (req, res) => {
     const hoursUntilCheckin = (checkinDate - now) / (1000 * 60 * 60);
     
     if (hoursUntilCheckin < 24) {
+      await reservation.update({ status: "cancelled" });
       return res.status(400).json({ 
-        message: "Cannot pay within 24 hours of check-in",
+        message: "This reservation was cancelled because the final payment deadline has passed.",
         hoursRemaining: hoursUntilCheckin.toFixed(2)
       });
     }
@@ -178,6 +187,7 @@ paymentRouter.get("/status/:ReservationId", async (req, res) => {
     if (!reservation) {
       return res.status(404).json({ message: "Reservation not found" });
     }
+    await syncReservationStatus(reservation);
     
     const invoice = reservation.Invoice;
     if (!invoice) {

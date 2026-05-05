@@ -1,3 +1,6 @@
+import Invoice from "../entities/Invoice.js";
+import Payment from "../entities/Payment.js";
+
 const FINAL_STATUSES = new Set(["cancelled", "canceled"]);
 
 function normalizeStatus(status) {
@@ -8,7 +11,32 @@ function hasValidStayDates(reservation) {
   return reservation?.requestedCheckin && reservation?.requestedCheckout;
 }
 
-export function getReservationLifecycleStatus(reservation, now = new Date()) {
+function toNumber(value) {
+  return Number.parseFloat(value || 0) || 0;
+}
+
+async function getPaymentSummary(reservation) {
+  const invoice = reservation.Invoice || await Invoice.findOne({
+    where: { ReservationId: reservation.ReservationId },
+    include: [{ model: Payment, as: "payments", required: false }]
+  });
+
+  if (!invoice) return null;
+
+  const totalAmount = toNumber(invoice.totalAmount);
+  const payments = invoice.payments || await Payment.findAll({
+    where: { InvoiceId: invoice.InvoiceId }
+  });
+  const totalPaid = payments.reduce((sum, payment) => sum + toNumber(payment.amount), 0);
+
+  return {
+    totalAmount,
+    totalPaid,
+    isFullyPaid: totalAmount > 0 && totalPaid >= totalAmount
+  };
+}
+
+export function getReservationLifecycleStatus(reservation, now = new Date(), paymentSummary = null) {
   if (!reservation) return null;
 
   const currentStatus = normalizeStatus(reservation.status);
@@ -23,6 +51,11 @@ export function getReservationLifecycleStatus(reservation, now = new Date()) {
     return currentStatus || "pending";
   }
 
+  if (paymentSummary && paymentSummary.totalAmount > 0 && !paymentSummary.isFullyPaid) {
+    const hoursUntilCheckin = (checkin - now) / (1000 * 60 * 60);
+    if (hoursUntilCheckin < 24) return "cancelled";
+  }
+
   if (checkout < now) return "completed";
   if (checkin <= now && now < checkout) return "active";
   return "upcoming";
@@ -31,7 +64,8 @@ export function getReservationLifecycleStatus(reservation, now = new Date()) {
 export async function syncReservationStatus(reservation, now = new Date()) {
   if (!reservation) return null;
 
-  const lifecycleStatus = getReservationLifecycleStatus(reservation, now);
+  const paymentSummary = await getPaymentSummary(reservation);
+  const lifecycleStatus = getReservationLifecycleStatus(reservation, now, paymentSummary);
   if (!lifecycleStatus) return reservation;
 
   if (normalizeStatus(reservation.status) !== lifecycleStatus) {
