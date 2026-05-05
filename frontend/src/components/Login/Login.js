@@ -23,6 +23,17 @@ export default function Login() {
 
   const navigate = useNavigate();
 
+  function getPostLoginRedirect() {
+    const redirect = sessionStorage.getItem("postLoginRedirect");
+    sessionStorage.removeItem("postLoginRedirect");
+
+    if (!redirect || !redirect.startsWith("/") || redirect.startsWith("//")) {
+      return "/dashboard";
+    }
+
+    return redirect;
+  }
+
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
@@ -41,9 +52,10 @@ export default function Login() {
         // 🔥 MAGIC HAPPENS HERE:
         // if login succeeded, redirect to the appropriate page
         if (isAdminMode) {
+          sessionStorage.removeItem("postLoginRedirect");
           navigate("/admin");
         } else {
-          navigate("/dashboard");
+          navigate(getPostLoginRedirect());
         }
       } 
       else {
@@ -94,9 +106,10 @@ export default function Login() {
       localStorage.setItem("userId", res.data.client.ClientId);
       // Redirect to dashboard or main page with a personalized message
       if (res.data.client.TypeClientTip === "Admin") {
+        sessionStorage.removeItem("postLoginRedirect");
         navigate("/admin");
       } else {
-        navigate("/dashboard");
+        navigate(getPostLoginRedirect());
       }
     } catch (err) {
       alert("Google login failed!");

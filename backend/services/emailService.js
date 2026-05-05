@@ -198,54 +198,92 @@ export const sendReservationConfirmation = async ({
   const balance = Number(remainingAmount || 0);
 
   const html = `
-    <div style="margin:0;padding:32px;background:#f6f2ec;font-family:Georgia,serif;color:#122033;">
-      <div style="max-width:640px;margin:0 auto;background:#fffaf4;border:1px solid #e4d5c2;border-radius:18px;overflow:hidden;">
-        <div style="padding:30px 34px;border-bottom:1px solid #eadfce;">
-          <div style="font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#b8894a;font-weight:700;">Cityscape Hotel</div>
-          <h1 style="margin:12px 0 8px;font-size:34px;line-height:1.1;color:#111827;">Your stay is confirmed</h1>
-          <p style="margin:0;color:#5d6a7a;font-size:15px;">Hello ${guestName}, thank you for booking with us.</p>
-        </div>
+    <div style="margin:0;padding:0;background:#f4f0ea;color:#182434;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f0ea;border-collapse:collapse;">
+        <tr>
+          <td align="center" style="padding:34px 18px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px;border-collapse:collapse;background:#fffaf4;border:1px solid #e4d5c2;border-radius:22px;overflow:hidden;box-shadow:0 18px 45px rgba(31,41,55,0.08);">
+              <tr>
+                <td style="padding:34px 38px 28px;background:#161f2d;">
+                  <div style="font-family:Arial,sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#d1ad78;font-weight:700;">Cityscape Hotel</div>
+                  <h1 style="margin:14px 0 10px;font-family:Georgia,serif;font-size:38px;line-height:1.05;font-weight:400;color:#ffffff;">Your stay is confirmed</h1>
+                  <p style="margin:0;font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#d9e0ea;">Hello ${guestName}, your reservation is saved and ready in your Cityscape account.</p>
+                </td>
+              </tr>
 
-        <div style="padding:28px 34px;">
-          <p style="margin:0 0 22px;color:#26364a;font-size:16px;">Reservation ${reservationCode} has been created successfully.</p>
+              <tr>
+                <td style="padding:30px 38px 8px;">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+                    <tr>
+                      <td style="font-family:Arial,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#b8894a;font-weight:700;">Reservation</td>
+                      <td align="right" style="font-family:Georgia,serif;font-size:22px;color:#111827;">${reservationCode}</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
 
-          <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
-            <tr>
-              <td style="padding:12px 0;border-bottom:1px solid #eadfce;color:#9a7b55;text-transform:uppercase;font-size:11px;letter-spacing:1.5px;">Room</td>
-              <td style="padding:12px 0;border-bottom:1px solid #eadfce;text-align:right;font-weight:700;">${roomName(room)}</td>
-            </tr>
-            <tr>
-              <td style="padding:12px 0;border-bottom:1px solid #eadfce;color:#9a7b55;text-transform:uppercase;font-size:11px;letter-spacing:1.5px;">Check-in</td>
-              <td style="padding:12px 0;border-bottom:1px solid #eadfce;text-align:right;font-weight:700;">${formatDate(reservation?.requestedCheckin)}</td>
-            </tr>
-            <tr>
-              <td style="padding:12px 0;border-bottom:1px solid #eadfce;color:#9a7b55;text-transform:uppercase;font-size:11px;letter-spacing:1.5px;">Check-out</td>
-              <td style="padding:12px 0;border-bottom:1px solid #eadfce;text-align:right;font-weight:700;">${formatDate(reservation?.requestedCheckout)}</td>
-            </tr>
-            <tr>
-              <td style="padding:12px 0;border-bottom:1px solid #eadfce;color:#9a7b55;text-transform:uppercase;font-size:11px;letter-spacing:1.5px;">Guests</td>
-              <td style="padding:12px 0;border-bottom:1px solid #eadfce;text-align:right;font-weight:700;">${reservation?.nrPeople || 1}</td>
-            </tr>
-          </table>
+              <tr>
+                <td style="padding:14px 38px 8px;">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;border:1px solid #eadfce;border-radius:16px;overflow:hidden;background:#ffffff;">
+                    <tr>
+                      <td colspan="2" style="padding:20px 22px;border-bottom:1px solid #eadfce;">
+                        <div style="font-family:Arial,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#b8894a;font-weight:700;">Selected room</div>
+                        <div style="margin-top:6px;font-family:Georgia,serif;font-size:26px;line-height:1.2;color:#111827;">${roomName(room)}</div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="width:50%;padding:18px 22px;border-right:1px solid #eadfce;border-bottom:1px solid #eadfce;">
+                        <div style="font-family:Arial,sans-serif;font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:#8b97a6;font-weight:700;">Check-in</div>
+                        <div style="margin-top:6px;font-family:Georgia,serif;font-size:17px;color:#111827;">${formatDate(reservation?.requestedCheckin)}</div>
+                      </td>
+                      <td style="width:50%;padding:18px 22px;border-bottom:1px solid #eadfce;">
+                        <div style="font-family:Arial,sans-serif;font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:#8b97a6;font-weight:700;">Check-out</div>
+                        <div style="margin-top:6px;font-family:Georgia,serif;font-size:17px;color:#111827;">${formatDate(reservation?.requestedCheckout)}</div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:18px 22px;border-right:1px solid #eadfce;">
+                        <div style="font-family:Arial,sans-serif;font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:#8b97a6;font-weight:700;">Guests</div>
+                        <div style="margin-top:6px;font-family:Georgia,serif;font-size:17px;color:#111827;">${reservation?.nrPeople || 1}</div>
+                      </td>
+                      <td style="padding:18px 22px;">
+                        <div style="font-family:Arial,sans-serif;font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:#8b97a6;font-weight:700;">Status</div>
+                        <div style="margin-top:6px;font-family:Arial,sans-serif;font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:#047857;font-weight:800;">Confirmed</div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
 
-          <div style="padding:18px 20px;border:1px solid #eadfce;border-radius:14px;background:#fff;">
-            <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
-              <span style="color:#5d6a7a;">Total amount</span>
-              <strong>${formatMoney(totalAmount)}</strong>
-            </div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
-              <span style="color:#5d6a7a;">Paid now</span>
-              <strong>${formatMoney(paidAmount)}</strong>
-            </div>
-            <div style="display:flex;justify-content:space-between;">
-              <span style="color:#5d6a7a;">Remaining balance</span>
-              <strong>${formatMoney(balance)}</strong>
-            </div>
-          </div>
+              <tr>
+                <td style="padding:18px 38px 6px;">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;background:#fbf7f1;border:1px solid #eadfce;border-radius:16px;">
+                    <tr>
+                      <td style="padding:18px 22px;font-family:Arial,sans-serif;font-size:14px;color:#5d6a7a;">Total amount</td>
+                      <td align="right" style="padding:18px 22px;font-family:Georgia,serif;font-size:18px;color:#111827;">${formatMoney(totalAmount)}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:0 22px 18px;font-family:Arial,sans-serif;font-size:14px;color:#5d6a7a;">Paid now</td>
+                      <td align="right" style="padding:0 22px 18px;font-family:Georgia,serif;font-size:18px;color:#047857;">${formatMoney(paidAmount)}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:0 22px 18px;font-family:Arial,sans-serif;font-size:14px;color:#5d6a7a;">Remaining balance</td>
+                      <td align="right" style="padding:0 22px 18px;font-family:Georgia,serif;font-size:18px;color:#111827;">${formatMoney(balance)}</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
 
-          <a href="${detailsUrl}" style="display:block;margin-top:24px;padding:14px 18px;border-radius:999px;background:#111827;color:#fff;text-align:center;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">View reservation</a>
-        </div>
-      </div>
+              <tr>
+                <td align="center" style="padding:22px 38px 34px;">
+                  <a href="${detailsUrl}" style="display:inline-block;min-width:230px;padding:15px 24px;border-radius:999px;background:#111827;color:#ffffff;text-align:center;text-decoration:none;font-family:Arial,sans-serif;font-size:12px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;">View reservation details</a>
+                  <p style="margin:18px 0 0;font-family:Arial,sans-serif;font-size:12px;line-height:1.5;color:#8b97a6;">You can review your stay, download the invoice, or manage eligible services from your reservation page.</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
     </div>
   `;
 
