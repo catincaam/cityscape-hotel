@@ -1,5 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
+import { API_BASE_URL } from "../../../../config/runtimeUrls";
 import "./StepServices.css";
+
+const ACTIVE_SERVICE_STATUSES = ["activ", "active", "available", "disponibil"];
+
+function isServiceAvailable(service) {
+  const status = String(service.status || "activ").trim().toLowerCase();
+  const bookableOnline =
+    service.bookableOnline === undefined ||
+    service.bookableOnline === null ||
+    service.bookableOnline === true ||
+    service.bookableOnline === 1 ||
+    String(service.bookableOnline).toLowerCase() === "true";
+
+  return ACTIVE_SERVICE_STATUSES.includes(status) && bookableOnline;
+}
 
 export default function StepServices({
   bookingData,
@@ -16,9 +31,21 @@ export default function StepServices({
   useEffect(() => {
     async function loadServices() {
       try {
-        const res = await fetch("http://localhost:9001/api/services");
+        const res = await fetch(`${API_BASE_URL}/api/services`);
         const data = await res.json();
-        setServices(data);
+        const availableServices = Array.isArray(data)
+          ? data.filter(isServiceAvailable)
+          : [];
+        const availableIds = new Set(availableServices.map(service => String(service.ServiceId)));
+        const sanitizedSelected = Object.fromEntries(
+          Object.entries(bookingData.services || {}).filter(([id]) => availableIds.has(String(id)))
+        );
+
+        setServices(availableServices);
+        if (Object.keys(sanitizedSelected).length !== Object.keys(bookingData.services || {}).length) {
+          setSelected(sanitizedSelected);
+          onUpdateServices(sanitizedSelected);
+        }
       } catch (err) {
         console.error("Error loading services:", err);
       }
@@ -126,7 +153,7 @@ export default function StepServices({
                 <div className="service-image-wrapper">
                   {service.image ? (
                     <img
-                      src={`http://localhost:9001${service.image}`}
+                      src={`${API_BASE_URL}${service.image}`}
                       alt={service.name}
                       className="service-image"
                     />

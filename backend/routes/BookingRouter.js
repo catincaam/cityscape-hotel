@@ -26,6 +26,23 @@ import {
 
 const bookingRouter = express.Router();
 
+const ACTIVE_SERVICE_STATUSES = new Set(["activ", "active", "available", "disponibil"]);
+
+function isServiceBookable(service) {
+  if (!service) return false;
+
+  const normalizedStatus = String(service.status || "activ").trim().toLowerCase();
+  const bookableOnline = service.bookableOnline;
+  const isBookableOnline =
+    bookableOnline === undefined ||
+    bookableOnline === null ||
+    bookableOnline === true ||
+    bookableOnline === 1 ||
+    String(bookableOnline).toLowerCase() === "true";
+
+  return ACTIVE_SERVICE_STATUSES.has(normalizedStatus) && isBookableOnline;
+}
+
 // GET /api/admin/bookings
 bookingRouter.get("/admin/bookings", async (req, res) => {
   try {
@@ -308,6 +325,33 @@ bookingRouter.post("/complete", async (req, res) => {
       });
     }
 
+    const selectedServiceItems = [];
+    if (services && Object.keys(services).length > 0) {
+      for (const [serviceId, quantity] of Object.entries(services)) {
+        const normalizedQuantity = Number(quantity);
+        if (normalizedQuantity > 0) {
+          if (!isPositiveInteger(normalizedQuantity)) {
+            return res.status(400).json({ message: "Service quantity must be a positive number." });
+          }
+
+          const serviceData = await getServiceById(serviceId);
+          if (!isServiceBookable(serviceData)) {
+            return res.status(400).json({ message: "Selected service is not available." });
+          }
+
+          if (serviceData.priceType === "per_person" && normalizedQuantity > Number(nrPeople)) {
+            return res.status(400).json({ message: "Per-person services cannot exceed the number of guests." });
+          }
+
+          selectedServiceItems.push({
+            ServiceId: parseInt(serviceId),
+            quantity: normalizedQuantity,
+            unitPrice: serviceData?.price || 0
+          });
+        }
+      }
+    }
+
     const reservation = await createReservation({
       reservationDate: reservationDate || new Date(),
       requestedCheckin,
@@ -323,29 +367,12 @@ bookingRouter.post("/complete", async (req, res) => {
     });
 
     const reservationServices = [];
-    if (services && Object.keys(services).length > 0) {
-      for (const [serviceId, quantity] of Object.entries(services)) {
-        const normalizedQuantity = Number(quantity);
-        if (normalizedQuantity > 0) {
-          if (!isPositiveInteger(normalizedQuantity)) {
-            return res.status(400).json({ message: "Service quantity must be a positive number." });
-          }
-          const serviceData = await getServiceById(serviceId);
-          if (!serviceData || serviceData.status !== "activ" || !serviceData.bookableOnline) {
-            return res.status(400).json({ message: "Selected service is not available." });
-          }
-          if (serviceData.priceType === "per_person" && normalizedQuantity > Number(nrPeople)) {
-            return res.status(400).json({ message: "Per-person services cannot exceed the number of guests." });
-          }
-          const resService = await addServiceToReservation({
-            ReservationId: reservation.ReservationId,
-            ServiceId: parseInt(serviceId),
-            quantity: normalizedQuantity,
-            unitPrice: serviceData?.price || 0
-          });
-          reservationServices.push(resService);
-        }
-      }
+    for (const serviceItem of selectedServiceItems) {
+      const resService = await addServiceToReservation({
+        ReservationId: reservation.ReservationId,
+        ...serviceItem
+      });
+      reservationServices.push(resService);
     }
 
     const invoice = await createInvoice({
