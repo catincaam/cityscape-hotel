@@ -11,6 +11,7 @@ function stars(rating) {
 function resolveAvatarUrl(value) {
   if (!value || typeof value !== 'string') return '';
   if (/^https?:\/\//i.test(value)) return value;
+  if (value.startsWith('/assets/')) return value;
   if (value.startsWith('/')) return `${API_BASE_URL}${value}`;
   return value;
 }

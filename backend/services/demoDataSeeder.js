@@ -17,6 +17,7 @@ import { ensureClientTypes } from "./clientTierService.js";
 
 const DEMO_EMAIL_DOMAIN = "cityscape.local";
 const DEMO_TEST_EMAIL = "demo@cityscape.com";
+const DEFAULT_PROFILE_PICTURE = "/assets/profilePicture.jpg";
 
 const addDays = (days) => {
   const date = new Date();
@@ -133,7 +134,7 @@ async function createDemoClients(transaction) {
       Client.create({
         ...seed,
         Password: password,
-        profilePicture: "https://img.freepik.com/premium-vector/cute-frog-explorer-boy-vector-illustration_456699-1187.jpg?w=740"
+        profilePicture: DEFAULT_PROFILE_PICTURE
       }, { transaction })
     )
   );

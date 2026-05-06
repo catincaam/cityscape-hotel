@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { MessageSquare, Search, Star } from "lucide-react";
+import { Search, Star } from "lucide-react";
+import { API_BASE_URL } from "../../../config/runtimeUrls";
+import defaultProfilePicture from "../../../assets/profilePicture.jpg";
 import "./AdminFeedback.css";
 
 function getClientName(feedback) {
@@ -11,6 +13,14 @@ function getClientName(feedback) {
 
 function getRating(feedback) {
   return Number(feedback.overall || feedback.service || feedback.cleanliness || feedback.theme || 0);
+}
+
+function resolveProfilePicture(value) {
+  if (!value || typeof value !== "string") return defaultProfilePicture;
+  if (/^https?:\/\//i.test(value)) return value;
+  if (value.startsWith("/assets/")) return value;
+  if (value.startsWith("/")) return `${API_BASE_URL}${value}`;
+  return value;
 }
 
 export default function AdminFeedback() {
@@ -73,6 +83,7 @@ export default function AdminFeedback() {
           {filtered.map((item) => {
             const rating = getRating(item);
             const clientName = getClientName(item);
+            const profilePicture = resolveProfilePicture(item.Client?.profilePicture);
             const reservationId = item.ReservationId || item.Reservation?.ReservationId;
             const date = item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "N/A";
 
@@ -80,11 +91,11 @@ export default function AdminFeedback() {
               <article className="admin-feedback-card" key={item.id}>
                 <div className="admin-feedback-card-top">
                   <div className="admin-feedback-avatar">
-                    {item.Client?.profilePicture ? (
-                      <img src={item.Client.profilePicture} alt={clientName} />
-                    ) : (
-                      <MessageSquare size={20} />
-                    )}
+                    <img
+                      src={profilePicture}
+                      alt={clientName}
+                      onError={(event) => { event.currentTarget.src = defaultProfilePicture; }}
+                    />
                   </div>
                   <div>
                     <h3>{clientName}</h3>

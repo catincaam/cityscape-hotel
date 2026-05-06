@@ -20,6 +20,7 @@ import fetch from 'node-fetch';
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const authRouter = express.Router();
+const DEFAULT_PROFILE_PICTURE = "/assets/profilePicture.jpg";
 
 const hashResetToken = (token) => crypto.createHash("sha256").update(token).digest("hex");
 
@@ -62,7 +63,7 @@ authRouter.post("/register", async (req, res) => {
       LastName: lastName.trim(),
       Password: PasswordHash,
       TypeClientTip: typeClientTip || "Standard",
-      profilePicture: "https://img.freepik.com/premium-vector/cute-frog-explorer-boy-vector-illustration_456699-1187.jpg?w=740"
+      profilePicture: DEFAULT_PROFILE_PICTURE
     });
 
     const { Password: _, ...safeClient } = client.dataValues;
@@ -257,7 +258,7 @@ authRouter.post("/google", async (req, res) => {
         LastName: payload.family_name || "",
         Password: "", // No password for OAuth
         TypeClientTip: "Standard",
-        profilePicture: "https://img.freepik.com/premium-vector/cute-frog-explorer-boy-vector-illustration_456699-1187.jpg?w=740"
+        profilePicture: DEFAULT_PROFILE_PICTURE
       });
     }
     const { Password, ...safeClient } = client.dataValues || client;
@@ -297,7 +298,7 @@ authRouter.post("/facebook", async (req, res) => {
         LastName: fbData.last_name || "",
         Password: "", // No password for OAuth
         TypeClientTip: "Standard",
-        profilePicture: "https://img.freepik.com/premium-vector/cute-frog-explorer-boy-vector-illustration_456699-1187.jpg?w=740"
+        profilePicture: DEFAULT_PROFILE_PICTURE
       });
     }
     const { Password, ...safeClient } = client.dataValues || client;
