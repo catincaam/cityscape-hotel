@@ -248,7 +248,11 @@ export async function seedDemoData() {
       { startOffset: -18, endOffset: -14, createdOffset: -30, guests: 2, status: "completed", paymentRatio: 1, services: [1], feedback: { overall: 4, cleanliness: 4, service: 5, theme: 4, comment: "Beautiful room and very attentive service." } },
       { startOffset: -8, endOffset: -2, createdOffset: -20, guests: 3, status: "completed", paymentRatio: 1, services: [2, 5], feedback: { overall: 4, cleanliness: 3, service: 4, theme: 5, comment: "Good price, but the cleaning could be improved." } },
       { startOffset: -1, endOffset: 4, createdOffset: -10, guests: 2, status: "paid", paymentRatio: 1, services: [3] },
+      { startOffset: 1, endOffset: 5, createdOffset: -9, guests: 3, status: "partial", paymentRatio: 0.2, services: [0, 2] },
+      { startOffset: 2, endOffset: 6, createdOffset: -8, guests: 2, status: "paid", paymentRatio: 1, services: [1, 4] },
       { startOffset: 3, endOffset: 7, createdOffset: -5, guests: 2, status: "partial", paymentRatio: 0.2, services: [2] },
+      { startOffset: 4, endOffset: 8, createdOffset: -6, guests: 4, status: "paid", paymentRatio: 1, services: [0, 3] },
+      { startOffset: 5, endOffset: 9, createdOffset: -6, guests: 2, status: "paid", paymentRatio: 1, services: [5] },
       { startOffset: 8, endOffset: 12, createdOffset: -4, guests: 4, status: "paid", paymentRatio: 1, services: [0, 4] },
       { startOffset: 16, endOffset: 20, createdOffset: -3, guests: 2, status: "paid", paymentRatio: 1, services: [1, 3] },
       { startOffset: 22, endOffset: 26, createdOffset: -2, guests: 2, status: "partial", paymentRatio: 0.2, services: [5] },
@@ -263,7 +267,28 @@ export async function seedDemoData() {
       { startOffset: 27, endOffset: 31, createdOffset: -2, guests: 2, status: "paid", paymentRatio: 1, services: [1, 4] },
       { startOffset: 36, endOffset: 39, createdOffset: -1, guests: 2, status: "cancelled", paymentRatio: 0.2, services: [] },
       { startOffset: -12, endOffset: -7, createdOffset: -25, guests: 4, status: "completed", paymentRatio: 1, services: [0, 2], feedback: { overall: 5, cleanliness: 4, service: 5, theme: 5, comment: "The themed room made the trip feel special." } },
-      { startOffset: 48, endOffset: 53, createdOffset: -1, guests: 2, status: "paid", paymentRatio: 1, services: [3] }
+      { startOffset: 48, endOffset: 53, createdOffset: -1, guests: 2, status: "paid", paymentRatio: 1, services: [3] },
+      { startOffset: -95, endOffset: -91, createdOffset: -110, guests: 2, status: "completed", paymentRatio: 1, services: [0, 1], feedback: { overall: 5, cleanliness: 5, service: 5, theme: 5, comment: "The staff made everything feel effortless from arrival to checkout." } },
+      { startOffset: -88, endOffset: -84, createdOffset: -103, guests: 3, status: "completed", paymentRatio: 1, services: [2], feedback: { overall: 4, cleanliness: 4, service: 5, theme: 4, comment: "Very smooth booking and a comfortable stay for our group." } },
+      { startOffset: -82, endOffset: -79, createdOffset: -96, guests: 1, status: "completed", paymentRatio: 1, services: [3, 5], feedback: { overall: 5, cleanliness: 5, service: 5, theme: 4, comment: "I loved the quiet atmosphere and the thoughtful room details." } },
+      { startOffset: -76, endOffset: -71, createdOffset: -90, guests: 2, status: "completed", paymentRatio: 1, services: [4], feedback: { overall: 4, cleanliness: 4, service: 4, theme: 5, comment: "The themed design was memorable and the service was reliable." } },
+      { startOffset: -69, endOffset: -65, createdOffset: -84, guests: 4, status: "completed", paymentRatio: 1, services: [0, 2, 5], feedback: { overall: 5, cleanliness: 4, service: 5, theme: 5, comment: "Great for a family stay, especially with the extra services included." } },
+      { startOffset: -54, endOffset: -50, createdOffset: -70, guests: 2, status: "completed", paymentRatio: 1, services: [1], feedback: { overall: 4, cleanliness: 5, service: 4, theme: 4, comment: "Clean room, fast support, and a very easy reservation process." } },
+      { startOffset: -42, endOffset: -39, createdOffset: -58, guests: 2, status: "completed", paymentRatio: 1, services: [2, 3], feedback: { overall: 5, cleanliness: 5, service: 5, theme: 5, comment: "A polished experience with a room that matched the theme beautifully." } },
+      { startOffset: -34, endOffset: -29, createdOffset: -48, guests: 3, status: "completed", paymentRatio: 1, services: [0], feedback: { overall: 4, cleanliness: 4, service: 4, theme: 5, comment: "The hotel felt personal and the city-inspired concept worked very well." } },
+      { startOffset: -25, endOffset: -21, createdOffset: -38, guests: 2, status: "completed", paymentRatio: 1, services: [3, 4], feedback: { overall: 5, cleanliness: 5, service: 4, theme: 5, comment: "Beautiful visuals, comfortable room, and an overall premium stay." } },
+      { startOffset: -17, endOffset: -13, createdOffset: -30, guests: 1, status: "completed", paymentRatio: 1, services: [5], feedback: { overall: 4, cleanliness: 4, service: 5, theme: 4, comment: "The team answered quickly and the room was exactly as described." } },
+      { startOffset: -10, endOffset: -6, createdOffset: -24, guests: 2, status: "completed", paymentRatio: 1, services: [1, 2], feedback: { overall: 5, cleanliness: 5, service: 5, theme: 5, comment: "One of the nicest digital booking experiences I have used." } },
+      { startOffset: 6, endOffset: 10, createdOffset: -5, guests: 3, status: "partial", paymentRatio: 0.2, services: [0, 4] },
+      { startOffset: 7, endOffset: 11, createdOffset: -5, guests: 2, status: "paid", paymentRatio: 1, services: [2, 5] },
+      { startOffset: 10, endOffset: 14, createdOffset: -4, guests: 2, status: "paid", paymentRatio: 1, services: [1] },
+      { startOffset: 12, endOffset: 17, createdOffset: -3, guests: 4, status: "partial", paymentRatio: 0.2, services: [0, 3] },
+      { startOffset: 14, endOffset: 18, createdOffset: -3, guests: 2, status: "paid", paymentRatio: 1, services: [4] },
+      { startOffset: 20, endOffset: 24, createdOffset: -2, guests: 3, status: "paid", paymentRatio: 1, services: [2] },
+      { startOffset: 25, endOffset: 29, createdOffset: -2, guests: 2, status: "partial", paymentRatio: 0.2, services: [1, 5] },
+      { startOffset: 30, endOffset: 33, createdOffset: -1, guests: 1, status: "cancelled", paymentRatio: 0.2, services: [] },
+      { startOffset: 42, endOffset: 46, createdOffset: -1, guests: 2, status: "paid", paymentRatio: 1, services: [0] },
+      { startOffset: 55, endOffset: 59, createdOffset: -1, guests: 3, status: "paid", paymentRatio: 1, services: [3] }
     ];
 
     const reservations = [];
@@ -298,6 +323,38 @@ export async function seedDemoData() {
         amount: 750,
         status: "active",
         description: "Welcome loyalty bonus",
+        availableAt: addDays(-1)
+      },
+      {
+        UserId: clients[2].ClientId,
+        ReservationId: null,
+        amount: -200,
+        status: "redeemed",
+        description: "Redeemed demo reward: Airport Transfer",
+        availableAt: addDays(-8)
+      },
+      {
+        UserId: clients[3].ClientId,
+        ReservationId: null,
+        amount: 500,
+        status: "active",
+        description: "Demo service loyalty bonus",
+        availableAt: addDays(-2)
+      },
+      {
+        UserId: clients[4].ClientId,
+        ReservationId: null,
+        amount: -250,
+        status: "redeemed",
+        description: "Redeemed demo reward: Spa Massage",
+        availableAt: addDays(-12)
+      },
+      {
+        UserId: clients[6].ClientId,
+        ReservationId: null,
+        amount: 1000,
+        status: "active",
+        description: "Gold tier demo bonus",
         availableAt: addDays(-1)
       }
     ], { transaction });
