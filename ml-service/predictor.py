@@ -61,13 +61,21 @@ def build_predictions(payload):
     bookings = [_num(row.get("bookings")) for row in history]
     revenue = [_num(row.get("revenue")) for row in history]
     occupancy = [_num(row.get("occupancyRate")) for row in history]
+    has_booking_activity = any(value > 0 for value in bookings)
 
-    booking_values = _linear_forecast(bookings, horizon=horizon, minimum=0)
+    booking_values = _linear_forecast(
+        bookings,
+        horizon=horizon,
+        minimum=1 if has_booking_activity else 0
+    )
     revenue_values = _linear_forecast(revenue, horizon=horizon, minimum=0)
     occupancy_values = _linear_forecast(occupancy, horizon=horizon, minimum=0, maximum=100)
 
     booking_forecast = [
-        {"date": date, "value": round(value)}
+        {
+            "date": date,
+            "value": max(1, round(value)) if has_booking_activity else round(value)
+        }
         for date, value in zip(labels, booking_values)
     ]
     revenue_forecast = [

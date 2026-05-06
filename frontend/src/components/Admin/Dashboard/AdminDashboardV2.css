@@ -517,12 +517,25 @@
 }
 
 .sentiment-person img,
-.sentiment-person svg {
+.sentiment-person svg,
+.sentiment-avatar-fallback {
   width: 42px;
   height: 42px;
   border-radius: 8px;
   object-fit: cover;
   color: #806329;
+}
+
+.sentiment-avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 42px;
+  border: 1px solid #e2d5c3;
+  background: #f3eee7;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
 }
 
 .sentiment-person strong,

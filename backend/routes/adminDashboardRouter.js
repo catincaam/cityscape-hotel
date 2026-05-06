@@ -140,13 +140,15 @@ function buildLocalPredictions(payload) {
   const lastHistoryDate = history.length ? new Date(history[history.length - 1].date) : new Date();
   const labels = Array.from({ length: horizon }, (_, index) => formatDateKey(addDays(lastHistoryDate, index + 1)));
 
-  const bookingValues = linearForecast(history.map((row) => row.bookings), horizon, 0);
+  const bookingHistory = history.map((row) => row.bookings);
+  const hasBookingActivity = bookingHistory.some((value) => Number(value || 0) > 0);
+  const bookingValues = linearForecast(bookingHistory, horizon, hasBookingActivity ? 1 : 0);
   const revenueValues = linearForecast(history.map((row) => row.revenue), horizon, 0);
   const occupancyValues = linearForecast(history.map((row) => row.occupancyRate), horizon, 0, 100);
 
   const bookingForecast = labels.map((date, index) => ({
     date,
-    value: Math.round(bookingValues[index])
+    value: hasBookingActivity ? Math.max(1, Math.round(bookingValues[index])) : Math.round(bookingValues[index])
   }));
   const revenueForecast = labels.map((date, index) => ({
     date,

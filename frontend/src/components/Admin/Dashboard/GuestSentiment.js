@@ -1,9 +1,44 @@
 import React from 'react';
 import { MessageSquare } from 'lucide-react';
+import { API_BASE_URL } from '../../../config/runtimeUrls';
 
 function stars(rating) {
   const rounded = Math.round(Number(rating || 0));
   return Array.from({ length: 5 }, (_, index) => (index < rounded ? '★' : '☆')).join('');
+}
+
+function resolveAvatarUrl(value) {
+  if (!value || typeof value !== 'string') return '';
+  if (/^https?:\/\//i.test(value)) return value;
+  if (value.startsWith('/')) return `${API_BASE_URL}${value}`;
+  return value;
+}
+
+function initials(name = 'Guest') {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || 'G';
+}
+
+function SentimentAvatar({ item }) {
+  const [failed, setFailed] = React.useState(false);
+  const avatar = resolveAvatarUrl(item.avatar);
+
+  if (!avatar || failed) {
+    return <span className="sentiment-avatar-fallback">{initials(item.guestName)}</span>;
+  }
+
+  return (
+    <img
+      src={avatar}
+      alt={item.guestName}
+      loading="lazy"
+      onError={() => setFailed(true)}
+    />
+  );
 }
 
 export default function GuestSentiment({ data, loading, onViewAll }) {
@@ -20,7 +55,7 @@ export default function GuestSentiment({ data, loading, onViewAll }) {
           {data.slice(0, 3).map((item) => (
             <article className="sentiment-card" key={item.id}>
               <div className="sentiment-person">
-                {item.avatar ? <img src={item.avatar} alt={item.guestName} /> : <MessageSquare size={22} />}
+                <SentimentAvatar item={item} />
                 <div>
                   <strong>{item.guestName}</strong>
                   <span>{stars(item.rating)}</span>
