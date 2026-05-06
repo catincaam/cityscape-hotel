@@ -96,6 +96,86 @@ function toNumber(value) {
   return Number.parseFloat(value || 0) || 0;
 }
 
+function linearForecast(values, horizon = 7, minimum = 0, maximum = null) {
+  const cleanValues = values.map(toNumber);
+  if (!cleanValues.length) {
+    return Array.from({ length: horizon }, () => minimum);
+  }
+
+  if (cleanValues.length === 1) {
+    const baseline = Math.max(minimum, cleanValues[0]);
+    return Array.from({ length: horizon }, () => baseline);
+  }
+
+  const count = cleanValues.length;
+  const xs = Array.from({ length: count }, (_, index) => index);
+  const meanX = xs.reduce((sum, value) => sum + value, 0) / count;
+  const meanY = cleanValues.reduce((sum, value) => sum + value, 0) / count;
+  const denominator = xs.reduce((sum, value) => sum + ((value - meanX) ** 2), 0) || 1;
+  const slope = xs.reduce((sum, value, index) => (
+    sum + ((value - meanX) * (cleanValues[index] - meanY))
+  ), 0) / denominator;
+  const intercept = meanY - (slope * meanX);
+  const recentValues = cleanValues.slice(-Math.min(7, count));
+  const recentAverage = recentValues.reduce((sum, value) => sum + value, 0) / recentValues.length;
+
+  return Array.from({ length: horizon }, (_, stepIndex) => {
+    const linearValue = intercept + (slope * (count + stepIndex));
+    let value = (linearValue * 0.65) + (recentAverage * 0.35);
+    value = Math.max(minimum, value);
+    if (maximum !== null) value = Math.min(maximum, value);
+    return value;
+  });
+}
+
+function addDays(date, days) {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
+function buildLocalPredictions(payload) {
+  const history = payload.history || [];
+  const horizon = Number(payload.horizon || 7);
+  const lastHistoryDate = history.length ? new Date(history[history.length - 1].date) : new Date();
+  const labels = Array.from({ length: horizon }, (_, index) => formatDateKey(addDays(lastHistoryDate, index + 1)));
+
+  const bookingValues = linearForecast(history.map((row) => row.bookings), horizon, 0);
+  const revenueValues = linearForecast(history.map((row) => row.revenue), horizon, 0);
+  const occupancyValues = linearForecast(history.map((row) => row.occupancyRate), horizon, 0, 100);
+
+  const bookingForecast = labels.map((date, index) => ({
+    date,
+    value: Math.round(bookingValues[index])
+  }));
+  const revenueForecast = labels.map((date, index) => ({
+    date,
+    value: Math.round(revenueValues[index] * 100) / 100
+  }));
+  const occupancyForecast = labels.map((date, index) => ({
+    date,
+    value: Math.round(occupancyValues[index])
+  }));
+  const averageBookingForecast = bookingForecast.length
+    ? bookingForecast.reduce((sum, item) => sum + item.value, 0) / bookingForecast.length
+    : 0;
+  const lowOccupancyDay = occupancyForecast.find((item) => item.value < 45);
+
+  return {
+    model: "linear-regression-baseline",
+    horizonDays: horizon,
+    bookingForecast,
+    revenueForecast,
+    revenueTotal: Math.round(revenueForecast.reduce((sum, item) => sum + item.value, 0) * 100) / 100,
+    occupancyForecast,
+    insights: {
+      bookingTrend: bookingForecast.at(-1)?.value >= averageBookingForecast ? "up" : "down",
+      lowOccupancyDate: lowOccupancyDay?.date || null,
+      lowOccupancyValue: lowOccupancyDay?.value || null
+    }
+  };
+}
+
 function isRealBooking(reservation) {
   const invoice = reservation.Invoice;
   if (!invoice) return false;
@@ -454,7 +534,8 @@ dashboardRouter.get("/overview", async (req, res) => {
 dashboardRouter.get("/predictions", async (req, res) => {
   try {
     const horizon = Number(req.query.horizon || 7);
-    const mlUrl = process.env.ML_SERVICE_URL || "http://127.0.0.1:9100/predict";
+    const mlUrl = process.env.ML_SERVICE_URL
+      || (process.env.NODE_ENV !== "production" ? "http://127.0.0.1:9100/predict" : "");
     const now = new Date();
     const historyStart = new Date(now);
     historyStart.setDate(now.getDate() - 89);
@@ -500,28 +581,42 @@ dashboardRouter.get("/predictions", async (req, res) => {
       });
     }
 
-    const response = await axios.post(mlUrl, {
+    const payload = {
       horizon,
       history,
       meta: {
         generatedAt: now.toISOString(),
         totalRooms
       }
-    }, {
-      timeout: 5000
-    });
+    };
 
-    res.json({
-      source: "python-ml-service",
-      mlUrl,
-      ...response.data
+    if (mlUrl) {
+      try {
+        const response = await axios.post(mlUrl, payload, {
+          timeout: 5000
+        });
+
+        return res.json({
+          source: "python-ml-service",
+          mlUrl,
+          ...response.data
+        });
+      } catch (mlErr) {
+        console.warn("[DASHBOARD PREDICTIONS FALLBACK]", mlErr.message);
+      }
+    }
+
+    return res.json({
+      source: "node-fallback",
+      mlUrl: mlUrl || null,
+      ...buildLocalPredictions(payload)
     });
   } catch (err) {
     console.error("[DASHBOARD PREDICTIONS ERROR]", err.message);
-    res.status(503).json({
-      message: "Prediction service unavailable",
+    res.status(500).json({
+      message: "Could not build prediction data",
       detail: err.message,
-      source: "python-ml-service"
+      source: "dashboard"
     });
   }
 });

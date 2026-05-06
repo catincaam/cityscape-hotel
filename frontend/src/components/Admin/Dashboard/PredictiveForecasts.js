@@ -32,7 +32,7 @@ export default function PredictiveForecasts() {
         console.error('Prediction fetch failed', err);
         if (active) {
           setPredictions(null);
-          setError('Python ML service is not running on localhost:9100, so forecasts are temporarily unavailable.');
+          setError('Forecast data is temporarily unavailable. Please try again shortly.');
         }
       })
       .finally(() => {
@@ -55,7 +55,7 @@ export default function PredictiveForecasts() {
       <div className="dashboard-card-heading">
         <div>
           <h3>Predictive Forecasts</h3>
-          <p>Python ML service projections for the next 7 days</p>
+          <p>ML projections for the next 7 days</p>
         </div>
       </div>
 
@@ -79,7 +79,7 @@ export default function PredictiveForecasts() {
               <p>Expected average: {Math.round(bookingBars.reduce((sum, item) => sum + item.value, 0) / bookingBars.length)} bookings/day.</p>
             </>
           ) : (
-            <p>Booking forecast appears as soon as the Python model responds.</p>
+            <p>Booking forecast appears as soon as prediction data is available.</p>
           )}
         </div>
 
@@ -95,7 +95,7 @@ export default function PredictiveForecasts() {
           ) : (
             <>
               <strong>Pending</strong>
-              <p>Revenue forecast appears after the Python model responds.</p>
+              <p>Revenue forecast appears after prediction data is available.</p>
             </>
           )}
         </div>
@@ -119,7 +119,7 @@ export default function PredictiveForecasts() {
           ) : (
             <>
               <strong>TODO</strong>
-              <p>Occupancy forecast appears after the Python service is running.</p>
+              <p>Occupancy forecast appears after prediction data is available.</p>
             </>
           )}
         </div>
