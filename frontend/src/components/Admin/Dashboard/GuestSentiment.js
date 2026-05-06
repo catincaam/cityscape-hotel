@@ -23,11 +23,19 @@ function initials(name = 'Guest') {
     .join('') || 'G';
 }
 
-function SentimentAvatar({ item }) {
-  const [failed, setFailed] = React.useState(false);
-  const avatar = resolveAvatarUrl(item.avatar);
+function generatedAvatarUrl(name = 'Guest') {
+  const seed = encodeURIComponent(name.trim() || 'Guest');
+  return `https://api.dicebear.com/9.x/lorelei/svg?seed=${seed}&radius=50&backgroundColor=f6efe7,dac5a3,efe7dc`;
+}
 
-  if (!avatar || failed) {
+function SentimentAvatar({ item }) {
+  const [fallback, setFallback] = React.useState(false);
+  const profileAvatar = resolveAvatarUrl(item.avatar);
+  const avatar = fallback || !profileAvatar
+    ? generatedAvatarUrl(item.guestName)
+    : profileAvatar;
+
+  if (!avatar) {
     return <span className="sentiment-avatar-fallback">{initials(item.guestName)}</span>;
   }
 
@@ -36,7 +44,7 @@ function SentimentAvatar({ item }) {
       src={avatar}
       alt={item.guestName}
       loading="lazy"
-      onError={() => setFailed(true)}
+      onError={() => setFallback(true)}
     />
   );
 }
