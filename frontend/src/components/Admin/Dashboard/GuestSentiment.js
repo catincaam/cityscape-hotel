@@ -1,6 +1,7 @@
 import React from 'react';
 import { MessageSquare } from 'lucide-react';
 import { API_BASE_URL } from '../../../config/runtimeUrls';
+import defaultProfilePicture from '../../../assets/profilePicture.jpg';
 
 function stars(rating) {
   const rounded = Math.round(Number(rating || 0));
@@ -14,37 +15,21 @@ function resolveAvatarUrl(value) {
   return value;
 }
 
-function initials(name = 'Guest') {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('') || 'G';
-}
-
-function generatedAvatarUrl(name = 'Guest') {
-  const seed = encodeURIComponent(name.trim() || 'Guest');
-  return `https://api.dicebear.com/9.x/lorelei/svg?seed=${seed}&radius=50&backgroundColor=f6efe7,dac5a3,efe7dc`;
-}
-
 function SentimentAvatar({ item }) {
   const [fallback, setFallback] = React.useState(false);
   const profileAvatar = resolveAvatarUrl(item.avatar);
-  const avatar = fallback || !profileAvatar
-    ? generatedAvatarUrl(item.guestName)
-    : profileAvatar;
-
-  if (!avatar) {
-    return <span className="sentiment-avatar-fallback">{initials(item.guestName)}</span>;
-  }
+  const avatar = fallback || !profileAvatar ? defaultProfilePicture : profileAvatar;
 
   return (
     <img
       src={avatar}
       alt={item.guestName}
       loading="lazy"
-      onError={() => setFallback(true)}
+      onError={(event) => {
+        if (event.currentTarget.src !== defaultProfilePicture) {
+          setFallback(true);
+        }
+      }}
     />
   );
 }
