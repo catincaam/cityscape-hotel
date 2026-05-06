@@ -136,6 +136,11 @@ function addDays(date, days) {
 
 function buildLocalPredictions(payload) {
   const history = payload.history || [];
+  const futureKnown = payload.futureKnown || [];
+  const knownByDate = futureKnown.reduce((map, row) => {
+    if (row?.date) map[row.date] = row;
+    return map;
+  }, {});
   const horizon = Number(payload.horizon || 7);
   const lastHistoryDate = history.length ? new Date(history[history.length - 1].date) : new Date();
   const labels = Array.from({ length: horizon }, (_, index) => formatDateKey(addDays(lastHistoryDate, index + 1)));
@@ -148,15 +153,19 @@ function buildLocalPredictions(payload) {
 
   const bookingForecast = labels.map((date, index) => ({
     date,
-    value: hasBookingActivity ? Math.max(1, Math.round(bookingValues[index])) : Math.round(bookingValues[index])
+    value: Math.max(
+      hasBookingActivity ? 1 : 0,
+      Math.round(bookingValues[index]),
+      Math.round(Number(knownByDate[date]?.bookings || 0))
+    )
   }));
   const revenueForecast = labels.map((date, index) => ({
     date,
-    value: Math.round(revenueValues[index] * 100) / 100
+    value: Math.round(Math.max(revenueValues[index], Number(knownByDate[date]?.revenue || 0)) * 100) / 100
   }));
   const occupancyForecast = labels.map((date, index) => ({
     date,
-    value: Math.round(occupancyValues[index])
+    value: Math.round(Math.max(occupancyValues[index], Number(knownByDate[date]?.occupancyRate || 0)))
   }));
   const averageBookingForecast = bookingForecast.length
     ? bookingForecast.reduce((sum, item) => sum + item.value, 0) / bookingForecast.length
@@ -549,6 +558,33 @@ dashboardRouter.get("/predictions", async (req, res) => {
     ]);
     const reservations = reservationsRaw.filter(isRealBooking);
 
+    const calculateDailyMetrics = (dayStart, dayEnd) => {
+      const activeReservations = reservations.filter((reservation) => {
+        if (reservation.status === "cancelled") return false;
+        const checkin = new Date(reservation.requestedCheckin);
+        const checkout = new Date(reservation.requestedCheckout);
+        return overlaps(checkin, checkout, dayStart, dayEnd);
+      });
+
+      const revenue = activeReservations.reduce((sum, reservation) => {
+        const checkin = new Date(reservation.requestedCheckin);
+        const checkout = new Date(reservation.requestedCheckout);
+        const nights = getDaysBetween(checkin, checkout);
+        return sum + (toNumber(reservation.Invoice?.totalAmount) / nights);
+      }, 0);
+
+      const occupiedRoomNights = activeReservations.reduce(
+        (sum, reservation) => sum + Math.max(1, reservation.RoomReservations?.length || 1),
+        0
+      );
+
+      return {
+        bookings: activeReservations.length,
+        revenue: Math.round(revenue * 100) / 100,
+        occupancyRate: Math.round((occupiedRoomNights / Math.max(1, totalRooms)) * 100)
+      };
+    };
+
     const history = [];
     for (let index = 0; index < 90; index += 1) {
       const dayStart = new Date(historyStart);
@@ -557,35 +593,32 @@ dashboardRouter.get("/predictions", async (req, res) => {
       const dayEnd = new Date(dayStart);
       dayEnd.setDate(dayEnd.getDate() + 1);
 
-      const dayReservations = reservations.filter((reservation) => {
-        const checkin = new Date(reservation.requestedCheckin);
-        return checkin >= dayStart && checkin < dayEnd;
-      });
-
-      const dayRevenue = dayReservations.reduce((sum, reservation) => {
-        if (reservation.status === "cancelled") return sum;
-        return sum + toNumber(reservation.Invoice?.totalAmount);
-      }, 0);
-
-      const occupiedRoomNights = reservations.reduce((sum, reservation) => {
-        if (reservation.status === "cancelled") return sum;
-        const checkin = new Date(reservation.requestedCheckin);
-        const checkout = new Date(reservation.requestedCheckout);
-        if (!overlaps(checkin, checkout, dayStart, dayEnd)) return sum;
-        return sum + Math.max(1, reservation.RoomReservations?.length || 1);
-      }, 0);
+      const metrics = calculateDailyMetrics(dayStart, dayEnd);
 
       history.push({
         date: formatDateKey(dayStart),
-        bookings: dayReservations.length,
-        revenue: Math.round(dayRevenue * 100) / 100,
-        occupancyRate: Math.round((occupiedRoomNights / Math.max(1, totalRooms)) * 100)
+        ...metrics
+      });
+    }
+
+    const futureKnown = [];
+    for (let index = 1; index <= horizon; index += 1) {
+      const dayStart = new Date(now);
+      dayStart.setDate(now.getDate() + index);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(dayStart);
+      dayEnd.setDate(dayEnd.getDate() + 1);
+
+      futureKnown.push({
+        date: formatDateKey(dayStart),
+        ...calculateDailyMetrics(dayStart, dayEnd)
       });
     }
 
     const payload = {
       horizon,
       history,
+      futureKnown,
       meta: {
         generatedAt: now.toISOString(),
         totalRooms

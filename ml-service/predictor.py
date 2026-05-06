@@ -54,6 +54,11 @@ def _label_days(last_date, horizon=7):
 
 def build_predictions(payload):
     history = payload.get("history", [])
+    future_known = {
+        row.get("date"): row
+        for row in payload.get("futureKnown", [])
+        if row.get("date")
+    }
     horizon = int(payload.get("horizon", 7))
     last_date = history[-1]["date"] if history else None
     labels = _label_days(last_date, horizon)
@@ -74,16 +79,26 @@ def build_predictions(payload):
     booking_forecast = [
         {
             "date": date,
-            "value": max(1, round(value)) if has_booking_activity else round(value)
+            "value": max(
+                1 if has_booking_activity else 0,
+                round(value),
+                round(_num(future_known.get(date, {}).get("bookings")))
+            )
         }
         for date, value in zip(labels, booking_values)
     ]
     revenue_forecast = [
-        {"date": date, "value": round(value, 2)}
+        {
+            "date": date,
+            "value": round(max(value, _num(future_known.get(date, {}).get("revenue"))), 2)
+        }
         for date, value in zip(labels, revenue_values)
     ]
     occupancy_forecast = [
-        {"date": date, "value": round(value)}
+        {
+            "date": date,
+            "value": round(max(value, _num(future_known.get(date, {}).get("occupancyRate"))))
+        }
         for date, value in zip(labels, occupancy_values)
     ]
 
