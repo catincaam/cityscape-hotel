@@ -5,7 +5,7 @@ import "./AdminBookings.css";
 import "../rewards/AdminRewards.css";
 
 
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 12;
 
 export default function AdminBookings() {
   const [bookings, setBookings] = useState([]);
@@ -226,13 +226,13 @@ export default function AdminBookings() {
 
           <div className="booking-stat-card">
             <div className="booking-stat-label">Projected Revenue</div>
-            <div className="booking-stat-value">€{(totalRevenue / 1000).toFixed(1)}k</div>
+            <div className="booking-stat-value">EUR {(totalRevenue / 1000).toFixed(1)}k</div>
             <div className="booking-stat-trend">Total value</div>
           </div>
 
           <div className="booking-stat-card">
             <div className="booking-stat-label">Cash Received</div>
-            <div className="booking-stat-value">€{(cashReceived / 1000).toFixed(1)}k</div>
+            <div className="booking-stat-value">EUR {(cashReceived / 1000).toFixed(1)}k</div>
             <div className="booking-stat-trend">Collected</div>
           </div>
       </div>
@@ -408,17 +408,17 @@ export default function AdminBookings() {
                     <div className="booking-portfolio-content">
                       <h4 className="booking-portfolio-guest">{b.guestName}</h4>
                       <p className="booking-portfolio-theme">{b.roomTheme}</p>
-                      <p className="booking-portfolio-dates">📅 {b.dates}</p>
+                      <div className="booking-portfolio-meta"><span>Stay</span><strong>{b.dates}</strong></div>
 
                       {/* PRICING INFO */}
                       <div className="booking-portfolio-pricing">
                         <div className="booking-price-row">
                           <span className="booking-price-label">Total:</span>
-                          <span className="booking-price-value">€{parseFloat(b.totalPrice).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+                          <span className="booking-price-value">EUR {parseFloat(b.totalPrice).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
                         </div>
                         <div className="booking-price-row">
                           <span className="booking-price-label">Received:</span>
-                          <span className="booking-price-value">€{(b.totalPaid || 0).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+                          <span className="booking-price-value">EUR {(b.totalPaid || 0).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
                         </div>
                       </div>
 
@@ -455,7 +455,7 @@ export default function AdminBookings() {
                     disabled={page === 1}
                     onClick={() => setPage(page - 1)}
                   >
-                    ← Previous
+                    Previous
                   </button>
                   
                   {Array.from({length: pageCount}, (_, i) => i+1).slice(Math.max(0, page-2), Math.min(pageCount, page+2)).map(p => (
@@ -473,7 +473,7 @@ export default function AdminBookings() {
                     disabled={page === pageCount}
                     onClick={() => setPage(page + 1)}
                   >
-                    Next →
+                    Next
                   </button>
                 </div>
               </div>
@@ -485,7 +485,7 @@ export default function AdminBookings() {
       {/* SUCCESS TOAST */}
       {success && (
         <div className="toast toast-success">
-          <div className="toast-icon">✓</div>
+          <div className="toast-icon">OK</div>
           <div className="toast-message">{success}</div>
         </div>
       )}
@@ -493,7 +493,7 @@ export default function AdminBookings() {
       {/* ERROR TOAST */}
       {error && (
         <div className="toast toast-error">
-          <div className="toast-icon">⚠</div>
+          <div className="toast-icon">!</div>
           <div className="toast-message">{error}</div>
         </div>
       )}
