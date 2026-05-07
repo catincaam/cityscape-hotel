@@ -94,8 +94,8 @@ export default function AllReservations() {
   const getTimelineStatus = (reservation) => {
     const status = String(reservation.status || "").toLowerCase();
     if (status === "cancelled" || status === "canceled") return "Cancelled";
-    if (hasPaymentDeadlinePassed(reservation)) return "Cancelled";
     if (status === "completed") return "Past";
+    if (hasPaymentDeadlinePassed(reservation)) return "Cancelled";
 
     const today = startOfDay(new Date());
     const checkIn = startOfDay(getCheckIn(reservation));

@@ -267,6 +267,39 @@ function normalizeDemoReservationSeed(seed) {
   return seed;
 }
 
+function createDemoOwnershipPicker() {
+  let demoPastCount = 0;
+  let demoStayCount = 0;
+  let demoCancelledCount = 0;
+  let otherClientIndex = 1;
+
+  return function pickClient(seed, clients) {
+    const isCancelled = seed.status === "cancelled";
+    const isPast = seed.status === "completed" || seed.endOffset < 0;
+    const isCurrentOrFuture = seed.endOffset >= 0 && !isCancelled;
+    const isPaidOrSafelyUpcoming = seed.paymentRatio >= 1 || seed.startOffset >= 3;
+
+    if (isPast && demoPastCount < 16) {
+      demoPastCount += 1;
+      return clients[0];
+    }
+
+    if (isCurrentOrFuture && isPaidOrSafelyUpcoming && demoStayCount < 6) {
+      demoStayCount += 1;
+      return clients[0];
+    }
+
+    if (isCancelled && demoCancelledCount < 2) {
+      demoCancelledCount += 1;
+      return clients[0];
+    }
+
+    const client = clients[((otherClientIndex - 1) % (clients.length - 1)) + 1];
+    otherClientIndex += 1;
+    return client;
+  };
+}
+
 export async function seedDemoData() {
   return db.transaction(async (transaction) => {
     await removePreviousDemoData(transaction);
@@ -326,11 +359,11 @@ export async function seedDemoData() {
     ];
 
     const reservations = [];
+    const pickClient = createDemoOwnershipPicker();
+
     for (let index = 0; index < reservationSeeds.length; index += 1) {
       const seed = normalizeDemoReservationSeed(reservationSeeds[index]);
-      const client = index < 10
-        ? clients[0]
-        : clients[((index - 10) % (clients.length - 1)) + 1];
+      const client = pickClient(seed, clients);
       const room = selectRoomByCity(catalog.rooms, seed.city, index);
       const reservation = await createReservationBundle({
         client,
