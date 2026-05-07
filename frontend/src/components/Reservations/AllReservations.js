@@ -75,7 +75,15 @@ export default function AllReservations() {
 
   const hasPaymentDeadlinePassed = (reservation) => {
     const checkInValue = getCheckIn(reservation);
+    const checkOutValue = getCheckOut(reservation);
     if (!checkInValue) return false;
+
+    const status = String(reservation.status || "").toLowerCase();
+    if (status === "completed" || status === "cancelled" || status === "canceled") return false;
+
+    const today = startOfDay(new Date());
+    const checkOut = startOfDay(checkOutValue);
+    if (checkOutValue && checkOut < today) return false;
 
     const total = getReservationTotal(reservation);
     const remaining = Math.max(0, total - getTotalPaid(reservation));
@@ -90,13 +98,15 @@ export default function AllReservations() {
 
   const getTimelineStatus = (reservation) => {
     const status = String(reservation.status || "").toLowerCase();
-    if (status === "cancelled" || status === "canceled" || hasPaymentDeadlinePassed(reservation)) return "Cancelled";
+    if (status === "cancelled" || status === "canceled") return "Cancelled";
     if (status === "completed") return "Past";
 
     const today = startOfDay(new Date());
     const checkIn = startOfDay(getCheckIn(reservation));
     const checkOut = startOfDay(getCheckOut(reservation));
 
+    if (checkOut < today) return "Past";
+    if (hasPaymentDeadlinePassed(reservation)) return "Cancelled";
     if (checkIn <= today && checkOut >= today) return "Active";
     if (checkIn > today) return "Upcoming";
     return "Past";

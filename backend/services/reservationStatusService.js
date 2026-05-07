@@ -1,7 +1,7 @@
 import Invoice from "../entities/Invoice.js";
 import Payment from "../entities/Payment.js";
 
-const FINAL_STATUSES = new Set(["cancelled", "canceled"]);
+const CANCELLED_STATUSES = new Set(["cancelled", "canceled"]);
 
 function normalizeStatus(status) {
   return String(status || "").trim().toLowerCase();
@@ -40,7 +40,8 @@ export function getReservationLifecycleStatus(reservation, now = new Date(), pay
   if (!reservation) return null;
 
   const currentStatus = normalizeStatus(reservation.status);
-  if (FINAL_STATUSES.has(currentStatus)) return "cancelled";
+  if (CANCELLED_STATUSES.has(currentStatus)) return "cancelled";
+  if (currentStatus === "completed") return "completed";
   if (!hasValidStayDates(reservation)) return currentStatus || "pending";
 
   const checkin = new Date(reservation.requestedCheckin);
@@ -50,14 +51,15 @@ export function getReservationLifecycleStatus(reservation, now = new Date(), pay
     return currentStatus || "pending";
   }
 
+  if (currentStatus === "pending") return "pending";
+
+  if (checkout < now) return "completed";
+
   if (paymentSummary && paymentSummary.totalAmount > 0 && !paymentSummary.isFullyPaid) {
     const hoursUntilCheckin = (checkin - now) / (1000 * 60 * 60);
     if (hoursUntilCheckin < 24) return "cancelled";
   }
 
-  if (currentStatus === "pending") return "pending";
-
-  if (checkout < now) return "completed";
   if (checkin <= now && now < checkout) return "active";
   return "upcoming";
 }
