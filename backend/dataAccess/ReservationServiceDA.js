@@ -4,6 +4,21 @@ import Service from "../entities/Service.js";
 import Reservation from "../entities/Reservation.js";
 import { isPositiveInteger, isValidEmail, isValidPersonName } from "../utils/validators.js";
 
+const ACTIVE_SERVICE_STATUSES = new Set(["activ", "active", "available", "disponibil"]);
+
+function isServiceBookable(service) {
+  const status = String(service?.status || "").trim().toLowerCase();
+  const bookableOnline = service?.bookableOnline;
+  const isBookableOnline =
+    bookableOnline === undefined ||
+    bookableOnline === null ||
+    bookableOnline === true ||
+    bookableOnline === 1 ||
+    String(bookableOnline).toLowerCase() === "true";
+
+  return ACTIVE_SERVICE_STATUSES.has(status) && isBookableOnline;
+}
+
 function normalizeReservationServicePayload(data) {
   return {
     ReservationId: data.ReservationId ?? data.reservationId,
@@ -37,7 +52,7 @@ export async function addServiceToReservation(data) {
 
   const service = await Service.findByPk(ServiceId);
   if (!service) throw new Error("Service not found");
-  if (service.status !== "activ" || !service.bookableOnline) {
+  if (!isServiceBookable(service)) {
     throw new Error("Selected service is not available");
   }
 
