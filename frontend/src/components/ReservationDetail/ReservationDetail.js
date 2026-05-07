@@ -24,7 +24,7 @@ const ReservationDetail = () => {
   const fetchReservationDetails = useCallback(async () => {
     try {
       setLoading(true);
-      const resResponse = await fetch(`http://localhost:9001/api/reservations/${id}`);
+      const resResponse = await fetch(`${API_BASE_URL}/api/reservations/${id}`);
       if (!resResponse.ok) throw new Error('Reservation not found');
       const resData = await resResponse.json();
 
@@ -35,7 +35,7 @@ const ReservationDetail = () => {
 
       let services = [];
       try {
-        const reservationServicesResponse = await fetch(`http://localhost:9001/api/reservation-services/reservation/${id}`);
+        const reservationServicesResponse = await fetch(`${API_BASE_URL}/api/reservation-services/reservation/${id}`);
         if (reservationServicesResponse.ok) {
           const bookedServices = await reservationServicesResponse.json();
           services = Array.isArray(bookedServices)
@@ -56,13 +56,13 @@ const ReservationDetail = () => {
 
       if (reservationInvoice) {
         try {
-          const servicesResponse = await fetch('http://localhost:9001/api/consumed-services');
+          const servicesResponse = await fetch(`${API_BASE_URL}/api/consumed-services`);
           const allConsumed = await servicesResponse.json();
           const consumed = allConsumed.filter(cs => String(cs.InvoiceId) === String(reservationInvoice.InvoiceId));
 
           const consumedWithDetails = await Promise.all(
             consumed.map(async (cs) => {
-              const serviceResponse = await fetch(`http://localhost:9001/api/services/${cs.ServiceId}`);
+              const serviceResponse = await fetch(`${API_BASE_URL}/api/services/${cs.ServiceId}`);
               const serviceData = await serviceResponse.json();
               return {
                 ...cs,
@@ -100,7 +100,7 @@ const ReservationDetail = () => {
 
       try {
         const token = localStorage.getItem('token');
-        const clientResponse = await fetch(`http://localhost:9001/api/clients/${resData.ClientId}`, {
+        const clientResponse = await fetch(`${API_BASE_URL}/api/clients/${resData.ClientId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (clientResponse.ok) {
@@ -145,7 +145,7 @@ const ReservationDetail = () => {
 
   const handleDownloadReceipt = () => {
     if (!reservation) return;
-    window.location.href = `http://localhost:9001/api/invoices/${reservation.ReservationId}/download-pdf`;
+    window.location.href = `${API_BASE_URL}/api/invoices/${reservation.ReservationId}/download-pdf`;
   };
 
   const handleCancelReservation = async () => {
@@ -158,7 +158,7 @@ const ReservationDetail = () => {
     });
     if (!confirmed) return;
     try {
-      const response = await fetch(`http://localhost:9001/api/reservations/${id}/cancel`, {
+      const response = await fetch(`${API_BASE_URL}/api/reservations/${id}/cancel`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -220,7 +220,7 @@ const ReservationDetail = () => {
 
     const normalizeImage = (image) => {
       if (!image) return null;
-      return image.startsWith('http') ? image : `http://localhost:9001${image}`;
+      return image.startsWith('http') ? image : `${API_BASE_URL}${image}`;
     };
 
     return rawImages
@@ -293,6 +293,14 @@ const ReservationDetail = () => {
   const roomName = roomDetails?.RoomTheme?.name || roomDetails?.RoomName || 'Selected Room';
   const roomTheme = roomDetails?.RoomTheme?.theme || roomDetails?.RoomTheme?.city || 'Premium Suite';
   const progressPercent = displayTotal > 0 ? Math.min(100, (totalPaid / displayTotal) * 100) : 0;
+  const handleAddService = () => {
+    if (reservationTimelineStatus === 'active' || reservationStatus === 'active') {
+      notify('Your stay is already active. Please speak with reception to add extra services during your stay.', 'info');
+      return;
+    }
+
+    navigate('/services');
+  };
 
   return (
     <div className="reservation-detail-page booking-detail-page">
@@ -364,7 +372,7 @@ const ReservationDetail = () => {
 
           <div className="booking-section-heading">
             <p>Included Services</p>
-            {!isCancelled && <button type="button" onClick={() => navigate('/services')}>Add Service</button>}
+            {!isCancelled && <button type="button" onClick={handleAddService}>Add Service</button>}
           </div>
 
           {reservationServices.length > 0 ? (
@@ -386,7 +394,7 @@ const ReservationDetail = () => {
           ) : (
             <div className="booking-empty-services">
               <p>No additional services booked.</p>
-              {!isCancelled && <button type="button" onClick={() => navigate('/services')}>Discover services</button>}
+              {!isCancelled && <button type="button" onClick={handleAddService}>Discover services</button>}
             </div>
           )}
 
