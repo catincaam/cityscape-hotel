@@ -1,4 +1,6 @@
-const API = "http://localhost:9001/api";
+import { API_BASE_URL } from "../config/runtimeUrls";
+
+const API = `${API_BASE_URL}/api`;
 
 export async function login(email, password) {
   const r = await fetch(`${API}/auth/login`, {

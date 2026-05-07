@@ -7,6 +7,7 @@ import axios from 'axios';
 import "./Login.css";
 import { EyeOpen, EyeClosed } from "./EyeIcons";
 import { isStrongPassword, isValidEmail, isValidPersonName } from "../../utils/validators";
+import { API_BASE_URL } from "../../config/runtimeUrls";
 
 export default function Login() {
   const [mode, setMode] = useState("login"); // login | register
@@ -98,7 +99,7 @@ export default function Login() {
   async function handleGoogleSuccess(credentialResponse) {
     try {
       // Send token to backend for authentication
-      const res = await axios.post("http://localhost:9001/api/auth/google", {
+      const res = await axios.post(`${API_BASE_URL}/api/auth/google`, {
         token: credentialResponse.credential,
       });
       // Save JWT and user info (you can use localStorage/sessionStorage)

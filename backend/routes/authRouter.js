@@ -82,7 +82,7 @@ authRouter.post("/register", async (req, res) => {
 authRouter.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    const normalizedEmail = email?.trim();
+    const normalizedEmail = normalizeEmail(email);
 
     if (!normalizedEmail || !password) {
       return res.status(400).json({ message: "Email and password required" });
