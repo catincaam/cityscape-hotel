@@ -273,12 +273,15 @@ const ReservationDetail = () => {
   const remaining = calculateRemaining(displayTotal);
   const reservationStatus = String(reservation.status || 'pending').toLowerCase();
   const isCancelled = reservationStatus === 'cancelled' || reservationStatus === 'canceled';
-  const paymentStatus = isCancelled ? 'cancelled' : remaining <= 0 ? 'paid' : totalPaid > 0 ? 'partial' : 'unpaid';
   const checkInDate = new Date(reservation.requestedCheckin);
   const checkOutDate = new Date(reservation.requestedCheckout);
   const now = new Date();
+  const hoursUntilCheckin = (checkInDate - now) / (1000 * 60 * 60);
+  const paymentDeadlinePassed = displayTotal > 0 && remaining > 0 && hoursUntilCheckin < 24;
+  const isPaymentInactive = isCancelled || paymentDeadlinePassed;
+  const paymentStatus = isPaymentInactive ? 'cancelled' : remaining <= 0 ? 'paid' : totalPaid > 0 ? 'partial' : 'unpaid';
   const reservationTimelineStatus = (() => {
-    if (reservationStatus === 'cancelled' || reservationStatus === 'canceled') return 'cancelled';
+    if (isPaymentInactive) return 'cancelled';
     if (reservationStatus === 'completed' || checkOutDate < now) return 'completed';
     if (checkInDate <= now && now < checkOutDate) return 'active';
     if (now < checkInDate) return 'upcoming';
@@ -372,7 +375,7 @@ const ReservationDetail = () => {
 
           <div className="booking-section-heading">
             <p>Included Services</p>
-            {!isCancelled && <button type="button" onClick={handleAddService}>Add Service</button>}
+            {!isPaymentInactive && <button type="button" onClick={handleAddService}>Add Service</button>}
           </div>
 
           {reservationServices.length > 0 ? (
@@ -394,11 +397,11 @@ const ReservationDetail = () => {
           ) : (
             <div className="booking-empty-services">
               <p>No additional services booked.</p>
-              {!isCancelled && <button type="button" onClick={handleAddService}>Discover services</button>}
+              {!isPaymentInactive && <button type="button" onClick={handleAddService}>Discover services</button>}
             </div>
           )}
 
-          <div className={`booking-summary-card ${isCancelled ? 'cancelled' : ''}`}>
+          <div className={`booking-summary-card ${isPaymentInactive ? 'cancelled' : ''}`}>
             <div className="booking-summary-line">
               <span>Accommodation ({nights} {nights === 1 ? 'night' : 'nights'})</span>
               <strong>{formatMoney(accommodationTotal)}</strong>
@@ -418,7 +421,9 @@ const ReservationDetail = () => {
               <span className={`booking-status-dot ${paymentStatus}`}></span>
               <strong>
                 {paymentStatus === 'cancelled'
-                  ? totalPaid > 0
+                  ? paymentDeadlinePassed
+                    ? 'Payment deadline passed'
+                    : totalPaid > 0
                     ? 'Cancelled - payment no longer active'
                     : 'Cancelled - no payment due'
                   : paymentStatus === 'paid'
@@ -429,11 +434,13 @@ const ReservationDetail = () => {
               </strong>
               <span>{reservation.reservationDate ? formatDate(new Date(reservation.reservationDate)) : formatDate(checkInDate)}</span>
             </div>
-            {isCancelled ? (
+            {isPaymentInactive ? (
               <div className="booking-cancelled-note">
-                <strong>Reservation cancelled</strong>
+                <strong>{paymentDeadlinePassed ? 'Reservation no longer payable' : 'Reservation cancelled'}</strong>
                 <span>
-                  {totalPaid > 0
+                  {paymentDeadlinePassed
+                    ? 'The payment deadline has passed, so this stay can no longer be paid online.'
+                    : totalPaid > 0
                     ? `This stay is no longer active. Paid amount recorded: ${formatMoney(totalPaid)}.`
                     : 'You cancelled this stay before completing payment.'}
                 </span>
