@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../Dashboard/Navbar";
 import { getDashboardData } from "../../services/dashboardService";
+import { API_BASE_URL } from "../../config/runtimeUrls";
 import "./AllReservations.css";
 
 export default function AllReservations() {
@@ -56,9 +57,40 @@ export default function AllReservations() {
     return nightlyRate * calculateNights(reservation);
   };
 
+  const getPayments = (reservation) => (
+    reservation.Invoice?.payments
+    || reservation.Invoice?.Payments
+    || reservation.invoice?.payments
+    || reservation.invoice?.Payments
+    || reservation.Invoices?.[0]?.payments
+    || reservation.Invoices?.[0]?.Payments
+    || []
+  );
+
+  const getTotalPaid = (reservation) => {
+    return getPayments(reservation).reduce((sum, payment) => {
+      return sum + toNumber(payment.amount ?? payment.Amount);
+    }, 0);
+  };
+
+  const hasPaymentDeadlinePassed = (reservation) => {
+    const checkInValue = getCheckIn(reservation);
+    if (!checkInValue) return false;
+
+    const total = getReservationTotal(reservation);
+    const remaining = Math.max(0, total - getTotalPaid(reservation));
+    if (total <= 0 || remaining <= 0) return false;
+
+    const checkIn = new Date(checkInValue);
+    if (Number.isNaN(checkIn.getTime())) return false;
+
+    const hoursUntilCheckin = (checkIn.getTime() - Date.now()) / (1000 * 60 * 60);
+    return hoursUntilCheckin < 24;
+  };
+
   const getTimelineStatus = (reservation) => {
     const status = String(reservation.status || "").toLowerCase();
-    if (status === "cancelled") return "Cancelled";
+    if (status === "cancelled" || status === "canceled" || hasPaymentDeadlinePassed(reservation)) return "Cancelled";
     if (status === "completed") return "Past";
 
     const today = startOfDay(new Date());
@@ -173,17 +205,17 @@ export default function AllReservations() {
     if (theme?.showcaseImage) {
       return theme.showcaseImage.startsWith("http")
         ? theme.showcaseImage
-        : `http://localhost:9001${theme.showcaseImage}`;
+        : `${API_BASE_URL}${theme.showcaseImage}`;
     }
 
     if (room?.image) {
-      return room.image.startsWith("http") ? room.image : `http://localhost:9001${room.image}`;
+      return room.image.startsWith("http") ? room.image : `${API_BASE_URL}${room.image}`;
     }
 
     if (theme?.images?.[0]?.imageUrl) {
       return theme.images[0].imageUrl.startsWith("http")
         ? theme.images[0].imageUrl
-        : `http://localhost:9001${theme.images[0].imageUrl}`;
+        : `${API_BASE_URL}${theme.images[0].imageUrl}`;
     }
 
     return "https://via.placeholder.com/300x200?text=No+Image";
