@@ -32,6 +32,24 @@ const getNights = (checkin, checkout) => {
 
 const toMoney = (value) => Math.round(Number(value) * 100) / 100;
 
+const normalizeText = (value) => String(value || "").trim().toLowerCase();
+
+function selectRoomByCity(rooms, city, fallbackIndex) {
+  const normalizedCity = normalizeText(city);
+  if (normalizedCity) {
+    const matchingRooms = rooms.filter((room) => {
+      const themeCity = normalizeText(room.RoomTheme?.city);
+      return themeCity === normalizedCity || themeCity.includes(normalizedCity);
+    });
+
+    if (matchingRooms.length) {
+      return matchingRooms[fallbackIndex % matchingRooms.length];
+    }
+  }
+
+  return rooms[fallbackIndex % rooms.length];
+}
+
 const clientSeeds = [
   ["Catinca", "Marinescu", "Gold"],
   ["Elena", "Popescu", "Silver"],
@@ -244,16 +262,16 @@ export async function seedDemoData() {
     const clients = await createDemoClients(transaction);
 
     const reservationSeeds = [
-      { startOffset: -36, endOffset: -32, createdOffset: -50, guests: 2, status: "completed", paymentRatio: 1, services: [0, 3], feedback: { overall: 5, cleanliness: 5, service: 5, theme: 5, comment: "Amazing experience, I will return again." } },
-      { startOffset: -18, endOffset: -14, createdOffset: -30, guests: 2, status: "completed", paymentRatio: 1, services: [1], feedback: { overall: 4, cleanliness: 4, service: 5, theme: 4, comment: "Beautiful room and very attentive service." } },
-      { startOffset: -8, endOffset: -2, createdOffset: -20, guests: 3, status: "completed", paymentRatio: 1, services: [2, 5], feedback: { overall: 4, cleanliness: 3, service: 4, theme: 5, comment: "Good price, but the cleaning could be improved." } },
-      { startOffset: -6, endOffset: -3, createdOffset: -14, guests: 2, status: "completed", paymentRatio: 1, services: [0, 1, 4], feedback: { overall: 5, cleanliness: 5, service: 5, theme: 4, comment: "A very polished stay with excellent service and smooth communication." } },
-      { startOffset: -5, endOffset: -1, createdOffset: -12, guests: 4, status: "completed", paymentRatio: 1, services: [2, 3], feedback: { overall: 4, cleanliness: 4, service: 5, theme: 5, comment: "The room theme was memorable and the extra services were easy to add." } },
-      { startOffset: -4, endOffset: -2, createdOffset: -10, guests: 2, status: "completed", paymentRatio: 1, services: [1, 5], feedback: { overall: 5, cleanliness: 5, service: 4, theme: 5, comment: "Great city-inspired atmosphere and a very comfortable short stay." } },
-      { startOffset: -3, endOffset: -1, createdOffset: -8, guests: 1, status: "completed", paymentRatio: 1, services: [0, 2], feedback: { overall: 4, cleanliness: 5, service: 4, theme: 4, comment: "Everything was clear, fast, and well organized from booking to checkout." } },
-      { startOffset: -1, endOffset: 4, createdOffset: -10, guests: 2, status: "paid", paymentRatio: 1, services: [3] },
-      { startOffset: 1, endOffset: 5, createdOffset: -9, guests: 3, status: "partial", paymentRatio: 0.2, services: [0, 2] },
-      { startOffset: 2, endOffset: 6, createdOffset: -8, guests: 2, status: "paid", paymentRatio: 1, services: [1, 4] },
+      { city: "Seoul", startOffset: -36, endOffset: -32, createdOffset: -50, guests: 2, status: "completed", paymentRatio: 1, services: [0, 3], feedback: { overall: 5, cleanliness: 5, service: 5, theme: 5, comment: "Amazing experience, I will return again." } },
+      { city: "Shanghai", startOffset: -18, endOffset: -14, createdOffset: -30, guests: 2, status: "completed", paymentRatio: 1, services: [1], feedback: { overall: 4, cleanliness: 4, service: 5, theme: 4, comment: "Beautiful room and very attentive service." } },
+      { city: "Alberobello", startOffset: -8, endOffset: -2, createdOffset: -20, guests: 3, status: "completed", paymentRatio: 1, services: [2, 5], feedback: { overall: 4, cleanliness: 3, service: 4, theme: 5, comment: "Good price, but the cleaning could be improved." } },
+      { city: "Prague", startOffset: -6, endOffset: -3, createdOffset: -14, guests: 2, status: "completed", paymentRatio: 1, services: [0, 1, 4], feedback: { overall: 5, cleanliness: 5, service: 5, theme: 4, comment: "A very polished stay with excellent service and smooth communication." } },
+      { city: "Lisbon", startOffset: -5, endOffset: -1, createdOffset: -12, guests: 4, status: "completed", paymentRatio: 1, services: [2, 3], feedback: { overall: 4, cleanliness: 4, service: 5, theme: 5, comment: "The room theme was memorable and the extra services were easy to add." } },
+      { city: "Cancun", startOffset: -4, endOffset: -2, createdOffset: -10, guests: 2, status: "completed", paymentRatio: 1, services: [1, 5], feedback: { overall: 5, cleanliness: 5, service: 4, theme: 5, comment: "Great city-inspired atmosphere and a very comfortable short stay." } },
+      { city: "Seoul", startOffset: -3, endOffset: -1, createdOffset: -8, guests: 1, status: "completed", paymentRatio: 1, services: [0, 2], feedback: { overall: 4, cleanliness: 5, service: 4, theme: 4, comment: "Everything was clear, fast, and well organized from booking to checkout." } },
+      { city: "Shanghai", startOffset: -1, endOffset: 4, createdOffset: -10, guests: 2, status: "paid", paymentRatio: 1, services: [3] },
+      { city: "Prague", startOffset: 1, endOffset: 5, createdOffset: -9, guests: 3, status: "partial", paymentRatio: 0.2, services: [0, 2] },
+      { city: "Lisbon", startOffset: 2, endOffset: 6, createdOffset: -8, guests: 2, status: "paid", paymentRatio: 1, services: [1, 4] },
       { startOffset: 3, endOffset: 7, createdOffset: -5, guests: 2, status: "partial", paymentRatio: 0.2, services: [2] },
       { startOffset: 4, endOffset: 8, createdOffset: -6, guests: 4, status: "paid", paymentRatio: 1, services: [0, 3] },
       { startOffset: 5, endOffset: 9, createdOffset: -6, guests: 2, status: "paid", paymentRatio: 1, services: [5] },
@@ -301,7 +319,7 @@ export async function seedDemoData() {
       const client = index < 10
         ? clients[0]
         : clients[((index - 10) % (clients.length - 1)) + 1];
-      const room = catalog.rooms[index % catalog.rooms.length];
+      const room = selectRoomByCity(catalog.rooms, seed.city, index);
       const reservation = await createReservationBundle({
         client,
         room,

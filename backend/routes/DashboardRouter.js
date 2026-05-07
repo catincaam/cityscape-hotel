@@ -13,6 +13,25 @@ import { publicAssetUrl } from "../utils/publicUrl.js";
 
 const router = express.Router();
 
+const toMoney = (value) => Math.round(Number(value || 0) * 100) / 100;
+
+const getReservationNights = (reservation) => {
+  const checkin = new Date(reservation.requestedCheckin);
+  const checkout = new Date(reservation.requestedCheckout);
+  if (Number.isNaN(checkin.getTime()) || Number.isNaN(checkout.getTime())) return 1;
+  return Math.max(1, Math.ceil((checkout - checkin) / (1000 * 60 * 60 * 24)));
+};
+
+const getReservationTotal = (reservation, roomTheme, invoice) => {
+  const invoiceTotal = Number(invoice?.totalAmount || 0);
+  if (invoiceTotal > 0) return toMoney(invoiceTotal);
+
+  const nightlyRate = Number(roomTheme?.basePrice || 0);
+  if (nightlyRate <= 0) return 0;
+
+  return toMoney(nightlyRate * getReservationNights(reservation));
+};
+
 router.get("/dashboard", authClient, async (req, res) => {
   try {
     // 🔑 ID vine din JWT
@@ -39,7 +58,7 @@ router.get("/dashboard", authClient, async (req, res) => {
               include: [
                 {
                   model: RoomTheme,
-                  attributes: ['city', 'name', 'theme', 'image', 'showcaseImage']
+                  attributes: ['city', 'name', 'theme', 'image', 'showcaseImage', 'basePrice']
                 }
               ]
             }
@@ -107,7 +126,8 @@ router.get("/dashboard", authClient, async (req, res) => {
           checkIn: reservation.requestedCheckin,
           checkOut: reservation.requestedCheckout,
           status: bookingStatus,
-          totalAmount: invoice?.totalAmount || 0,
+          totalAmount: getReservationTotal(reservation, roomTheme, invoice),
+          pricePerNight: Number(roomTheme?.basePrice || 0),
           image: publicAssetUrl(roomTheme?.showcaseImage || roomTheme?.image)
         };
       })
@@ -130,7 +150,8 @@ router.get("/dashboard", authClient, async (req, res) => {
           checkOut: reservation.requestedCheckout,
           guests: reservation.nrPeople || 1,
           status: reservation.status || "pending",
-          totalAmount: invoice?.totalAmount || 0,
+          totalAmount: getReservationTotal(reservation, roomTheme, invoice),
+          pricePerNight: Number(roomTheme?.basePrice || 0),
           image: publicAssetUrl(roomTheme?.showcaseImage || roomTheme?.image)
         };
       })

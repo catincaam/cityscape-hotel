@@ -23,6 +23,38 @@ export default function AllReservations() {
   const getCheckIn = (reservation) => reservation.requestedCheckin || reservation.checkIn;
   const getCheckOut = (reservation) => reservation.requestedCheckout || reservation.checkOut;
   const getReservationId = (reservation) => reservation.ReservationId || reservation.reservationId;
+  const toNumber = (value) => {
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const calculateNights = (reservation) => {
+    const checkin = new Date(getCheckIn(reservation));
+    const checkout = new Date(getCheckOut(reservation));
+    if (Number.isNaN(checkin.getTime()) || Number.isNaN(checkout.getTime())) return 1;
+    return Math.max(1, Math.ceil((checkout - checkin) / (1000 * 60 * 60 * 24)));
+  };
+
+  const getPrimaryTheme = (reservation) => {
+    const roomRes = reservation.RoomReservations?.[0];
+    return roomRes?.Room?.RoomTheme || null;
+  };
+
+  const getReservationTotal = (reservation) => {
+    const invoiceTotal = toNumber(
+      reservation.totalAmount
+      ?? reservation.Invoice?.totalAmount
+      ?? reservation.invoice?.totalAmount
+      ?? reservation.Invoices?.[0]?.totalAmount
+    );
+    if (invoiceTotal > 0) return invoiceTotal;
+
+    const theme = getPrimaryTheme(reservation);
+    const nightlyRate = toNumber(theme?.basePrice || theme?.price || reservation.pricePerNight);
+    if (!nightlyRate) return 0;
+
+    return nightlyRate * calculateNights(reservation);
+  };
 
   const getTimelineStatus = (reservation) => {
     const status = String(reservation.status || "").toLowerCase();
@@ -44,20 +76,19 @@ export default function AllReservations() {
         roomName: reservation.room || "Your Sanctuary",
         city: reservation.city || "Destination",
         themeName: reservation.themeName || "",
-        totalAmount: Number(reservation.totalAmount || 0)
+        totalAmount: getReservationTotal(reservation)
       };
     }
 
     const roomRes = reservation.RoomReservations?.[0];
     const room = roomRes?.Room;
     const theme = room?.RoomTheme;
-    const invoice = reservation.Invoice;
 
     return {
       roomName: room?.RoomName || theme?.name || "Your Sanctuary",
       city: theme?.city || "Destination",
       themeName: theme?.name || "",
-      totalAmount: Number(invoice?.totalAmount || theme?.basePrice || 0)
+      totalAmount: getReservationTotal(reservation)
     };
   };
 
@@ -125,9 +156,7 @@ export default function AllReservations() {
   };
 
   const getNights = (reservation) => {
-    const checkin = new Date(getCheckIn(reservation));
-    const checkout = new Date(getCheckOut(reservation));
-    return Math.max(1, Math.ceil(Math.abs(checkout - checkin) / (1000 * 60 * 60 * 24)));
+    return calculateNights(reservation);
   };
 
   const getStatusBadge = (reservation) => {
