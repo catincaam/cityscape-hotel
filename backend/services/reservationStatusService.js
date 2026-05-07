@@ -41,7 +41,6 @@ export function getReservationLifecycleStatus(reservation, now = new Date(), pay
 
   const currentStatus = normalizeStatus(reservation.status);
   if (CANCELLED_STATUSES.has(currentStatus)) return "cancelled";
-  if (currentStatus === "completed") return "completed";
   if (!hasValidStayDates(reservation)) return currentStatus || "pending";
 
   const checkin = new Date(reservation.requestedCheckin);
@@ -51,15 +50,13 @@ export function getReservationLifecycleStatus(reservation, now = new Date(), pay
     return currentStatus || "pending";
   }
 
-  if (currentStatus === "pending") return "pending";
-
-  if (checkout < now) return "completed";
-
   if (paymentSummary && paymentSummary.totalAmount > 0 && !paymentSummary.isFullyPaid) {
     const hoursUntilCheckin = (checkin - now) / (1000 * 60 * 60);
     if (hoursUntilCheckin < 24) return "cancelled";
   }
 
+  if (currentStatus === "pending") return "pending";
+  if (currentStatus === "completed" || checkout < now) return "completed";
   if (checkin <= now && now < checkout) return "active";
   return "upcoming";
 }

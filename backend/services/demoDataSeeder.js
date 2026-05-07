@@ -255,6 +255,18 @@ async function createReservationBundle({ client, room, serviceSet, reservationSe
   return reservation;
 }
 
+function normalizeDemoReservationSeed(seed) {
+  if (seed.endOffset < 0 && seed.status !== "cancelled") {
+    return {
+      ...seed,
+      status: "completed",
+      paymentRatio: 1
+    };
+  }
+
+  return seed;
+}
+
 export async function seedDemoData() {
   return db.transaction(async (transaction) => {
     await removePreviousDemoData(transaction);
@@ -315,7 +327,7 @@ export async function seedDemoData() {
 
     const reservations = [];
     for (let index = 0; index < reservationSeeds.length; index += 1) {
-      const seed = reservationSeeds[index];
+      const seed = normalizeDemoReservationSeed(reservationSeeds[index]);
       const client = index < 10
         ? clients[0]
         : clients[((index - 10) % (clients.length - 1)) + 1];

@@ -278,7 +278,7 @@ const ReservationDetail = () => {
   const now = new Date();
   const hoursUntilCheckin = (checkInDate - now) / (1000 * 60 * 60);
   const isCompletedStay = reservationStatus === 'completed' || checkOutDate < now;
-  const paymentDeadlinePassed = !isCancelled && !isCompletedStay && displayTotal > 0 && remaining > 0 && hoursUntilCheckin < 24;
+  const paymentDeadlinePassed = !isCancelled && displayTotal > 0 && remaining > 0 && hoursUntilCheckin < 24;
   const isPaymentInactive = isCancelled || paymentDeadlinePassed;
   const paymentStatus = isPaymentInactive ? 'cancelled' : remaining <= 0 ? 'paid' : totalPaid > 0 ? 'partial' : 'unpaid';
   const reservationTimelineStatus = (() => {
