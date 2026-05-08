@@ -1,7 +1,14 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Navbar from "../Dashboard/Navbar";
+import { API_BASE_URL } from "../../config/runtimeUrls";
 import "./BookingSuccess.css";
+
+const resolveAssetUrl = (url) => {
+  if (!url) return "";
+  if (url.startsWith("http")) return url;
+  return `${API_BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+};
 
 export default function BookingSuccess() {
   const location = useLocation();
@@ -9,6 +16,9 @@ export default function BookingSuccess() {
   const [bookingDetails, setBookingDetails] = useState(null);
   const [roomImages, setRoomImages] = useState([]);
   const [roomTheme, setRoomTheme] = useState(null);
+  const [serviceCatalog, setServiceCatalog] = useState([]);
+
+  const selectedServices = useMemo(() => bookingDetails?.services || {}, [bookingDetails?.services]);
 
   useEffect(() => {
     if (location.state?.bookingData) {
@@ -27,13 +37,14 @@ export default function BookingSuccess() {
         
         if (roomId) {
           console.log("🔍 Fetching room theme with ID:", roomId);
-          const res = await fetch(`http://localhost:9001/api/room-themes/${roomId}`);
+          const res = await fetch(`${API_BASE_URL}/api/room-themes/${roomId}`);
           const data = await res.json();
           setRoomTheme(data);
+          const showcaseImage = resolveAssetUrl(data.showcaseImage);
           const galleryImages = (data.images || [])
             .filter(Boolean)
-            .map((img) => img.startsWith("http") ? img : `http://localhost:9001${img}`)
-            .filter((img) => img !== `http://localhost:9001${data.showcaseImage}`);
+            .map((img) => resolveAssetUrl(img.imageUrl || img))
+            .filter((img) => img !== showcaseImage);
           setRoomImages(galleryImages);
         }
       } catch (err) {
@@ -46,11 +57,61 @@ export default function BookingSuccess() {
     }
   }, [bookingDetails?.room]);
 
+  useEffect(() => {
+    async function fetchServices() {
+      if (!selectedServices || Object.keys(selectedServices).length === 0) {
+        setServiceCatalog([]);
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/services`);
+        if (!res.ok) throw new Error("Could not load services");
+        const data = await res.json();
+        setServiceCatalog(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Error fetching services:", err);
+        setServiceCatalog([]);
+      }
+    }
+
+    fetchServices();
+  }, [selectedServices]);
+
+  const serviceLookup = useMemo(() => {
+    return new Map(
+      serviceCatalog.map((service) => [
+        String(service.ServiceId ?? service.serviceId ?? service.id),
+        service
+      ])
+    );
+  }, [serviceCatalog]);
+
+  const selectedServiceRows = useMemo(() => {
+    return Object.entries(selectedServices)
+      .map(([serviceId, quantity]) => {
+        const service = serviceLookup.get(String(serviceId));
+        const numericQuantity = Number(quantity) || 0;
+        const unitPrice = Number(service?.price || 0);
+
+        if (!service && !numericQuantity) return null;
+
+        return {
+          id: serviceId,
+          name: service?.name || `Service #${serviceId}`,
+          quantity: numericQuantity,
+          priceType: service?.priceType || "per_service",
+          total: unitPrice * numericQuantity
+        };
+      })
+      .filter(Boolean);
+  }, [selectedServices, serviceLookup]);
+
   if (!bookingDetails) {
     return <div className="loading">Loading...</div>;
   }
 
-  const { reservation, invoice, payment, room, services } = bookingDetails;
+  const { reservation, invoice, payment, room } = bookingDetails;
   const checkInDate = new Date(reservation?.requestedCheckin);
   const checkOutDate = new Date(reservation?.requestedCheckout);
   const nights = bookingDetails?.costBreakdown?.nights || Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
@@ -76,7 +137,7 @@ export default function BookingSuccess() {
       }
 
       const response = await fetch(
-        `http://localhost:9001/api/invoices/${reservationId}/download-pdf`,
+        `${API_BASE_URL}/api/invoices/${reservationId}/download-pdf`,
         {
           headers: {
             "Authorization": `Bearer ${localStorage.getItem("token")}`
@@ -163,14 +224,23 @@ export default function BookingSuccess() {
             </div>
 
             {/* INCLUDED EXPERIENCES */}
-            {services && Object.keys(services).length > 0 && (
+            {selectedServiceRows.length > 0 && (
               <div className="included-box">
                 <h3>Included Experiences</h3>
                 <div className="experiences-grid">
-                  {Object.entries(services).map(([serviceId, qty], idx) => (
-                    <div key={idx} className="experience-item">
-                      <span className="experience-icon">✓</span>
-                      <span className="experience-name">{serviceId}</span>
+                  {selectedServiceRows.map((service) => (
+                    <div key={service.id} className="experience-item">
+                      <span className="experience-icon" aria-hidden="true">&#10003;</span>
+                      <span className="experience-copy">
+                        <span className="experience-name">{service.name}</span>
+                        <span className="experience-meta">
+                          {service.quantity}{" "}
+                          {service.priceType === "per_person"
+                            ? service.quantity === 1 ? "person" : "people"
+                            : service.quantity === 1 ? "item" : "items"}
+                          {service.total > 0 ? ` - ${service.total.toFixed(2)} EUR due at hotel` : ""}
+                        </span>
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -191,7 +261,7 @@ export default function BookingSuccess() {
                 )}
                 {servicesCost > 0 && (
                   <div className="payment-line">
-                    <span>Extra Services</span>
+                    <span>Services due at hotel</span>
                     <span className="amount">€{servicesCost.toFixed(2)}</span>
                   </div>
                 )}

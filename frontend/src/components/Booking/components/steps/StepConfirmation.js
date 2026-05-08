@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import "./StepConfirmation.css";
 import { jwtDecode } from "jwt-decode";
+import { API_BASE_URL } from "../../../../config/runtimeUrls";
 
 export default function StepConfirmation({ bookingData, onBack, onComplete }) {
   const [paymentType, setPaymentType] = useState("full"); // "partial" or "full"
@@ -18,7 +19,7 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
   useEffect(() => {
     async function loadServices() {
       try {
-        const res = await fetch("http://localhost:9001/api/services");
+        const res = await fetch(`${API_BASE_URL}/api/services`);
         const data = await res.json();
         setServices(data);
       } catch (err) {
@@ -206,7 +207,7 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
 
     try {
       // Aici vei face request la backend pentru a crea rezervarea
-      const response = await fetch("http://localhost:9001/api/booking/complete", {
+      const response = await fetch(`${API_BASE_URL}/api/booking/complete`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
