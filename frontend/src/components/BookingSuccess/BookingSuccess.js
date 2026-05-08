@@ -10,6 +10,53 @@ const resolveAssetUrl = (url) => {
   return `${API_BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
 };
 
+const normalizeSelectedServices = (rawServices) => {
+  if (!rawServices) return [];
+
+  if (Array.isArray(rawServices)) {
+    return rawServices
+      .map((item) => {
+        if (item && typeof item === "object") {
+          const embedded = item.Service || item.service || item;
+          const id = item.ServiceId ?? item.serviceId ?? item.id ?? embedded.ServiceId ?? embedded.serviceId ?? embedded.id;
+          return {
+            id: String(id),
+            quantity: Number(item.quantity ?? item.qty ?? item.count ?? 1) || 1,
+            embedded
+          };
+        }
+
+        return {
+          id: String(item),
+          quantity: 1,
+          embedded: null
+        };
+      })
+      .filter((entry) => entry.id && entry.id !== "undefined" && entry.id !== "null");
+  }
+
+  return Object.entries(rawServices)
+    .map(([id, value]) => {
+      if (value && typeof value === "object") {
+        const embedded = value.Service || value.service || value;
+        const serviceId = value.ServiceId ?? value.serviceId ?? value.id ?? embedded.ServiceId ?? embedded.serviceId ?? embedded.id ?? id;
+        return {
+          id: String(serviceId),
+          quantity: Number(value.quantity ?? value.qty ?? value.count ?? 1) || 1,
+          embedded
+        };
+      }
+
+      const quantity = Number(value);
+      return {
+        id: String(id),
+        quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1,
+        embedded: null
+      };
+    })
+    .filter((entry) => entry.id && entry.id !== "undefined" && entry.id !== "null");
+};
+
 export default function BookingSuccess() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -18,7 +65,18 @@ export default function BookingSuccess() {
   const [roomTheme, setRoomTheme] = useState(null);
   const [serviceCatalog, setServiceCatalog] = useState([]);
 
-  const selectedServices = useMemo(() => bookingDetails?.services || {}, [bookingDetails?.services]);
+  const selectedServices = useMemo(() => {
+    if (Array.isArray(bookingDetails?.serviceDetails) && bookingDetails.serviceDetails.length > 0) {
+      return bookingDetails.serviceDetails;
+    }
+
+    return bookingDetails?.services || {};
+  }, [bookingDetails?.serviceDetails, bookingDetails?.services]);
+
+  const normalizedSelectedServices = useMemo(
+    () => normalizeSelectedServices(selectedServices),
+    [selectedServices]
+  );
 
   useEffect(() => {
     if (location.state?.bookingData) {
@@ -59,7 +117,7 @@ export default function BookingSuccess() {
 
   useEffect(() => {
     async function fetchServices() {
-      if (!selectedServices || Object.keys(selectedServices).length === 0) {
+      if (normalizedSelectedServices.length === 0) {
         setServiceCatalog([]);
         return;
       }
@@ -76,7 +134,7 @@ export default function BookingSuccess() {
     }
 
     fetchServices();
-  }, [selectedServices]);
+  }, [normalizedSelectedServices]);
 
   const serviceLookup = useMemo(() => {
     return new Map(
@@ -88,24 +146,28 @@ export default function BookingSuccess() {
   }, [serviceCatalog]);
 
   const selectedServiceRows = useMemo(() => {
-    return Object.entries(selectedServices)
-      .map(([serviceId, quantity]) => {
-        const service = serviceLookup.get(String(serviceId));
-        const numericQuantity = Number(quantity) || 0;
-        const unitPrice = Number(service?.price || 0);
+    return normalizedSelectedServices
+      .map(({ id, quantity, embedded }) => {
+        const service = serviceLookup.get(String(id)) || embedded || {};
+        const unitPrice = Number(service.price ?? service.unitPrice ?? 0);
+        const serviceName = service.name || service.title || service.serviceName;
+        const priceType = service.priceType || service.price_type || "per_service";
 
-        if (!service && !numericQuantity) return null;
+        if (!serviceName && !quantity) return null;
 
         return {
-          id: serviceId,
-          name: service?.name || `Service #${serviceId}`,
-          quantity: numericQuantity,
-          priceType: service?.priceType || "per_service",
-          total: unitPrice * numericQuantity
+          id,
+          name: serviceName || "Booked experience",
+          description: service.description || "",
+          category: service.category || "Experience",
+          image: resolveAssetUrl(service.image || service.imageUrl || service.image_url || ""),
+          quantity,
+          priceType,
+          total: Number(service.total ?? unitPrice * quantity)
         };
       })
       .filter(Boolean);
-  }, [selectedServices, serviceLookup]);
+  }, [normalizedSelectedServices, serviceLookup]);
 
   if (!bookingDetails) {
     return <div className="loading">Loading...</div>;
@@ -229,19 +291,35 @@ export default function BookingSuccess() {
                 <h3>Included Experiences</h3>
                 <div className="experiences-grid">
                   {selectedServiceRows.map((service) => (
-                    <div key={service.id} className="experience-item">
-                      <span className="experience-icon" aria-hidden="true">&#10003;</span>
-                      <span className="experience-copy">
+                    <article
+                      key={service.id}
+                      className={`experience-item ${service.image ? "with-image" : ""}`}
+                    >
+                      {service.image && (
+                        <img
+                          src={service.image}
+                          alt={service.name}
+                          className="experience-image"
+                        />
+                      )}
+                      <div className="experience-copy">
+                        <div className="experience-topline">
+                          <span>{service.category}</span>
+                          <span>{service.priceType === "per_person" ? "Per person" : "Per stay"}</span>
+                        </div>
                         <span className="experience-name">{service.name}</span>
+                        {service.description && (
+                          <span className="experience-description">{service.description}</span>
+                        )}
                         <span className="experience-meta">
-                          {service.quantity}{" "}
+                          Qty {service.quantity}{" "}
                           {service.priceType === "per_person"
                             ? service.quantity === 1 ? "person" : "people"
                             : service.quantity === 1 ? "item" : "items"}
                           {service.total > 0 ? ` - ${service.total.toFixed(2)} EUR due at hotel` : ""}
                         </span>
-                      </span>
-                    </div>
+                      </div>
+                    </article>
                   ))}
                 </div>
               </div>

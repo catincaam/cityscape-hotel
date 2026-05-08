@@ -144,6 +144,28 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
     return service ? sum + qty * Number(service.price) : sum;
   }, 0);
 
+  const selectedServiceDetails = Object.entries(bookingData.services || {})
+    .map(([id, qty]) => {
+      const service = services.find(s => String(s.ServiceId) === String(id));
+      if (!service) return null;
+
+      const quantity = Number(qty) || 1;
+      const unitPrice = Number(service.price || 0);
+
+      return {
+        ServiceId: service.ServiceId,
+        name: service.name,
+        description: service.description,
+        category: service.category,
+        price: unitPrice,
+        priceType: service.priceType || "per_service",
+        image: service.image,
+        quantity,
+        total: unitPrice * quantity
+      };
+    })
+    .filter(Boolean);
+
   const totalAmount = roomTotal;
 
   const partialAmount = (totalAmount * 0.2).toFixed(2);
@@ -241,6 +263,7 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
           checkIn: bookingData.checkIn,
           checkOut: bookingData.checkOut,
           services: bookingData.services,
+          serviceDetails: selectedServiceDetails,
           costBreakdown: {
             roomTotal,
             servicesTotal,
