@@ -320,9 +320,6 @@ export default function BookingSuccess() {
                           <span>{service.priceType === "per_person" ? "Per person" : "Per stay"}</span>
                         </div>
                         <span className="experience-name">{service.name}</span>
-                        {service.description && (
-                          <span className="experience-description">{service.description}</span>
-                        )}
                         <div className="experience-footer">
                           <span className="experience-meta">
                             {service.quantity}{" "}
