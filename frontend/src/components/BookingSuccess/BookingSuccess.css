@@ -266,15 +266,15 @@
 }
 
 .experience-item {
-  display: grid;
-  grid-template-columns: 120px minmax(0, 1fr) auto;
+  display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 18px;
-  min-height: 132px;
+  gap: 16px;
+  min-height: 118px;
   background: #ffffff;
   border: 1px solid #eadbc8;
   border-radius: 12px;
-  padding: 12px 16px 12px 12px;
+  padding: 12px 14px 12px 12px;
   box-shadow: inset 3px 0 0 #d4b896;
   width: 100%;
   box-sizing: border-box;
@@ -282,13 +282,13 @@
 }
 
 .experience-item:not(.with-image) {
-  grid-template-columns: minmax(0, 1fr) auto;
-  min-height: 120px;
+  min-height: 108px;
 }
 
 .experience-image {
-  width: 120px;
-  height: 108px;
+  flex: 0 0 92px;
+  width: 92px;
+  height: 92px;
   min-height: 0;
   object-fit: cover;
   border-radius: 10px;
@@ -317,7 +317,8 @@
 .experience-copy {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
+  flex: 1 1 auto;
   min-width: 0;
   padding: 2px 0;
 }
@@ -330,7 +331,8 @@
   font-weight: 700;
   line-height: 1.22;
   white-space: normal;
-  overflow-wrap: anywhere;
+  word-break: normal;
+  overflow-wrap: normal;
 }
 
 .experience-description {
@@ -346,8 +348,8 @@
 .experience-footer {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
+  justify-content: space-between;
+  gap: 14px;
   margin-top: 0;
   padding-top: 0;
   border-top: 0;
@@ -370,12 +372,13 @@
   border-radius: 8px;
   background: #fbf4eb;
   color: #a8753c;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 800;
   line-height: 1.1;
-  justify-self: end;
-  min-width: 112px;
-  padding: 12px 14px;
+  flex: 0 0 auto;
+  margin-left: auto;
+  min-width: 104px;
+  padding: 10px 12px;
   white-space: nowrap;
 }
 
@@ -746,9 +749,10 @@
 
 .room-gallery-image {
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 16 / 10;
   height: auto;
-  object-fit: contain;
+  object-fit: cover;
+  object-position: center;
   background: #f7f3ed;
   border: 1px solid #eadfce;
   border-radius: 10px;
@@ -847,7 +851,7 @@
   }
 
   .room-gallery-image {
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 16 / 10;
   }
 
   .hotel-header {
@@ -914,9 +918,8 @@
   }
 
   .experience-item {
-    display: flex;
-    align-items: stretch;
     flex-direction: column;
+    align-items: stretch;
     gap: 12px;
     min-height: 0;
     padding: 12px;
@@ -931,7 +934,8 @@
   }
 
   .experience-image {
-    aspect-ratio: 16 / 10;
+    aspect-ratio: 4 / 3;
+    flex-basis: auto;
     height: auto;
     width: 100%;
   }
