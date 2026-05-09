@@ -362,15 +362,24 @@ export default function BookingSuccess() {
                   <div className="payment-services">
                     {selectedServiceRows.map((service) => (
                       <div key={`summary-${service.id}`} className="payment-service-line">
-                        <span>
-                          {service.name}
-                          <small>
-                            {service.quantity}{" "}
-                            {service.priceType === "per_person"
-                              ? service.quantity === 1 ? "person" : "people"
-                              : service.quantity === 1 ? "item" : "items"}
-                          </small>
-                        </span>
+                        <div className="payment-service-main">
+                          {service.image && (
+                            <img
+                              src={service.image}
+                              alt={service.name}
+                              className="payment-service-image"
+                            />
+                          )}
+                          <span>
+                            {service.name}
+                            <small>
+                              {service.quantity}{" "}
+                              {service.priceType === "per_person"
+                                ? service.quantity === 1 ? "person" : "people"
+                                : service.quantity === 1 ? "item" : "items"}
+                            </small>
+                          </span>
+                        </div>
                         {service.total > 0 && <strong>{service.total.toFixed(2)} EUR</strong>}
                       </div>
                     ))}

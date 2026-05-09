@@ -462,24 +462,41 @@
 
 .payment-service-line {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  border-radius: 8px;
-  background: #fbf8f3;
-  padding: 10px 12px;
+  border: 1px solid #eadfce;
+  border-radius: 10px;
+  background: #fffaf3;
+  padding: 9px 10px;
 }
 
-.payment-service-line span {
+.payment-service-main {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  min-width: 0;
+}
+
+.payment-service-image {
+  border-radius: 8px;
+  flex: 0 0 42px;
+  height: 42px;
+  object-fit: cover;
+  width: 42px;
+}
+
+.payment-service-main span {
   color: #374151;
   display: flex;
   flex-direction: column;
   gap: 2px;
   font-size: 0.84rem;
   line-height: 1.3;
+  min-width: 0;
 }
 
-.payment-service-line small {
+.payment-service-main small {
   color: #9a8064;
   font-size: 0.68rem;
   font-weight: 700;
@@ -914,6 +931,10 @@
   .payment-service-line {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .payment-service-main {
+    width: 100%;
   }
 
   .experience-footer {
