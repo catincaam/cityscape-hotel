@@ -266,10 +266,9 @@
 }
 
 .experience-item {
-  display: grid;
-  grid-template-columns: 66px minmax(0, 1fr) auto;
+  display: flex;
   align-items: center;
-  column-gap: 14px;
+  gap: 14px;
   min-height: 82px;
   overflow: hidden;
   background: #ffffff;
@@ -278,14 +277,15 @@
   padding: 8px 12px 8px 8px;
   box-shadow: inset 3px 0 0 #d4b896;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .experience-item:not(.with-image) {
-  grid-template-columns: minmax(0, 1fr) auto;
   min-height: 72px;
 }
 
 .experience-image {
+  flex: 0 0 66px;
   width: 66px;
   height: 66px;
   min-height: 0;
@@ -317,6 +317,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  flex: 1 1 auto;
   min-width: 0;
   padding: 1px 0;
 }
@@ -328,9 +329,8 @@
   color: #142033;
   font-weight: 700;
   line-height: 1.18;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: normal;
 }
 
 .experience-footer {
@@ -363,7 +363,8 @@
   font-size: 0.88rem;
   font-weight: 800;
   line-height: 1.1;
-  justify-self: end;
+  flex: 0 0 auto;
+  margin-left: auto;
   min-width: 94px;
   padding: 8px 10px;
   white-space: nowrap;
@@ -901,17 +902,18 @@
   }
 
   .experience-item {
-    grid-template-columns: 56px minmax(0, 1fr);
+    align-items: flex-start;
+    flex-wrap: wrap;
     padding-right: 8px;
   }
 
   .experience-item .experience-total {
-    grid-column: 2;
-    justify-self: start;
-    margin-top: 4px;
+    margin-left: 70px;
+    margin-top: -4px;
   }
 
   .experience-image {
+    flex-basis: 56px;
     width: 56px;
     height: 56px;
   }
