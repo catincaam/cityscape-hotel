@@ -1,6 +1,8 @@
 // rewardService.js - API pentru puncte
+import { API_BASE_URL } from "../config/runtimeUrls";
 
-const API_URL = "http://localhost:9001/api/reward-points";
+const API = `${API_BASE_URL}/api`;
+const API_URL = `${API}/reward-points`;
 
 export async function getUserPoints(userId) {
   const res = await fetch(`${API_URL}/user/${userId}`);
@@ -37,7 +39,7 @@ export async function activatePointsForReservation(reservationId) {
 
 export async function getAllRewards() {
   try {
-    const res = await fetch("http://localhost:9001/api/rewards/admin/all");
+    const res = await fetch(`${API}/rewards/admin/all`);
     if (!res.ok) throw new Error("Failed to fetch rewards");
     return await res.json();
   } catch (err) {
@@ -48,7 +50,7 @@ export async function getAllRewards() {
 
 export async function getActiveRewards() {
   try {
-    const res = await fetch("http://localhost:9001/api/rewards");
+    const res = await fetch(`${API}/rewards`);
     if (!res.ok) throw new Error("Failed to fetch active rewards");
     return await res.json();
   } catch (err) {
@@ -58,7 +60,7 @@ export async function getActiveRewards() {
 }
 
 export async function createReward({ title, desc, points, image, category, rewardType }) {
-  const res = await fetch("http://localhost:9001/api/rewards", {
+  const res = await fetch(`${API}/rewards`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ title, desc, points: parseInt(points), image, category, rewardType: rewardType || 'per_booking' })
@@ -76,7 +78,7 @@ export async function updateReward(id, { title, desc, points, image, category, r
   const payload = { title, desc, points: points ? parseInt(points) : undefined, image, category, rewardType, active };
   console.log('📤 updateReward payload:', payload);
   
-  const res = await fetch(`http://localhost:9001/api/rewards/${id}`, {
+  const res = await fetch(`${API}/rewards/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
@@ -93,7 +95,7 @@ export async function updateReward(id, { title, desc, points, image, category, r
 }
 
 export async function deleteReward(id) {
-  const res = await fetch(`http://localhost:9001/api/rewards/${id}`, {
+  const res = await fetch(`${API}/rewards/${id}`, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" }
   });

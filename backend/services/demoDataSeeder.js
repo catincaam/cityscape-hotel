@@ -247,8 +247,8 @@ async function createReservationBundle({ client, room, serviceSet, reservationSe
     amount: reservationSeed.status === "completed" ? 500 : 250,
     status: reservationSeed.status === "completed" ? "active" : "pending",
     description: reservationSeed.status === "completed"
-      ? `Demo points for completed stay #${reservation.ReservationId}`
-      : `Pending demo points for reservation #${reservation.ReservationId}`,
+      ? `Completed stay reward - reservation #${reservation.ReservationId}`
+      : `Upcoming stay points - reservation #${reservation.ReservationId}`,
     availableAt: reservationSeed.status === "completed" ? addDays(-1) : checkout
   }, { transaction });
 
@@ -381,7 +381,7 @@ export async function seedDemoData() {
         ReservationId: null,
         amount: -300,
         status: "redeemed",
-        description: "Redeemed demo reward: Complimentary Dinner",
+        description: "Reward redeemed: Complimentary Dinner",
         availableAt: addDays(-3)
       },
       {
@@ -397,7 +397,7 @@ export async function seedDemoData() {
         ReservationId: null,
         amount: -200,
         status: "redeemed",
-        description: "Redeemed demo reward: Airport Transfer",
+        description: "Reward redeemed: Airport Transfer",
         availableAt: addDays(-8)
       },
       {
@@ -405,7 +405,7 @@ export async function seedDemoData() {
         ReservationId: null,
         amount: 500,
         status: "active",
-        description: "Demo service loyalty bonus",
+        description: "Service loyalty bonus",
         availableAt: addDays(-2)
       },
       {
@@ -413,7 +413,7 @@ export async function seedDemoData() {
         ReservationId: null,
         amount: -250,
         status: "redeemed",
-        description: "Redeemed demo reward: Spa Massage",
+        description: "Reward redeemed: Spa Massage",
         availableAt: addDays(-12)
       },
       {
@@ -421,7 +421,7 @@ export async function seedDemoData() {
         ReservationId: null,
         amount: 1000,
         status: "active",
-        description: "Gold tier demo bonus",
+        description: "Gold tier loyalty bonus",
         availableAt: addDays(-1)
       }
     ], { transaction });

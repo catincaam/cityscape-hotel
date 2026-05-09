@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from "../Dashboard/Navbar";
 import "./Rewards.css";
 import { getUserActivePoints, getUserPendingPoints, getUserPoints, getAllRewards } from "../../services/rewardService";
+import { API_BASE_URL } from "../../config/runtimeUrls";
 
 // Get userId from localStorage (set during login)
 const USER_ID = parseInt(localStorage.getItem("userId")) || 1;
@@ -11,7 +12,45 @@ const getStayRoom = (stay) => stay?.room || stay?.RoomReservations?.[0]?.Room ||
 const getStayTheme = (stay) => getStayRoom(stay)?.RoomTheme || null;
 const toImageUrl = (path) => {
   if (!path) return null;
-  return path.startsWith("http") ? path : `http://localhost:9001${path}`;
+  return path.startsWith("http") ? path : `${API_BASE_URL}${path.startsWith("/") ? "" : "/"}${path}`;
+};
+
+const getPointReservation = (point) => point.Reservation || point.reservation || null;
+
+const getPointTheme = (point) => {
+  const reservation = getPointReservation(point);
+  return reservation?.RoomReservations?.[0]?.Room?.RoomTheme || null;
+};
+
+const cleanPointDescription = (point) => {
+  const raw = String(point.description || "").trim();
+  const theme = getPointTheme(point);
+  const roomName = theme?.name || "Cityscape stay";
+  const city = theme?.city ? `, ${theme.city}` : "";
+
+  if (point.status === "redeemed" || point.amount < 0) {
+    return raw.replace(/^Redeemed demo reward:/i, "Reward redeemed:") || "Reward redeemed";
+  }
+
+  if (/demo points|pending demo points/i.test(raw)) {
+    return point.status === "pending"
+      ? `Upcoming stay points - ${roomName}${city}`
+      : `Completed stay reward - ${roomName}${city}`;
+  }
+
+  if (/reservation reward/i.test(raw)) {
+    return `Upcoming stay points - ${roomName}${city}`;
+  }
+
+  if (/puncte din rezervare/i.test(raw)) {
+    return `Completed stay reward - ${roomName}${city}`;
+  }
+
+  if (/test points/i.test(raw)) {
+    return "Manual loyalty adjustment";
+  }
+
+  return raw || (point.status === "pending" ? "Upcoming stay points" : "Loyalty points earned");
 };
 
 export default function Rewards() {
@@ -39,9 +78,9 @@ export default function Rewards() {
       setHistory(
         all.map((p) => ({
           id: p.RewardPointId,
-          label: p.description || "Reward",
+          label: cleanPointDescription(p),
           date: new Date(p.createdAt).toLocaleDateString(),
-          status: p.status.charAt(0).toUpperCase() + p.status.slice(1),
+          status: p.status ? p.status.charAt(0).toUpperCase() + p.status.slice(1) : "Active",
           amount: (p.amount > 0 ? "+" : "") + p.amount + "p",
           icon: p.status === "redeemed" ? "shopping_bag" : "workspace_premium"
         }))
@@ -55,12 +94,12 @@ export default function Rewards() {
 
       // Fetch upcoming stay
       try {
-        const res = await fetch(`http://localhost:9001/api/reservations/upcoming/${USER_ID}`);
+        const res = await fetch(`${API_BASE_URL}/api/reservations/upcoming/${USER_ID}`);
         console.log("Upcoming reservations API response:", res.status, res.statusText);
         if (res.ok) {
           const stay = await res.json();
           console.log("Upcoming stay data:", stay);
-          const detailsRes = await fetch(`http://localhost:9001/api/reservations/${stay.ReservationId}`);
+          const detailsRes = await fetch(`${API_BASE_URL}/api/reservations/${stay.ReservationId}`);
           if (detailsRes.ok) {
             const stayDetails = await detailsRes.json();
             setUpcomingStay(stayDetails);
@@ -223,7 +262,7 @@ export default function Rewards() {
                     className="reward-card-image"
                     style={{ 
                       backgroundImage: reward.image 
-                        ? `url('http://localhost:9001${reward.image}')` 
+                        ? `url('${toImageUrl(reward.image)}')`
                         : 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)'
                     }}
                   >
