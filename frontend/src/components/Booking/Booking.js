@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../Dashboard/Navbar";
 
@@ -8,7 +8,6 @@ import StepServices from "./components/steps/StepServices";
 import StepConfirmation from "./components/steps/StepConfirmation";
 
 import BookingStepper from "./components/BookingStepper";
-import BookingFooter from "./components/BookingFooter";
 
 import "./Booking.css";
 import { isValidDateRange } from "../../utils/validators";
@@ -95,6 +94,10 @@ export default function Booking() {
     }
   }
 
+  const handleUpdateServices = useCallback((services) => {
+    setBookingData(prev => ({ ...prev, services }));
+  }, []);
+
   return (
     <>
       <Navbar />
@@ -164,9 +167,7 @@ export default function Booking() {
             bookingData={bookingData}
             onBack={() => setStep(2)}
             onNext={() => setStep(4)}
-            onUpdateServices={(services) =>
-              setBookingData(prev => ({ ...prev, services }))
-            }
+            onUpdateServices={handleUpdateServices}
           />
         )}
 

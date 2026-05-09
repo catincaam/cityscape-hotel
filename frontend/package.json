@@ -23,9 +23,9 @@
     "xlsx": "^0.18.5"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
+    "start": "node scripts/react-scripts-no-warnings.js start",
+    "build": "node scripts/react-scripts-no-warnings.js build",
+    "test": "node scripts/react-scripts-no-warnings.js test",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

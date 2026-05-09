@@ -36,22 +36,32 @@ export default function StepServices({
         const availableServices = Array.isArray(data)
           ? data.filter(isServiceAvailable)
           : [];
-        const availableIds = new Set(availableServices.map(service => String(service.ServiceId)));
-        const sanitizedSelected = Object.fromEntries(
-          Object.entries(bookingData.services || {}).filter(([id]) => availableIds.has(String(id)))
-        );
 
         setServices(availableServices);
-        if (Object.keys(sanitizedSelected).length !== Object.keys(bookingData.services || {}).length) {
-          setSelected(sanitizedSelected);
-          onUpdateServices(sanitizedSelected);
-        }
       } catch (err) {
         console.error("Error loading services:", err);
       }
     }
     loadServices();
   }, []);
+
+  useEffect(() => {
+    if (services.length === 0) return;
+
+    const currentServices = bookingData.services || {};
+    const availableIds = new Set(services.map(service => String(service.ServiceId)));
+    const sanitizedSelected = Object.fromEntries(
+      Object.entries(currentServices).filter(([id]) => availableIds.has(String(id)))
+    );
+    const selectionChanged =
+      Object.keys(sanitizedSelected).length !== Object.keys(currentServices).length ||
+      Object.entries(sanitizedSelected).some(([id, qty]) => currentServices[id] !== qty);
+
+    if (selectionChanged) {
+      setSelected(sanitizedSelected);
+      onUpdateServices(sanitizedSelected);
+    }
+  }, [bookingData.services, onUpdateServices, services]);
 
   useEffect(() => {
     if (bookingData.services) {

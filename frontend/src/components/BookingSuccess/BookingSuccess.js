@@ -242,6 +242,10 @@ export default function BookingSuccess() {
             Your reservation is saved and ready in your dashboard.
             {emailWasSent ? " A confirmation email has also been sent to your inbox." : ""}
           </p>
+          <div className="payment-confirmation-badge">
+            <span>Card payment approved</span>
+            <strong>Official booking confirmation</strong>
+          </div>
         </div>
 
         {/* MAIN LAYOUT */}
@@ -288,7 +292,15 @@ export default function BookingSuccess() {
             {/* INCLUDED EXPERIENCES */}
             {selectedServiceRows.length > 0 && (
               <div className="included-box">
-                <h3>Included Experiences</h3>
+                <div className="included-header">
+                  <div>
+                    <span className="included-eyebrow">Added to your stay</span>
+                    <h3>Reserved Services</h3>
+                  </div>
+                  <span className="included-count">
+                    {selectedServiceRows.length} {selectedServiceRows.length === 1 ? "service" : "services"}
+                  </span>
+                </div>
                 <div className="experiences-grid">
                   {selectedServiceRows.map((service) => (
                     <article
@@ -311,13 +323,20 @@ export default function BookingSuccess() {
                         {service.description && (
                           <span className="experience-description">{service.description}</span>
                         )}
-                        <span className="experience-meta">
-                          Qty {service.quantity}{" "}
-                          {service.priceType === "per_person"
-                            ? service.quantity === 1 ? "person" : "people"
-                            : service.quantity === 1 ? "item" : "items"}
-                          {service.total > 0 ? ` - ${service.total.toFixed(2)} EUR due at hotel` : ""}
-                        </span>
+                        <div className="experience-footer">
+                          <span className="experience-meta">
+                            {service.quantity}{" "}
+                            {service.priceType === "per_person"
+                              ? service.quantity === 1 ? "person" : "people"
+                              : service.quantity === 1 ? "item" : "items"}
+                          </span>
+                          {service.total > 0 && (
+                            <span className="experience-total">
+                              {service.total.toFixed(2)} EUR
+                              <small>at hotel</small>
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </article>
                   ))}
@@ -341,6 +360,24 @@ export default function BookingSuccess() {
                   <div className="payment-line">
                     <span>Services due at hotel</span>
                     <span className="amount">€{servicesCost.toFixed(2)}</span>
+                  </div>
+                )}
+                {selectedServiceRows.length > 0 && (
+                  <div className="payment-services">
+                    {selectedServiceRows.map((service) => (
+                      <div key={`summary-${service.id}`} className="payment-service-line">
+                        <span>
+                          {service.name}
+                          <small>
+                            {service.quantity}{" "}
+                            {service.priceType === "per_person"
+                              ? service.quantity === 1 ? "person" : "people"
+                              : service.quantity === 1 ? "item" : "items"}
+                          </small>
+                        </span>
+                        {service.total > 0 && <strong>{service.total.toFixed(2)} EUR</strong>}
+                      </div>
+                    ))}
                   </div>
                 )}
                 {taxFees > 0 && (

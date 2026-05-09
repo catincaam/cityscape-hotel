@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import "./AdminRewards.css";
 import { getAllRewards, createReward, updateReward, deleteReward } from "../../../services/rewardService";
 
@@ -34,7 +34,6 @@ export default function AdminRewards() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [editingId, setEditingId] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleteConfirmTitle, setDeleteConfirmTitle] = useState("");
 
@@ -170,7 +169,6 @@ export default function AdminRewards() {
       setForm(INITIAL_FORM_STATE);
       setImages([]);
       setPreviews([]);
-      setEditingId(null);
       await fetchRewards();
     } catch (err) {
       setError(err.message || "Error during operation!");
@@ -237,7 +235,6 @@ export default function AdminRewards() {
       active: reward.active,
       image: reward.image
     });
-    setEditingId(reward.RewardId);
     setImages([]);
     setPreviews([]);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -248,7 +245,6 @@ export default function AdminRewards() {
     setImages([]);
     setPreviews([]);
     setError("");
-    setEditingId(null);
   }
 
   const previewImage = previews.length > 0 ? previews[0] : (form.image ? `${CONFIG.API_BASE_URL}${form.image}` : null);

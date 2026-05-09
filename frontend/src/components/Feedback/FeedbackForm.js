@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 export default function FeedbackForm({ reservation, status }) {
@@ -11,7 +11,6 @@ export default function FeedbackForm({ reservation, status }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
-  const { id } = useParams();
 
   // Nu permite review dacă statusul nu e completed
   if (status !== "completed") {

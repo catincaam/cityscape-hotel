@@ -15,13 +15,11 @@ import EmailTest from "./components/EmailTest/EmailTest";
 import DayPasses from "./components/DayPasses/DayPasses";
 import Rewards from "./components/Rewards/Rewards";
 import RewardsDetails from "./components/RewardsDetails/RewardsDetails";
-import PastReservations from "./components/Reservations/PastReservations";
 import AllReservations from "./components/Reservations/AllReservations";
 import ProfileEdit from "./components/Profile/ProfileEdit";
 import FeedbackPage from "./components/Feedback/FeedbackPage";
 import ChatbotWidget from "./components/Chatbot/ChatbotWidget";
 import ProtectedRoute from "./routes/ProtectedRoute";
-import Experiences from "./components/Experiences/Experiences";
 import ServiceBooking from "./components/Services/ServiceBooking";
 export default function App() {
   return (

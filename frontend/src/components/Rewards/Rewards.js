@@ -24,18 +24,7 @@ export default function Rewards() {
   const [loading, setLoading] = useState(true);
   const [upcomingStay, setUpcomingStay] = useState(null);
   const [upcomingStayImage, setUpcomingStayImage] = useState(null);
-  const [user, setUser] = useState({
-    name: localStorage.getItem("userName") || "User"
-  });
   const [carouselIndex, setCarouselIndex] = useState(0);
-
-  // Update user name from localStorage
-  useEffect(() => {
-    const userName = localStorage.getItem("userName");
-    if (userName) {
-      setUser(u => ({ ...u, name: userName }));
-    }
-  }, []);
 
   // Function to fetch data - can be called multiple times
   const fetchData = async () => {

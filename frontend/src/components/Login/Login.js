@@ -133,9 +133,6 @@ export default function Login() {
         
         <div className="hero-content">
           <div className="hero-header">
-            <div className="hotel-icon floating-icon">
-              <span className="icon-text">🏛️</span>
-            </div>
             <h1 className="hotel-name">Cityscape Hotel</h1>
           </div>
 

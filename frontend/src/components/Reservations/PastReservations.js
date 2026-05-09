@@ -79,9 +79,6 @@ export default function PastReservations() {
               // Fallback pentru datele de checkin/checkout
               const checkinStr = res.requestedCheckin || res.checkIn || res.checkin || res.startDate;
               const checkoutStr = res.requestedCheckout || res.checkOut || res.checkout || res.endDate;
-              const now = new Date();
-              const checkin = checkinStr ? new Date(checkinStr) : null;
-              const checkout = checkoutStr ? new Date(checkoutStr) : null;
               // Etichetă status: doar 'Completed' pentru rezervările filtrate
               let statusLabel = 'Completed', statusColor = '#047857', statusBg = '#d1fae5';
 

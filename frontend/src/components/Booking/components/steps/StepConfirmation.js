@@ -9,7 +9,6 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
   const [cardName, setCardName] = useState("");
   const [expiry, setExpiry] = useState("");
   const [cvc, setCvc] = useState("");
-  const [saveCard, setSaveCard] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [services, setServices] = useState([]);
   const [clientId, setClientId] = useState(null);

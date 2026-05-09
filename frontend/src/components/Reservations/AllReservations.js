@@ -136,6 +136,7 @@ export default function AllReservations() {
 
   useEffect(() => {
     fetchReservations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchReservations = async () => {

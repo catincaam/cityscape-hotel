@@ -68,31 +68,13 @@ body {
 .hero-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0;
   animation: fadeInUp 0.8s ease-out;
-}
-
-.hotel-icon {
-  width: 2.5rem;
-  height: 2.5rem;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-10px); }
-}
-
-.floating-icon {
-  animation: float 6s ease-in-out infinite;
 }
 
 .hotel-name {
