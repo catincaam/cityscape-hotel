@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import Navbar from "../Dashboard/Navbar";
 import { API_BASE_URL } from "../../config/runtimeUrls";
 import "./Services.css";
@@ -17,7 +16,6 @@ export default function Services() {
   const [services, setServices] = useState([]);
   const [activeFilter, setActiveFilter] = useState("all");
   const [loading, setLoading] = useState(true);
-  const [carouselIndex, setCarouselIndex] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -51,17 +49,8 @@ export default function Services() {
       : services.filter((service) => service.category?.toLowerCase() === activeFilter.toLowerCase());
   }, [activeFilter, services]);
 
-  const visibleServices = filtered.slice(carouselIndex, carouselIndex + 3);
   const featuredServices = services.slice(0, 4);
   const showcaseImage = resolveImageUrl(services.find((service) => service.image)?.image);
-  const maxIndex = Math.max(0, filtered.length - 3);
-
-  const handlePrev = () => setCarouselIndex((index) => Math.max(0, index - 1));
-  const handleNext = () => setCarouselIndex((index) => Math.min(maxIndex, index + 1));
-
-  useEffect(() => {
-    setCarouselIndex(0);
-  }, [activeFilter, services]);
 
   useEffect(() => {
     if (activeFilter !== "all" && !categories.some((category) => category.key.toLowerCase() === activeFilter.toLowerCase())) {
@@ -105,16 +94,6 @@ export default function Services() {
               <p>Curated for you</p>
               <h2>Available Services</h2>
             </div>
-            {filtered.length > 3 && (
-              <div className="services-carousel-controls">
-                <button type="button" onClick={handlePrev} disabled={carouselIndex === 0} aria-label="Previous services">
-                  <ChevronLeft size={18} />
-                </button>
-                <button type="button" onClick={handleNext} disabled={carouselIndex === maxIndex} aria-label="Next services">
-                  <ChevronRight size={18} />
-                </button>
-              </div>
-            )}
           </div>
 
           <div className="service-filters">
@@ -136,7 +115,7 @@ export default function Services() {
             <div className="services-state">No services available at this time.</div>
           ) : (
             <div className="services-card-grid">
-              {visibleServices.map((service, index) => (
+              {filtered.map((service, index) => (
                 <article key={service.ServiceId || index} className="premium-service-card">
                   <div className="premium-service-image">
                     {service.image ? (

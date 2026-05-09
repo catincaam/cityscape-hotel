@@ -179,28 +179,6 @@
   background: #d2b485;
 }
 
-.services-carousel-controls {
-  display: flex;
-  gap: 10px;
-}
-
-.services-carousel-controls button {
-  width: 34px;
-  height: 34px;
-  display: grid;
-  place-items: center;
-  border: 1px solid #d8dfeb;
-  border-radius: 50%;
-  background: #fff;
-  color: #102033;
-  cursor: pointer;
-}
-
-.services-carousel-controls button:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-
 .service-filters {
   display: flex;
   justify-content: center;
