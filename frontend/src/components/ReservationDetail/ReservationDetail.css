@@ -1901,24 +1901,51 @@
 
 .booking-service-row {
   display: grid;
-  grid-template-columns: 36px 1fr auto;
+  grid-template-columns: 54px minmax(0, 1fr) auto;
   gap: 16px;
   align-items: center;
-  padding: 20px 0;
+  padding: 18px 0;
   border-bottom: 1px solid #f0ede8;
 }
 
 .booking-service-icon {
+  width: 54px;
+  height: 54px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #eadfce;
+  border-radius: 14px;
+  background: #fbf7f0;
   color: #c1a676;
   font-size: 11px;
   font-weight: 900;
   letter-spacing: 0.08em;
 }
 
+.booking-service-image {
+  width: 54px;
+  height: 54px;
+  display: block;
+  object-fit: cover;
+  border: 1px solid #eadfce;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(28, 22, 14, 0.08);
+}
+
+.booking-service-copy {
+  min-width: 0;
+}
+
 .booking-service-row strong {
   display: block;
   margin-bottom: 4px;
   font-size: 14px;
+}
+
+.booking-service-row span {
+  display: block;
+  line-height: 1.5;
 }
 
 .booking-service-row p {
@@ -2164,7 +2191,18 @@
   }
 
   .booking-service-row {
-    grid-template-columns: 1fr;
-    gap: 8px;
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .booking-service-row p {
+    grid-column: 2;
+  }
+
+  .booking-service-image,
+  .booking-service-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
   }
 }

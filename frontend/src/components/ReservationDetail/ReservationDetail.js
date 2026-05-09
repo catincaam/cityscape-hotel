@@ -7,6 +7,12 @@ import './ReservationDetail.css';
 
 const formatMoney = (value) => `${Number(value || 0).toFixed(2)} EUR`;
 
+const resolveAssetUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  return `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+};
+
 const ReservationDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -44,8 +50,10 @@ const ReservationDetail = () => {
                 quantity: rs.quantity || 1,
                 personDetails: rs.personDetails || null,
                 serviceName: rs.Service?.name || 'Service',
+                description: rs.Service?.description || '',
                 category: rs.Service?.category || '',
                 priceType: rs.Service?.priceType || 'per_booking',
+                image: resolveAssetUrl(rs.Service?.image || rs.Service?.imageUrl || rs.Service?.image_url || ''),
                 price: rs.unitPrice ?? rs.Service?.price ?? 0
               }))
             : [];
@@ -67,8 +75,10 @@ const ReservationDetail = () => {
               return {
                 ...cs,
                 serviceName: serviceData.name || serviceData.serviceName || 'Service',
+                description: serviceData.description || '',
                 category: serviceData.category || '',
                 priceType: serviceData.priceType || 'per_booking',
+                image: resolveAssetUrl(serviceData.image || serviceData.imageUrl || serviceData.image_url || ''),
                 price: cs.paidPrice ?? serviceData.price ?? 0
               };
             })
@@ -383,11 +393,15 @@ const ReservationDetail = () => {
             <div className="booking-services-list">
               {reservationServices.map((service, index) => (
                 <div className="booking-service-row" key={`${service.ServiceId}-${index}`}>
-                  <div className="booking-service-icon">{service.priceType === 'per_person' ? 'PP' : 'SV'}</div>
-                  <div>
+                  {service.image ? (
+                    <img src={service.image} alt={service.serviceName} className="booking-service-image" />
+                  ) : (
+                    <div className="booking-service-icon">{service.priceType === 'per_person' ? 'PP' : 'SV'}</div>
+                  )}
+                  <div className="booking-service-copy">
                     <strong>{service.serviceName}</strong>
                     <span>
-                      {service.category || 'Hotel service'} - Qty {service.quantity}
+                      {service.description || service.category || 'Hotel service'} - Qty {service.quantity}
                       {service.priceType === 'per_person' ? ' people' : ''}
                     </span>
                   </div>

@@ -113,7 +113,7 @@ export async function getReservationServices(reservationId) {
     include: [
       {
         model: Service,
-        attributes: ["ServiceId", "name", "description", "price", "category", "priceType"]
+        attributes: ["ServiceId", "name", "description", "price", "category", "priceType", "image"]
       }
     ]
   });
@@ -129,7 +129,7 @@ export async function getReservationService(reservationId, serviceId) {
     include: [
       {
         model: Service,
-        attributes: ["ServiceId", "name", "description", "price", "category", "priceType"]
+        attributes: ["ServiceId", "name", "description", "price", "category", "priceType", "image"]
       }
     ]
   });
