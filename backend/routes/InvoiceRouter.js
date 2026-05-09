@@ -23,23 +23,39 @@ const formatDate = (value) => {
 
 const money = (value) => `${Number(value || 0).toFixed(2)} EUR`;
 
-const drawLabel = (doc, label, value, x, y, width = 140) => {
-  doc.fontSize(7).font("Helvetica-Bold").fillColor("#9a7b55")
-    .text(label.toUpperCase(), x, y, { width, characterSpacing: 1.2 });
-  doc.fontSize(10).font("Helvetica-Bold").fillColor("#111827")
-    .text(value || "-", x, y + 13, { width });
+const drawLabel = (doc, label, value, x, y, width = 140, options = {}) => {
+  doc.fontSize(options.labelSize || 6.8).font("Helvetica-Bold").fillColor(options.labelColor || "#a67f54")
+    .text(label.toUpperCase(), x, y, { width, characterSpacing: options.spacing || 1.35 });
+  doc.fontSize(options.valueSize || 10).font(options.valueFont || "Helvetica-Bold").fillColor(options.valueColor || "#101827")
+    .text(value || "-", x, y + (options.valueOffset || 13), { width, lineGap: 2 });
 };
 
 const drawLineItem = (doc, y, description, meta, amount, options = {}) => {
-  doc.roundedRect(54, y, 488, 46, 6).fill(options.fill || "#ffffff");
-  doc.fontSize(10).font("Helvetica-Bold").fillColor("#111827")
-    .text(description, 72, y + 12, { width: 300 });
+  const height = options.height || 54;
+  doc.roundedRect(60, y, 476, height, 12).fill(options.fill || "#fffdfa");
+  doc.roundedRect(60, y, 4, height, 2).fill(options.accent || "#d7b98c");
+  doc.strokeColor(options.border || "#efe4d5").lineWidth(0.8)
+    .roundedRect(60, y, 476, height, 12).stroke();
+
+  doc.fontSize(10.5).font("Helvetica-Bold").fillColor("#101827")
+    .text(description, 82, y + 13, { width: 290, lineGap: 2 });
   if (meta) {
-    doc.fontSize(8).font("Helvetica").fillColor("#6b7280")
-      .text(meta, 72, y + 27, { width: 300 });
+    doc.fontSize(8).font("Helvetica").fillColor("#7c6d5e")
+      .text(meta, 82, y + 31, { width: 290, lineGap: 2 });
   }
-  doc.fontSize(10).font("Helvetica-Bold").fillColor("#9a6f36")
-    .text(money(amount), 380, y + 18, { width: 140, align: "right" });
+  doc.roundedRect(404, y + 15, 106, 26, 8).fill(options.amountFill || "#f8f1e8");
+  doc.fontSize(10).font("Helvetica-Bold").fillColor(options.amountColor || "#9a6f36")
+    .text(money(amount), 414, y + 23, { width: 86, align: "right" });
+};
+
+const drawMetricCard = (doc, label, value, x, y, width) => {
+  doc.roundedRect(x, y, width, 68, 12).fill("#fbf8f3");
+  doc.strokeColor("#f0e5d6").lineWidth(0.7).roundedRect(x, y, width, 68, 12).stroke();
+  drawLabel(doc, label, value, x + 18, y + 18, width - 36, {
+    labelColor: "#b08455",
+    valueSize: 10.5,
+    valueOffset: 15
+  });
 };
 
 /* CREATE */
@@ -131,85 +147,100 @@ invoiceRouter.get("/:reservationId/download-pdf", async (req, res) => {
 
     doc.pipe(res);
 
-    doc.rect(0, 0, 595, 842).fill("#f7f3ed");
-    doc.roundedRect(34, 34, 527, 774, 18).fill("#fffdf9");
+    doc.rect(0, 0, 595, 842).fill("#f2ede5");
+    doc.circle(76, 82, 58).fill("#eadcc8");
+    doc.circle(538, 762, 86).fill("#efe4d5");
+    doc.roundedRect(30, 28, 535, 786, 24).fill("#fffdfa");
+    doc.rect(30, 28, 10, 786).fill("#d0a66f");
 
-    doc.fontSize(9).font("Helvetica-Bold").fillColor("#9a6f36")
-      .text("CITYSCAPE HOTEL", 54, 62, { characterSpacing: 2.5 });
-    doc.fontSize(34).font("Helvetica").fillColor("#111827")
-      .text("Invoice", 54, 86);
-    doc.fontSize(9).font("Helvetica").fillColor("#6b7280")
-      .text("Reservation payment receipt", 56, 128);
+    doc.fontSize(8).font("Helvetica-Bold").fillColor("#b08455")
+      .text("CITYSCAPE HOTEL", 62, 62, { characterSpacing: 3.2 });
+    doc.fontSize(36).font("Times-Roman").fillColor("#0f172a")
+      .text("Invoice", 62, 86);
+    doc.fontSize(9).font("Helvetica").fillColor("#7c6d5e")
+      .text("Reservation payment receipt", 64, 129);
 
-    doc.fontSize(9).font("Helvetica-Bold").fillColor("#9a7b55")
-      .text(`INVOICE #${String(invoice.InvoiceId).padStart(5, "0")}`, 380, 68, { width: 145, align: "right" });
-    doc.fontSize(9).font("Helvetica").fillColor("#6b7280")
-      .text(formatDate(invoice.issueDate || new Date()), 380, 84, { width: 145, align: "right" });
-    doc.fontSize(13).font("Helvetica-Bold").fillColor("#111827")
-      .text(`#${reservationCode}`, 380, 112, { width: 145, align: "right" });
+    doc.roundedRect(386, 58, 130, 74, 14).fill("#f8f1e8");
+    doc.fontSize(7).font("Helvetica-Bold").fillColor("#a67f54")
+      .text("INVOICE", 404, 74, { width: 94, align: "right", characterSpacing: 1.6 });
+    doc.fontSize(11).font("Helvetica-Bold").fillColor("#0f172a")
+      .text(`#${String(invoice.InvoiceId).padStart(5, "0")}`, 404, 89, { width: 94, align: "right" });
+    doc.fontSize(8).font("Helvetica").fillColor("#7c6d5e")
+      .text(formatDate(invoice.issueDate || new Date()), 404, 106, { width: 94, align: "right" });
 
-    doc.moveTo(54, 158).lineTo(542, 158).strokeColor("#e7d8c4").lineWidth(1).stroke();
+    doc.fontSize(11).font("Helvetica-Bold").fillColor("#0f172a")
+      .text(`#${reservationCode}`, 390, 145, { width: 126, align: "right" });
+    doc.moveTo(62, 168).lineTo(532, 168).strokeColor("#eadcc8").lineWidth(1).stroke();
 
-    drawLabel(doc, "Guest", guestName, 54, 184, 190);
-    drawLabel(doc, "Email", client?.Email || "-", 54, 226, 220);
-    drawLabel(doc, "Room", roomTitle, 312, 184, 210);
-    drawLabel(doc, "Guests", `${reservation.nrPeople || 1} guest${reservation.nrPeople === 1 ? "" : "s"}`, 312, 226, 160);
+    doc.roundedRect(62, 192, 470, 86, 16).fill("#ffffff");
+    doc.strokeColor("#f0e5d6").lineWidth(0.8).roundedRect(62, 192, 470, 86, 16).stroke();
+    drawLabel(doc, "Guest", guestName, 84, 212, 190);
+    drawLabel(doc, "Email", client?.Email || "-", 84, 248, 210);
+    drawLabel(doc, "Room", roomTitle, 326, 212, 178);
+    drawLabel(doc, "Guests", `${reservation.nrPeople || 1} guest${reservation.nrPeople === 1 ? "" : "s"}`, 326, 248, 160);
 
-    doc.roundedRect(54, 286, 488, 82, 10).fill("#f8f4ee");
-    drawLabel(doc, "Check-in", formatDate(reservation.requestedCheckin), 78, 310, 130);
-    drawLabel(doc, "Check-out", formatDate(reservation.requestedCheckout), 230, 310, 130);
-    drawLabel(doc, "Duration", `${nights} night${nights === 1 ? "" : "s"}`, 382, 310, 120);
+    drawMetricCard(doc, "Check-in", formatDate(reservation.requestedCheckin), 62, 304, 146);
+    drawMetricCard(doc, "Check-out", formatDate(reservation.requestedCheckout), 224, 304, 146);
+    drawMetricCard(doc, "Duration", `${nights} night${nights === 1 ? "" : "s"}`, 386, 304, 146);
 
-    doc.fontSize(9).font("Helvetica-Bold").fillColor("#9a7b55")
-      .text("BILLING DETAILS", 54, 405, { characterSpacing: 1.4 });
+    doc.fontSize(8).font("Helvetica-Bold").fillColor("#a67f54")
+      .text("BILLING DETAILS", 62, 404, { characterSpacing: 1.8 });
 
-    let rowY = 432;
+    let rowY = 430;
     drawLineItem(
       doc,
       rowY,
       "Room accommodation",
       `${roomTitle} - ${nights} night${nights === 1 ? "" : "s"}`,
-      accommodationTotal
+      accommodationTotal,
+      { fill: "#ffffff", accent: "#d0a66f" }
     );
-    rowY += 54;
+    rowY += 66;
 
     if (reservationServices.length > 0) {
-      doc.fontSize(8).font("Helvetica-Bold").fillColor("#9a7b55")
-        .text("SERVICES RESERVED - PAYABLE AT HOTEL", 54, rowY + 4, { characterSpacing: 1.1 });
-      rowY += 26;
+      doc.fontSize(8).font("Helvetica-Bold").fillColor("#a67f54")
+        .text("SERVICES RESERVED - PAYABLE AT HOTEL", 62, rowY + 4, { characterSpacing: 1.45 });
+      rowY += 28;
 
       reservationServices.forEach((item) => {
         const serviceName = item.Service?.name || item.Service?.serviceName || `Service #${item.ServiceId}`;
         const quantity = Number(item.quantity || 0);
         const unitPrice = Number(item.unitPrice || 0);
         drawLineItem(doc, rowY, serviceName, `${quantity} x ${money(unitPrice)}`, quantity * unitPrice, {
-          fill: "#fbfaf7"
+          fill: "#fffdfa",
+          accent: "#b78a55",
+          amountFill: "#fbf2e6"
         });
-        rowY += 54;
+        rowY += 66;
       });
     }
 
-    doc.roundedRect(54, rowY + 10, 488, 88, 10).fill("#111827");
-    doc.fontSize(9).font("Helvetica-Bold").fillColor("#d6b98b")
-      .text("TOTAL DUE NOW", 78, rowY + 34, { characterSpacing: 1.3 });
-    doc.fontSize(26).font("Helvetica-Bold").fillColor("#ffffff")
-      .text(money(totalAmount), 300, rowY + 27, { width: 210, align: "right" });
-    doc.fontSize(9).font("Helvetica").fillColor("#d1d5db")
-      .text(`Paid: ${money(paidAmount)}   Remaining: ${money(remainingAmount)}`, 78, rowY + 60);
+    rowY = Math.min(rowY, 596);
+    doc.roundedRect(62, rowY + 4, 470, 90, 16).fill("#0f172a");
+    doc.roundedRect(62, rowY + 4, 470, 90, 16).strokeColor("#0f172a").stroke();
+    doc.fontSize(8).font("Helvetica-Bold").fillColor("#d9b77e")
+      .text("TOTAL DUE NOW", 84, rowY + 30, { characterSpacing: 1.6 });
+    doc.fontSize(28).font("Helvetica-Bold").fillColor("#ffffff")
+      .text(money(totalAmount), 300, rowY + 24, { width: 198, align: "right" });
+    doc.fontSize(8.5).font("Helvetica").fillColor("#cbd5e1")
+      .text(`Paid ${money(paidAmount)}   |   Remaining ${money(remainingAmount)}`, 84, rowY + 59);
 
-    const statusY = rowY + 122;
-    doc.roundedRect(54, statusY, 488, 54, 10).fill(remainingAmount <= 0 ? "#ecfdf5" : "#fff7ed");
-    doc.fontSize(9).font("Helvetica-Bold").fillColor(remainingAmount <= 0 ? "#047857" : "#9a3412")
-      .text("PAYMENT STATUS", 78, statusY + 14, { characterSpacing: 1.3 });
-    doc.fontSize(13).font("Helvetica-Bold").fillColor(remainingAmount <= 0 ? "#065f46" : "#7c2d12")
-      .text(paymentStatus, 78, statusY + 29);
+    const statusY = rowY + 118;
+    const isPaid = remainingAmount <= 0;
+    doc.roundedRect(62, statusY, 470, 58, 14).fill(isPaid ? "#eafaf1" : "#fff7ed");
+    doc.strokeColor(isPaid ? "#b9efd0" : "#fed7aa").lineWidth(0.8).roundedRect(62, statusY, 470, 58, 14).stroke();
+    doc.circle(86, statusY + 29, 10).fill(isPaid ? "#10b981" : "#f59e0b");
+    doc.fontSize(8).font("Helvetica-Bold").fillColor(isPaid ? "#047857" : "#9a3412")
+      .text("PAYMENT STATUS", 108, statusY + 15, { characterSpacing: 1.5 });
+    doc.fontSize(13).font("Helvetica-Bold").fillColor(isPaid ? "#065f46" : "#7c2d12")
+      .text(paymentStatus, 108, statusY + 31);
 
-    doc.moveTo(54, 744).lineTo(542, 744).strokeColor("#e7d8c4").lineWidth(1).stroke();
-    doc.fontSize(8).font("Helvetica").fillColor("#6b7280")
-      .text("Thank you for choosing Cityscape Hotel.", 54, 762, { width: 488, align: "center" });
-    doc.fontSize(7).fillColor("#9ca3af")
-      .text("This invoice was generated automatically by the Cityscape Hotel reservation system.", 54, 778, {
-        width: 488,
+    doc.moveTo(62, 744).lineTo(532, 744).strokeColor("#eadcc8").lineWidth(1).stroke();
+    doc.fontSize(8).font("Helvetica").fillColor("#7c6d5e")
+      .text("Thank you for choosing Cityscape Hotel.", 62, 762, { width: 470, align: "center" });
+    doc.fontSize(7).fillColor("#a8a29e")
+      .text("This invoice was generated automatically by the Cityscape Hotel reservation system.", 62, 778, {
+        width: 470,
         align: "center"
       });
 
