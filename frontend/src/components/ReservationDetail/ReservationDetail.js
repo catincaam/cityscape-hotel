@@ -45,16 +45,31 @@ const ReservationDetail = () => {
         if (reservationServicesResponse.ok) {
           const bookedServices = await reservationServicesResponse.json();
           services = Array.isArray(bookedServices)
-            ? bookedServices.map(rs => ({
-                ServiceId: rs.ServiceId,
-                quantity: rs.quantity || 1,
-                personDetails: rs.personDetails || null,
-                serviceName: rs.Service?.name || 'Service',
-                description: rs.Service?.description || '',
-                category: rs.Service?.category || '',
-                priceType: rs.Service?.priceType || 'per_booking',
-                image: resolveAssetUrl(rs.Service?.image || rs.Service?.imageUrl || rs.Service?.image_url || ''),
-                price: rs.unitPrice ?? rs.Service?.price ?? 0
+            ? await Promise.all(bookedServices.map(async (rs) => {
+                let serviceData = rs.Service || {};
+
+                if (!serviceData.image && rs.ServiceId) {
+                  try {
+                    const serviceResponse = await fetch(`${API_BASE_URL}/api/services/${rs.ServiceId}`);
+                    if (serviceResponse.ok) {
+                      serviceData = { ...serviceData, ...(await serviceResponse.json()) };
+                    }
+                  } catch (serviceDetailsError) {
+                    console.warn('Error fetching service image:', serviceDetailsError);
+                  }
+                }
+
+                return {
+                  ServiceId: rs.ServiceId,
+                  quantity: rs.quantity || 1,
+                  personDetails: rs.personDetails || null,
+                  serviceName: serviceData.name || serviceData.serviceName || 'Service',
+                  description: serviceData.description || '',
+                  category: serviceData.category || '',
+                  priceType: serviceData.priceType || 'per_booking',
+                  image: resolveAssetUrl(serviceData.image || serviceData.imageUrl || serviceData.image_url || ''),
+                  price: rs.unitPrice ?? serviceData.price ?? 0
+                };
               }))
             : [];
         }
