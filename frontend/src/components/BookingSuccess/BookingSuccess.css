@@ -215,11 +215,11 @@
 
 /* INCLUDED EXPERIENCES */
 .included-box {
-  background: #fff;
-  border: 1px solid #eee5db;
+  background: linear-gradient(180deg, #fff 0%, #fffdf9 100%);
+  border: 1px solid #eadfce;
   border-radius: 12px;
-  padding: 18px 22px;
-  box-shadow: 0 12px 28px rgba(31, 41, 55, 0.04);
+  padding: 18px 20px 16px;
+  box-shadow: 0 16px 34px rgba(31, 41, 55, 0.055);
 }
 
 .included-header {
@@ -262,19 +262,20 @@
 .experiences-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 16px;
+  gap: 10px;
 }
 
 .experience-item {
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr);
+  grid-template-columns: 66px minmax(0, 1fr);
   align-items: center;
-  min-height: 76px;
+  min-height: 82px;
   overflow: hidden;
-  background: #fffaf5;
-  border: 1px solid #eee1d2;
+  background: #ffffff;
+  border: 1px solid #eadbc8;
   border-radius: 10px;
-  padding: 8px;
+  padding: 8px 12px 8px 8px;
+  box-shadow: inset 3px 0 0 #d4b896;
 }
 
 .experience-item:not(.with-image) {
@@ -283,12 +284,13 @@
 }
 
 .experience-image {
-  width: 64px;
-  height: 64px;
+  width: 66px;
+  height: 66px;
   min-height: 0;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 9px;
   display: block;
+  box-shadow: 0 8px 18px rgba(31, 41, 55, 0.12);
 }
 
 .experience-topline {
@@ -312,16 +314,18 @@
 .experience-copy {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
   min-width: 0;
-  padding: 2px 4px 2px 12px;
+  padding: 1px 0 1px 14px;
 }
 
 .experience-name {
-  font-size: 0.96rem;
+  display: block;
+  max-width: 100%;
+  font-size: 1.02rem;
   color: #142033;
   font-weight: 700;
-  line-height: 1.15;
+  line-height: 1.18;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -331,7 +335,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 14px;
   margin-top: 0;
   padding-top: 0;
   border-top: 0;
@@ -351,9 +355,13 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 1px;
-  color: #b9884a;
-  font-size: 0.84rem;
+  border-radius: 8px;
+  background: #fbf4eb;
+  color: #a8753c;
+  font-size: 0.88rem;
   font-weight: 800;
+  line-height: 1.1;
+  padding: 6px 8px;
   white-space: nowrap;
 }
 
@@ -879,14 +887,18 @@
 
 @media (max-width: 560px) {
   .included-header,
-  .experience-footer,
   .payment-service-line {
     align-items: flex-start;
     flex-direction: column;
   }
 
+  .experience-footer {
+    align-items: flex-start;
+  }
+
   .experience-item {
     grid-template-columns: 56px minmax(0, 1fr);
+    padding-right: 8px;
   }
 
   .experience-image {

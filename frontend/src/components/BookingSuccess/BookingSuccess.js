@@ -330,7 +330,7 @@ export default function BookingSuccess() {
                           {service.total > 0 && (
                             <span className="experience-total">
                               {service.total.toFixed(2)} EUR
-                              <small>at hotel</small>
+                              <small>Pay at hotel</small>
                             </span>
                           )}
                         </div>
