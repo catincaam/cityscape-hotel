@@ -242,10 +242,6 @@ export default function BookingSuccess() {
             Your reservation is saved and ready in your dashboard.
             {emailWasSent ? " A confirmation email has also been sent to your inbox." : ""}
           </p>
-          <div className="payment-confirmation-badge">
-            <span>Card payment approved</span>
-            <strong>Official booking confirmation</strong>
-          </div>
         </div>
 
         {/* MAIN LAYOUT */}
