@@ -93,7 +93,7 @@ export default function Services() {
             style={showcaseImage ? { backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0), rgba(46,35,21,0.08)), url("${showcaseImage}")` } : undefined}
           >
             <div className="services-visual-card">
-              <strong>cityscape_concierge</strong>
+              <strong>cityscape</strong>
               <em>"The details make the stay."</em>
             </div>
           </div>
