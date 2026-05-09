@@ -327,14 +327,14 @@ export default function BookingSuccess() {
                               ? service.quantity === 1 ? "person" : "people"
                               : service.quantity === 1 ? "item" : "items"}
                           </span>
-                          {service.total > 0 && (
-                            <span className="experience-total">
-                              {service.total.toFixed(2)} EUR
-                              <small>Pay at hotel</small>
-                            </span>
-                          )}
                         </div>
                       </div>
+                      {service.total > 0 && (
+                        <span className="experience-total">
+                          {service.total.toFixed(2)} EUR
+                          <small>Pay at hotel</small>
+                        </span>
+                      )}
                     </article>
                   ))}
                 </div>
