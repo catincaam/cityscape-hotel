@@ -12,7 +12,16 @@ import Navbar from "../Dashboard/Navbar";
 import profilePicture from "../../assets/profilePicture.jpg";
 import { getDashboardData } from "../../services/dashboardService";
 import { getUserActivePoints } from "../../services/rewardService";
+import { API_BASE_URL } from "../../config/runtimeUrls";
 import "./ProfilePage.css";
+
+const resolveProfilePicture = (value) => {
+  if (!value || typeof value !== "string") return profilePicture;
+  if (/^https?:\/\//i.test(value)) return value;
+  if (value.startsWith("/assets/")) return value;
+  if (value.startsWith("/")) return `${API_BASE_URL}${value}`;
+  return value;
+};
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -116,7 +125,7 @@ export default function ProfilePage() {
         <aside className="profile-sidebar">
           <div className="profile-portrait">
             <img
-              src={userData?.client?.profilePicture || profilePicture}
+              src={resolveProfilePicture(userData?.client?.profilePicture)}
               alt="User avatar"
               onError={(event) => { event.currentTarget.src = profilePicture; }}
             />
