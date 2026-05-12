@@ -52,15 +52,10 @@ export default function ProfileEdit() {
     setProfilePic(resolveImage(client.profilePicture));
   }, [resolveImage]);
 
-  const hasUpcomingOrActiveReservations = useCallback((reservations = []) => {
-    const now = new Date();
+  const hasExistingReservations = useCallback((reservations = []) => {
     return reservations.some((reservation) => {
       const status = String(reservation.status || "").toLowerCase();
-      const checkout = reservation.checkOut || reservation.requestedCheckout;
-
-      if (status === "cancelled" || status === "canceled") return false;
-      if (status === "upcoming" || status === "active") return true;
-      return checkout ? new Date(checkout) >= now : false;
+      return status !== "cancelled" && status !== "canceled";
     });
   }, []);
 
@@ -68,31 +63,55 @@ export default function ProfileEdit() {
     async function loadProfile() {
       try {
         const token = localStorage.getItem("token");
-        const dashboardResponse = await fetch(`${API}/dashboard`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const dashboard = dashboardResponse.ok ? await dashboardResponse.json() : null;
-
-        if (dashboard) {
-          setHasBlockingReservations(hasUpcomingOrActiveReservations(dashboard.allReservations || dashboard.recentReservations || []));
-        }
+        let loadedClient = null;
 
         const profileResponse = await fetch(`${API}/clients/me`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
         if (profileResponse.ok) {
-          const client = await profileResponse.json();
-          applyClient(client);
-          return;
+          loadedClient = await profileResponse.json();
+          applyClient(loadedClient);
+        } else {
+          const profileError = await profileResponse.json().catch(() => ({}));
+          console.warn("Could not load /clients/me:", profileResponse.status, profileError.message || profileResponse.statusText);
         }
 
-        if (dashboard?.client) {
+        let dashboard = null;
+        try {
+          const dashboardResponse = await fetch(`${API}/dashboard`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          dashboard = dashboardResponse.ok ? await dashboardResponse.json() : null;
+        } catch (dashboardErr) {
+          console.warn("Could not load dashboard reservations for profile lock:", dashboardErr.message);
+        }
+
+        if (dashboard?.client && !loadedClient) {
+          loadedClient = dashboard.client;
           applyClient(dashboard.client);
-          return;
         }
 
-        throw new Error("Could not load your profile.");
+        const dashboardReservations = dashboard?.allReservations || dashboard?.recentReservations || [];
+        if (dashboardReservations.length) {
+          setHasBlockingReservations(hasExistingReservations(dashboardReservations));
+        } else {
+          const userId = loadedClient?.ClientId || loadedClient?.clientId || localStorage.getItem("userId");
+          if (userId) {
+            try {
+              const reservationsResponse = await fetch(`${API}/reservations?userId=${userId}`);
+              const reservations = reservationsResponse.ok ? await reservationsResponse.json() : [];
+              setHasBlockingReservations(hasExistingReservations(Array.isArray(reservations) ? reservations : []));
+            } catch (reservationsErr) {
+              console.warn("Could not load reservations for profile lock:", reservationsErr.message);
+              setHasBlockingReservations(true);
+            }
+          }
+        }
+
+        if (!loadedClient) {
+          throw new Error("Could not load your profile. Please sign in again.");
+        }
       } catch (err) {
         setError(err.message || "Could not load your profile.");
       } finally {
@@ -101,7 +120,7 @@ export default function ProfileEdit() {
     }
 
     loadProfile();
-  }, [applyClient, hasUpcomingOrActiveReservations]);
+  }, [applyClient, hasExistingReservations]);
 
   function handleProfilePicChange(event) {
     const file = event.target.files?.[0];
@@ -213,8 +232,8 @@ export default function ProfileEdit() {
 
   async function handleDelete() {
     if (hasBlockingReservations) {
-      setError("You cannot delete your account while you have upcoming or active reservations.");
-      notify("You cannot delete your account while you have upcoming or active reservations.", "warning");
+      setError("You cannot delete your account while you have reservations on your profile.");
+      notify("You cannot delete your account while you have reservations on your profile.", "warning");
       return;
     }
 
@@ -239,7 +258,7 @@ export default function ProfileEdit() {
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
         if (response.status === 409) {
-          throw new Error(data.message || "You cannot delete your account while you have upcoming or active reservations.");
+          throw new Error(data.message || "You cannot delete your account while you have reservations on your profile.");
         }
         throw new Error(data.message || "Could not delete account.");
       }
@@ -360,7 +379,7 @@ export default function ProfileEdit() {
                   <h3>Account Management</h3>
                   <p>
                     {hasBlockingReservations
-                      ? "You have upcoming or active reservations, so account deletion is currently unavailable."
+                      ? "You have reservations on your profile, so account deletion is currently unavailable."
                       : "Deleting your account is permanent and removes bookings, loyalty points, and profile history."}
                   </p>
                 </div>

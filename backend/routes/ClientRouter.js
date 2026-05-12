@@ -138,14 +138,13 @@ clientRouter.delete("/me", authMiddleware, async (req, res) => {
     const blockingReservation = await Reservation.findOne({
       where: {
         ClientId: req.client.id,
-        status: { [Op.ne]: "cancelled" },
-        requestedCheckout: { [Op.gte]: new Date() }
+        status: { [Op.notIn]: ["cancelled", "canceled"] }
       }
     });
 
     if (blockingReservation) {
       return res.status(409).json({
-        message: "You cannot delete your account while you have upcoming or active reservations."
+        message: "You cannot delete your account while you have reservations on your profile."
       });
     }
 
@@ -225,14 +224,13 @@ clientRouter.delete("/:id", authMiddleware, async (req, res) => {
     const blockingReservation = await Reservation.findOne({
       where: {
         ClientId: req.params.id,
-        status: { [Op.ne]: "cancelled" },
-        requestedCheckout: { [Op.gte]: new Date() }
+        status: { [Op.notIn]: ["cancelled", "canceled"] }
       }
     });
 
     if (blockingReservation) {
       return res.status(409).json({
-        message: "You cannot delete your account while you have upcoming or active reservations."
+        message: "You cannot delete your account while you have reservations on your profile."
       });
     }
 
