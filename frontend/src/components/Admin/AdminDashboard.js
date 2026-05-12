@@ -2,8 +2,17 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { PieChart } from "./PieChart.js";
 import { HorizontalBarChart } from "./HorizontalBarChart.js";
+import { API_BASE_URL } from "../../config/runtimeUrls.js";
 // import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import "./AdminDashboard.css";
+
+function resolveProfilePicture(value) {
+  if (!value || typeof value !== "string") return "";
+  if (/^https?:\/\//i.test(value)) return value;
+  if (value.startsWith("/assets/")) return value;
+  if (value.startsWith("/")) return `${API_BASE_URL}${value}`;
+  return value;
+}
 
 export default function AdminDashboard() {
   const [kpi, setKpi] = useState({ revenue: 0, occupancy: 0, satisfaction: 0 });
@@ -161,7 +170,7 @@ export default function AdminDashboard() {
             {feedback.map(f => {
               const clientName = f.Client ? `${f.Client.FirstName} ${f.Client.LastName}` : 'Guest';
               const clientEmail = f.Client?.Email || '';
-              const clientAvatar = f.Client?.profilePicture;
+              const clientAvatar = resolveProfilePicture(f.Client?.profilePicture);
               const checkIn = f.Reservation?.requestedCheckin ? new Date(f.Reservation.requestedCheckin).toLocaleDateString() : 'N/A';
               const rating = Number(f.serviceRating) || 0;
               

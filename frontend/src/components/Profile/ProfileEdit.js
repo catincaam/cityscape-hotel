@@ -15,8 +15,9 @@ import Navbar from "../Dashboard/Navbar";
 import { logout } from "../../services/authService";
 import { useNotification } from "../Notifications/NotificationProvider";
 import { isStrongPassword, isValidEmail, isValidPersonName } from "../../utils/validators";
+import { API_BASE_URL } from "../../config/runtimeUrls";
 
-const API = "http://localhost:9001/api";
+const API = `${API_BASE_URL}/api`;
 
 export default function ProfileEdit() {
   const navigate = useNavigate();
@@ -40,7 +41,7 @@ export default function ProfileEdit() {
   const resolveImage = useCallback((image) => {
     if (!image) return defaultProfilePic;
     if (image.startsWith("http")) return image;
-    if (image.startsWith("/uploads")) return `http://localhost:9001${image}`;
+    if (image.startsWith("/uploads")) return `${API_BASE_URL}${image}`;
     return image;
   }, []);
 
@@ -200,7 +201,8 @@ export default function ProfileEdit() {
       setNewPassword("");
       setConfirmPassword("");
       setSelectedFile(null);
-      setProfilePic(resolveImage(data.profilePicture));
+      const savedProfilePicture = data.profilePicture || uploadedImage || profilePic;
+      setProfilePic(resolveImage(savedProfilePicture));
       setMessage("Profile updated successfully.");
     } catch (err) {
       setError(err.message || "Could not save profile changes.");
