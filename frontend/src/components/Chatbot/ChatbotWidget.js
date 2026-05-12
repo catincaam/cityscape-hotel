@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { MessageCircle, Send, X } from "lucide-react";
+import { API_BASE_URL } from "../../config/runtimeUrls";
 import "./ChatbotWidget.css";
 
 const ChatbotWidget = () => {
@@ -47,7 +48,7 @@ const ChatbotWidget = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/chatbot/chat", {
+      const response = await fetch(`${API_BASE_URL}/api/chatbot/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
