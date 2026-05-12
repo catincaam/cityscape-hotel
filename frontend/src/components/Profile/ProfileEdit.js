@@ -270,9 +270,8 @@ export default function ProfileEdit() {
         <form className="profile-edit-shell" onSubmit={handleSave}>
           <header className="profile-edit-hero">
             <div>
-              <p className="profile-kicker">Profile Settings</p>
-              <h1>Edit your account</h1>
-              <span>Keep your Cityscape identity and security details up to date.</span>
+              <h1>Edit Identity</h1>
+              <span>Refine your presence within the sanctuary. Every detail matters.</span>
             </div>
             <div className="profile-edit-actions">
               <button type="button" className="profile-edit-secondary" onClick={() => navigate("/profile")}>
@@ -301,12 +300,11 @@ export default function ProfileEdit() {
             </div>
             <div>
               <h2>{firstName || "User"} {lastName}</h2>
-              <p>{email}</p>
               <span>Explorer Member</span>
             </div>
           </section>
 
-          <section className="profile-edit-card">
+          <section className="profile-edit-layout">
             <div className="profile-edit-section">
               <div className="profile-edit-section-title">
                 <UserRound size={18} />
