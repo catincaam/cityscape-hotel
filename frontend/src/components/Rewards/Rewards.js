@@ -171,6 +171,11 @@ export default function Rewards() {
     setCarouselIndex((prev) => (prev + 1) % rewards.length);
   };
 
+  const redeemReward = (reward) => {
+    sessionStorage.setItem("selectedReward", JSON.stringify(reward));
+    navigate("/rewards-details", { state: { reward } });
+  };
+
   const visibleRewards = rewards.slice(carouselIndex, carouselIndex + 3);
   const upcomingRoom = getStayRoom(upcomingStay);
   const upcomingTheme = getStayTheme(upcomingStay);
@@ -295,7 +300,7 @@ export default function Rewards() {
                     <button 
                       className={`luxury-redeem-btn ${activePoints < reward.points ? 'disabled' : ''}`}
                       disabled={activePoints < reward.points}
-                      onClick={() => navigate('/rewards-details', { state: { reward } })}
+                      onClick={() => redeemReward(reward)}
                     >
                       {activePoints < reward.points ? "NOT ENOUGH POINTS" : "REDEEM"}
                     </button>

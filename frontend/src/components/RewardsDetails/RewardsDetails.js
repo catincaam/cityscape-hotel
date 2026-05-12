@@ -1,7 +1,16 @@
-
-
-import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+  ArrowUpRight,
+  CalendarDays,
+  Check,
+  ChevronRight,
+  Gift,
+  MapPin,
+  ShieldCheck,
+  Sparkles,
+  Users
+} from "lucide-react";
 import { getUserActivePoints } from "../../services/rewardService";
 import { API_BASE_URL } from "../../config/runtimeUrls";
 import { getDashboardData } from "../../services/dashboardService";
@@ -18,26 +27,41 @@ const toImageUrl = (path) => {
   return path.startsWith("http") ? path : `${API_BASE_URL}${path.startsWith("/") ? "" : "/"}${path}`;
 };
 
-const RewardsDetails = () => {
+const formatDate = (date, options) => new Date(date).toLocaleDateString("en-US", options);
+const formatReservationRef = (id) => `BK-${String(id || "").padStart(4, "0")}`;
+
+export default function RewardsDetails() {
   const navigate = useNavigate();
   const location = useLocation();
   const [userPoints, setUserPoints] = useState(0);
   const [upcomingStays, setUpcomingStays] = useState([]);
   const [selectedStay, setSelectedStay] = useState(null);
-  const [reward, setReward] = useState(null);
+  const [reward, setReward] = useState(() => {
+    if (location.state?.reward) return location.state.reward;
+    try {
+      return JSON.parse(sessionStorage.getItem("selectedReward") || "null");
+    } catch {
+      return null;
+    }
+  });
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
-  const [guestDetails, setGuestDetails] = useState([
-    { name: "", email: "" }
-  ]);
+  const [guestDetails, setGuestDetails] = useState([{ name: "", email: "" }]);
   const [userId, setUserId] = useState(getStoredUserId);
 
   useEffect(() => {
-    if (location.state?.reward) setReward(location.state.reward);
+    if (location.state?.reward) {
+      setReward(location.state.reward);
+      sessionStorage.setItem("selectedReward", JSON.stringify(location.state.reward));
+    }
+  }, [location.state]);
+
+  useEffect(() => {
     async function fetchData() {
       try {
         let resolvedUserId = getStoredUserId();
+
         try {
           const dashboardData = await getDashboardData();
           const dashboardUserId = Number(
@@ -45,6 +69,7 @@ const RewardsDetails = () => {
             dashboardData?.client?.clientId ||
             dashboardData?.client?.id
           );
+
           if (Number.isFinite(dashboardUserId) && dashboardUserId > 0) {
             resolvedUserId = dashboardUserId;
             localStorage.setItem("userId", String(resolvedUserId));
@@ -56,15 +81,16 @@ const RewardsDetails = () => {
         setUserId(resolvedUserId);
         const active = await getUserActivePoints(resolvedUserId);
         setUserPoints(active.activePoints || 0);
+
         const res = await fetch(`${API_BASE_URL}/api/reservations?userId=${resolvedUserId}`);
         if (res.ok) {
           const reservations = await res.json();
           const now = new Date();
           const upcoming = reservations
-            .filter(r => new Date(r.requestedCheckin) > now && r.status !== 'cancelled')
+            .filter((reservation) => new Date(reservation.requestedCheckin) > now && reservation.status !== "cancelled")
             .sort((a, b) => new Date(a.requestedCheckin) - new Date(b.requestedCheckin))
             .slice(0, 5);
-          setUpcomingStays(upcoming.length ? upcoming : []);
+          setUpcomingStays(upcoming);
         }
       } catch {
         setUpcomingStays([]);
@@ -72,14 +98,32 @@ const RewardsDetails = () => {
         setLoading(false);
       }
     }
-    fetchData();
-  }, [location.state]);
 
-  const calculatePointsToDeduct = () => {
-    if (reward?.rewardType === 'per_person') {
-      return reward.points * guestDetails.length;
+    fetchData();
+  }, []);
+
+  const isPerPerson = reward?.rewardType === "per_person";
+  const pointsToDeduct = reward ? (isPerPerson ? reward.points * guestDetails.length : reward.points) : 0;
+  const rewardImage = toImageUrl(reward?.image);
+  const selectedRoom = selectedStay?.RoomReservations?.[0]?.Room;
+  const selectedTheme = selectedRoom?.RoomTheme;
+
+  const handleGuestChange = (idx, field, value) => {
+    setGuestDetails((prev) => prev.map((guest, i) => (
+      i === idx ? { ...guest, [field]: value } : guest
+    )));
+  };
+
+  const handleAddGuest = () => {
+    if (!selectedStay) return;
+    const maxGuests = selectedStay.nrPeople || 1;
+    if (guestDetails.length < maxGuests) {
+      setGuestDetails((prev) => [...prev, { name: "", email: "" }]);
     }
-    return reward?.points || 0;
+  };
+
+  const handleRemoveGuest = (idx) => {
+    setGuestDetails((prev) => prev.length === 1 ? prev : prev.filter((_, i) => i !== idx));
   };
 
   const handleApplyReward = async () => {
@@ -87,11 +131,12 @@ const RewardsDetails = () => {
       alert("Please select a stay");
       return;
     }
-    const pointsToDeduct = calculatePointsToDeduct();
+
     if (userPoints < pointsToDeduct) {
       alert(`Not enough points. You need ${pointsToDeduct} points but only have ${userPoints}`);
       return;
     }
+
     setApplying(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/rewards/apply`, {
@@ -102,16 +147,15 @@ const RewardsDetails = () => {
           rewardId: reward.RewardId,
           reservationId: selectedStay.ReservationId,
           points: pointsToDeduct,
-          guestCount: reward.rewardType === 'per_person' ? guestDetails.length : 1,
+          guestCount: isPerPerson ? guestDetails.length : 1,
           guestDetails
         })
       });
+
       if (res.ok) {
         setUserPoints(userPoints - pointsToDeduct);
-        setSuccessMessage(`Reward applied to your stay in ${selectedStay.Room?.city || 'your destination'}!`);
-        setTimeout(() => {
-          navigate("/rewards");
-        }, 2000);
+        setSuccessMessage("Reward applied to your selected stay.");
+        setTimeout(() => navigate("/rewards"), 2000);
       } else {
         alert("Failed to apply reward");
       }
@@ -122,171 +166,213 @@ const RewardsDetails = () => {
     }
   };
 
-  const handleGuestChange = (idx, field, value) => {
-    setGuestDetails(prev => prev.map((g, i) => i === idx ? { ...g, [field]: value } : g));
-  };
-  const handleAddGuest = () => {
-    if (!selectedStay) return;
-    const maxGuests = selectedStay.nrPeople || 1;
-    if (guestDetails.length < maxGuests) {
-      setGuestDetails(prev => [...prev, { name: "", email: "" }]);
-    }
-  };
-  const handleRemoveGuest = (idx) => {
-    setGuestDetails(prev => prev.length === 1 ? prev : prev.filter((_, i) => i !== idx));
-  };
-
-  // PREMIUM LAYOUT MARKUP
   if (!reward) {
     return (
       <>
         <Navbar />
-        <div className="rewards-details-container">
-          <p>No reward selected</p>
-          <button onClick={() => navigate("/rewards")}>Back to Rewards</button>
-        </div>
+        <main className="reward-redemption-page">
+          <section className="reward-empty">
+            <p>No reward selected.</p>
+            <button type="button" onClick={() => navigate("/rewards")}>Back to Rewards</button>
+          </section>
+        </main>
       </>
     );
   }
 
   return (
-    <div className="premium-bg">
+    <>
       <Navbar />
-      <main className="premium-main-wrapper">
-        <header className="premium-header">
-          <h1 className="premium-title">Redeem Your Experience</h1>
-          <p className="premium-subtitle">Apply your points to elevate your stay.</p>
-          <div className="premium-points-available">
-            <span className="premium-points-badge">
-              {userPoints.toLocaleString()} PTS AVAILABLE
-            </span>
-          </div>
-        </header>
-        <section className="premium-content-row">
-          <div className="premium-content-col">
-            {/* I. Selected Reward */}
-            <div className="premium-section">
-              <div className="premium-section-title"><span>I.</span> Selected Reward</div>
-              <div className="premium-reward-card">
-                {reward.image && (
-                  <img src={toImageUrl(reward.image)} alt={reward.title} className="premium-reward-img" />
-                )}
-                <div className="premium-reward-info">
-                  <div className="premium-reward-header-row">
-                    <div className="premium-reward-name">{reward.title}</div>
-                    <span className="premium-badge">{reward.rewardType === 'per_person' ? 'PER PERSON' : 'PER BOOKING'}</span>
-                  </div>
-                  <div className="premium-reward-desc">{reward.desc}</div>
-                  <div className="premium-reward-points">{reward.points} pts{reward.rewardType === 'per_person' && <span> / PERSON</span>}</div>
-                </div>
+      <main className="reward-redemption-page">
+        <section
+          className={`reward-redemption-hero ${rewardImage ? "" : "empty"}`}
+          style={rewardImage ? { backgroundImage: `linear-gradient(90deg, rgba(18, 16, 12, 0.74), rgba(18, 16, 12, 0.44)), url("${rewardImage}")` } : undefined}
+        >
+          <div className="reward-hero-content">
+            <p>{reward.category || "Cityscape Reward"}</p>
+            <h1>{reward.title}</h1>
+            <span>{reward.desc || "Apply your points to elevate your upcoming stay."}</span>
+            <div className="reward-hero-actions">
+              <div>
+                <small>{isPerPerson ? "Reward cost / person" : "Reward cost"}</small>
+                <strong>{reward.points.toLocaleString()} pts</strong>
               </div>
+              <button type="button" onClick={() => document.getElementById("reward-flow")?.scrollIntoView({ behavior: "smooth" })}>
+                Redeem reward
+                <ArrowUpRight size={18} />
+              </button>
             </div>
-            {/* II. Select Upcoming Stay */}
-            <div className="premium-section">
-              <div className="premium-section-title"><span>II.</span> Select Upcoming Stay</div>
-              <div className="premium-stays-list">
+          </div>
+        </section>
+
+        <section className="reward-redemption-content" id="reward-flow">
+          <div className="reward-timeline" aria-hidden="true" />
+
+          <div className="reward-redemption-main">
+            <section className="reward-step">
+              <div className="reward-step-marker">1</div>
+              <div className="reward-step-copy">
+                <h2>Selected Reward</h2>
+                <p>Confirm your reward before choosing the stay where it will be applied.</p>
+              </div>
+              <article className="selected-reward-row">
+                <img src={rewardImage || "/logo192.png"} alt={reward.title} />
+                <div className="selected-reward-copy">
+                  <h3>{reward.title}</h3>
+                  <p>{reward.desc}</p>
+                  <div className="selected-reward-meta">
+                    <span><Gift size={14} /> {isPerPerson ? "Per person" : "Per booking"}</span>
+                    <span><Sparkles size={14} /> {reward.points.toLocaleString()} pts</span>
+                  </div>
+                </div>
+                <button type="button" onClick={() => navigate("/rewards")}>
+                  Modify
+                  <ChevronRight size={13} />
+                </button>
+              </article>
+            </section>
+
+            <section className="reward-step">
+              <div className="reward-step-marker">2</div>
+              <div className="reward-step-header">
+                <div className="reward-step-copy">
+                  <h2>Choose Reservation</h2>
+                  <p>Apply this reward to one of your upcoming confirmed stays.</p>
+                </div>
+                <button type="button" className="reward-all-stays" onClick={() => navigate("/reservations")}>
+                  All reservations
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+
+              <div className="reward-stays-list">
                 {loading ? (
-                  <div className="premium-no-stays">Loading stays...</div>
+                  <div className="reward-state-card">Loading stays...</div>
                 ) : upcomingStays.length === 0 ? (
-                  <div className="premium-no-stays">
+                  <div className="reward-state-card">
                     <p>No upcoming stays found.</p>
-                    <a href="/book" className="premium-btn">Book a Stay</a>
+                    <button type="button" onClick={() => navigate("/booking")}>Book a Stay</button>
                   </div>
                 ) : (
-                  upcomingStays.map(stay => {
-                    const roomRes = Array.isArray(stay.RoomReservations) && stay.RoomReservations.length > 0 ? stay.RoomReservations[0] : null;
-                    const room = roomRes?.Room;
+                  upcomingStays.map((stay) => {
+                    const room = stay.RoomReservations?.[0]?.Room;
                     const theme = room?.RoomTheme;
-                    const isSelected = selectedStay && selectedStay.ReservationId === stay.ReservationId;
+                    const isSelected = selectedStay?.ReservationId === stay.ReservationId;
+                    const checkIn = new Date(stay.requestedCheckin);
+                    const checkOut = new Date(stay.requestedCheckout);
+
                     return (
-                      <div
+                      <button
+                        type="button"
                         key={stay.ReservationId}
-                        className={`premium-stay-card${isSelected ? ' selected' : ''}`}
+                        className={`reward-stay-option ${isSelected ? "selected" : ""}`}
                         onClick={() => setSelectedStay(stay)}
                       >
-                        <div className="premium-stay-card-header">
-                          <div className="premium-stay-card-title">{room?.name || 'Your Room'}</div>
-                          {isSelected && <span className="premium-stay-card-selected">SELECTED</span>}
+                        <div className="reward-date-tile">
+                          <span>{formatDate(checkIn, { month: "short" })}</span>
+                          <strong>{formatDate(checkIn, { day: "2-digit" })}-{formatDate(checkOut, { day: "2-digit" })}</strong>
                         </div>
-                        <div className="premium-stay-card-meta">
-                          <span className="premium-stay-card-location">{theme?.city || ''}</span>
-                          {theme?.city && <span className="premium-stay-dot">&nbsp;·&nbsp;</span>}
-                          <span className="premium-stay-card-theme">{theme?.name || ''}</span>
+                        <div className="reward-stay-body">
+                          <h3>{theme?.name || room?.RoomName || "Your Room"}</h3>
+                          <div className="reward-stay-meta">
+                            <span><MapPin size={14} /> {theme?.city || "Cityscape"}</span>
+                            <span><Users size={14} /> {stay.nrPeople || 1} guest{(stay.nrPeople || 1) > 1 ? "s" : ""}</span>
+                            <span>{formatReservationRef(stay.ReservationId)}</span>
+                          </div>
                         </div>
-                        <div className="premium-stay-card-dates-row">
-                          <span className="premium-stay-card-dates">
-                            {new Date(stay.requestedCheckin).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                            {' - '}
-                            {new Date(stay.requestedCheckout).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                          </span>
-                          <span className="premium-stay-dot">&nbsp;·&nbsp;</span>
-                          <span className="premium-stay-card-guests">{stay.nrPeople || 1} guest{(stay.nrPeople || 1) > 1 ? 's' : ''}</span>
+                        <div className="reward-selected-icon">
+                          {isSelected ? <Check size={19} /> : <ChevronRight size={20} />}
                         </div>
-                      </div>
+                      </button>
                     );
                   })
                 )}
               </div>
-            </div>
-            {/* III. Guest Details */}
-            <div className="premium-section">
-              <div className="premium-section-title premium-guest-title-row">
-                <span>III.</span> Guest Details
-                <button className="premium-add-guest" onClick={handleAddGuest} disabled={!selectedStay || guestDetails.length >= (selectedStay?.nrPeople || 1)}>
-                  <span className="premium-add-guest-plus">＋</span> ADD GUEST
-                </button>
+            </section>
+
+            <section className="reward-step">
+              <div className="reward-step-marker muted">3</div>
+              <div className="reward-step-copy">
+                <h2>Guest Details</h2>
+                <p>Optional guest details for the reward confirmation.</p>
               </div>
-              <div className="premium-guest-list">
+              <div className="reward-guest-list">
+                <button
+                  className="reward-add-guest"
+                  type="button"
+                  onClick={handleAddGuest}
+                  disabled={!selectedStay || guestDetails.length >= (selectedStay?.nrPeople || 1)}
+                >
+                  Add guest
+                </button>
                 {guestDetails.map((guest, idx) => (
-                  <div className="premium-guest-row" key={idx}>
-                    <div className="premium-guest-field">
-                      <label className="premium-guest-label">FULL NAME</label>
-                      <input type="text" value={guest.name} onChange={e => handleGuestChange(idx, 'name', e.target.value)} placeholder="Full Name" />
+                  <div className="reward-guest-row" key={idx}>
+                    <div className="reward-guest-field">
+                      <label>Full name</label>
+                      <input type="text" value={guest.name} onChange={(event) => handleGuestChange(idx, "name", event.target.value)} placeholder="Full Name" />
                     </div>
-                    <div className="premium-guest-field">
-                      <label className="premium-guest-label">EMAIL ADDRESS</label>
-                      <input type="email" value={guest.email} onChange={e => handleGuestChange(idx, 'email', e.target.value)} placeholder="Email Address" />
+                    <div className="reward-guest-field">
+                      <label>Email address</label>
+                      <input type="email" value={guest.email} onChange={(event) => handleGuestChange(idx, "email", event.target.value)} placeholder="Email Address" />
                     </div>
                     {guestDetails.length > 1 && (
-                      <button
-                        className="premium-remove-guest"
-                        type="button"
-                        title="Remove guest"
-                        onClick={() => handleRemoveGuest(idx)}
-                      >
+                      <button className="reward-remove-guest" type="button" title="Remove guest" onClick={() => handleRemoveGuest(idx)}>
                         &minus;
                       </button>
                     )}
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
           </div>
-          {/* SIDEBAR SUMMARY */}
-          <aside className="premium-sidebar">
-            <div className="premium-sidebar-card">
-              <div className="premium-sidebar-title">Redemption Summary</div>
-              <div className="premium-sidebar-row"><span>Selected Reward</span><span>{reward.title}</span></div>
-              <div className="premium-sidebar-row"><span>Number of Guests</span><span>{reward.rewardType === 'per_person' ? String(guestDetails.length).padStart(2, '0') : '01'}</span></div>
-              <div className="premium-sidebar-row"><span>Cost per person</span><span>{reward.points} pts</span></div>
-              <div className="premium-sidebar-row premium-sidebar-total"><span>Total Points</span><span>{calculatePointsToDeduct()} pts</span></div>
-              <div className="premium-sidebar-balance">BALANCE IMPACT <span>{userPoints.toLocaleString()} → {(userPoints - calculatePointsToDeduct()).toLocaleString()}</span></div>
+
+          <aside className="reward-summary-sidebar">
+            <div className="reward-summary-card">
+              <h3>Redemption Summary</h3>
+
+              <div className="reward-summary-block">
+                <p>Selected reward</p>
+                <div className="reward-summary-line">
+                  <span>
+                    <strong>{reward.title}</strong>
+                    <small>x{isPerPerson ? guestDetails.length : 1} {isPerPerson ? "person" : "booking"}</small>
+                  </span>
+                  <b>{pointsToDeduct.toLocaleString()} pts</b>
+                </div>
+              </div>
+
+              {selectedStay && (
+                <div className="reward-summary-block">
+                  <p>Stay details</p>
+                  <div className="reward-summary-stay">
+                    <CalendarDays size={15} />
+                    <span>{selectedTheme?.name || selectedRoom?.RoomName || "Selected stay"}</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="reward-balance-box">
+                <span>Balance impact</span>
+                <strong>{userPoints.toLocaleString()} -> {(userPoints - pointsToDeduct).toLocaleString()} pts</strong>
+              </div>
+
               <button
-                className="premium-sidebar-btn"
+                className="reward-summary-btn"
+                type="button"
                 onClick={handleApplyReward}
-                disabled={applying || !selectedStay || (reward.rewardType === 'per_person' && guestDetails.length < 1)}
+                disabled={applying || !selectedStay || pointsToDeduct > userPoints}
               >
-                {applying ? 'Applying...' : 'APPLY REWARD'}
+                {applying ? "Applying..." : "Apply Reward"}
               </button>
-              <div className="premium-sidebar-note">POINTS ARE NON-REFUNDABLE ONCE APPLIED TO A CONFIRMED STAY.</div>
-              {successMessage && <div className="success-message">{successMessage}</div>}
+
+              <div className="reward-secure-note"><ShieldCheck size={14} /> Secure redemption</div>
+              <p className="reward-summary-note">Points are non-refundable once applied to a confirmed stay.</p>
+
+              {successMessage && <div className="reward-success-message">{successMessage}</div>}
             </div>
           </aside>
         </section>
       </main>
-    </div>
+    </>
   );
-};
-
-export default RewardsDetails;
-
+}
