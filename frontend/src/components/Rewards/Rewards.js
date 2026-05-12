@@ -8,6 +8,7 @@ import { getDashboardData } from "../../services/dashboardService";
 
 const getStayRoom = (stay) => stay?.room || stay?.RoomReservations?.[0]?.Room || null;
 const getStayTheme = (stay) => getStayRoom(stay)?.RoomTheme || null;
+
 const toImageUrl = (path) => {
   if (!path) return null;
   return path.startsWith("http") ? path : `${API_BASE_URL}${path.startsWith("/") ? "" : "/"}${path}`;
@@ -66,9 +67,7 @@ export default function Rewards() {
   const [loading, setLoading] = useState(true);
   const [upcomingStay, setUpcomingStay] = useState(null);
   const [upcomingStayImage, setUpcomingStayImage] = useState(null);
-  const [carouselIndex, setCarouselIndex] = useState(0);
 
-  // Function to fetch data - can be called multiple times
   const fetchData = async () => {
     try {
       let userId = getStoredUserId();
@@ -97,63 +96,42 @@ export default function Rewards() {
       setActivePoints(Number(dashboardData?.cityPoints ?? active.activePoints ?? 0));
       setPendingPoints(Number(pending.pendingPoints || 0));
       setHistory(
-        (Array.isArray(all) ? all : []).map((p) => ({
-          id: p.RewardPointId,
-          label: cleanPointDescription(p),
-          date: new Date(p.createdAt).toLocaleDateString(),
-          status: p.status ? p.status.charAt(0).toUpperCase() + p.status.slice(1) : "Active",
-          amount: (p.amount > 0 ? "+" : "") + p.amount + "p",
-          icon: p.status === "redeemed" ? "shopping_bag" : "workspace_premium"
+        (Array.isArray(all) ? all : []).map((point) => ({
+          id: point.RewardPointId,
+          label: cleanPointDescription(point),
+          date: new Date(point.createdAt).toLocaleDateString(),
+          status: point.status ? point.status.charAt(0).toUpperCase() + point.status.slice(1) : "Active",
+          amount: `${point.amount > 0 ? "+" : ""}${point.amount}p`
         }))
       );
 
-      // Filter only active rewards
-      const activeRewards = Array.isArray(rewardsData) 
-        ? rewardsData.filter(r => r.active !== false)
-        : [];
-      setRewards(activeRewards);
+      setRewards(Array.isArray(rewardsData) ? rewardsData.filter((reward) => reward.active !== false) : []);
 
-      // Fetch upcoming stay
       try {
         const res = await fetch(`${API_BASE_URL}/api/reservations/upcoming/${userId}`);
-        console.log("Upcoming reservations API response:", res.status, res.statusText);
         if (res.ok) {
           const stay = await res.json();
-          console.log("Upcoming stay data:", stay);
           const detailsRes = await fetch(`${API_BASE_URL}/api/reservations/${stay.ReservationId}`);
-          if (detailsRes.ok) {
-            const stayDetails = await detailsRes.json();
-            setUpcomingStay(stayDetails);
-          } else {
-            setUpcomingStay(stay);
-          }
-        } else {
-          console.log("API returned non-ok status:", res.status);
-          // Try to get error details
-          const errorData = await res.json().catch(() => ({}));
-          console.log("Error details:", errorData);
+          setUpcomingStay(detailsRes.ok ? await detailsRes.json() : stay);
         }
       } catch (err) {
-        console.log("Fetch error:", err.message);
+        console.log("Could not fetch upcoming stay:", err.message);
       }
     } catch (err) {
-      console.error("Error fetching data:", err);
+      console.error("Error fetching rewards data:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Initial fetch on mount
   useEffect(() => {
     fetchData();
   }, []);
 
-  // Refetch data whenever returning to this page
   useEffect(() => {
     fetchData();
   }, [location]);
 
-  // Fetch room theme image for upcoming stay
   useEffect(() => {
     const room = getStayRoom(upcomingStay);
     const theme = getStayTheme(upcomingStay);
@@ -163,159 +141,126 @@ export default function Rewards() {
     );
   }, [upcomingStay]);
 
-  const handlePrevCarousel = () => {
-    setCarouselIndex((prev) => (prev - 1 + rewards.length) % rewards.length);
-  };
-
-  const handleNextCarousel = () => {
-    setCarouselIndex((prev) => (prev + 1) % rewards.length);
-  };
-
   const redeemReward = (reward) => {
     sessionStorage.setItem("selectedReward", JSON.stringify(reward));
     navigate("/rewards-details", { state: { reward } });
   };
 
-  const visibleRewards = rewards.slice(carouselIndex, carouselIndex + 3);
+  const scrollToSelection = () => {
+    document.getElementById("rewards-selection")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const upcomingRoom = getStayRoom(upcomingStay);
   const upcomingTheme = getStayTheme(upcomingStay);
+  const showcaseImage = toImageUrl(rewards.find((reward) => reward.image)?.image) || upcomingStayImage;
+  const tierProgress = Math.min(100, Math.round((activePoints / 10000) * 100));
 
   return (
     <>
       <Navbar />
       <main className="rewards-luxury-page">
-        {/* PERSONAL SANCTUARY SECTION */}
-        <section className="luxury-sanctuary">
-          <div className="sanctuary-label">PERSONAL SANCTUARY</div>
-          <p className="sanctuary-subtitle">
-            Your journey towards the extraordinary continues. Explore your curated benefits and upcoming escapes tailored for your discerning taste.
-          </p>
+        <section className="rewards-intro">
+          <p>Loyalty Rewards</p>
+          <h1>Redeem your Cityscape points for curated moments, private comforts and memorable stays.</h1>
         </section>
 
-        {/* POINTS BALANCE SECTION */}
-        <section className="luxury-points-section">
-          <div className="points-balance">
-            <h3 className="section-label">POINTS BALANCE</h3>
-            <div className="points-amount">
-              <span className="points-number">{activePoints.toLocaleString()}</span>
-              <span className="points-unit">pts</span>
-            </div>
+        <section className="rewards-showcase">
+          <div className="rewards-balance">
+            <p>Your legacy balance</p>
+            <h2>{activePoints.toLocaleString()} <span>Points</span></h2>
             {pendingPoints > 0 && (
-              <p className="pending-info">+{pendingPoints}p pending</p>
+              <em>{pendingPoints.toLocaleString()} points pending from upcoming stays</em>
             )}
-            <button className="luxury-btn" onClick={() => navigate("/booking")}>
-              Apply to Stay
-            </button>
+            <div className="rewards-progress">
+              <span>Ascension to next tier</span>
+              <b>{tierProgress}%</b>
+            </div>
+            <div className="rewards-progress-bar">
+              <span style={{ width: `${tierProgress}%` }} />
+            </div>
+            <div className="rewards-showcase-actions">
+              <button type="button" onClick={scrollToSelection}>View rewards</button>
+              <button type="button" className="ghost" onClick={() => navigate("/reservations")}>My stays</button>
+            </div>
           </div>
 
-          {/* UPCOMING STAY SECTION */}
-          {upcomingStay && (
-            <div className="upcoming-stay">
-              <div className="upcoming-header">
-                <h3 className="section-label">UPCOMING STAY</h3>
-                <a href="/reservations" className="view-all-stays">VIEW ALL STAYS</a>
-              </div>
-              <div className="stay-card">
-                {upcomingStayImage ? (
-                  <img 
-                    src={upcomingStayImage}
-                    alt="Upcoming stay"
-                    className="stay-card-image"
-                  />
-                ) : upcomingRoom?.image ? (
-                  <img 
-                    src={toImageUrl(upcomingRoom.image)}
-                    alt="Upcoming stay"
-                    className="stay-card-image"
-                  />
-                ) : (
-                  <div style={{ width: 160, height: 160, background: '#e5e7eb', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: '2rem' }}>-</span>
-                  </div>
-                )}
-                <div className="stay-card-content">
-                  <h4 className="stay-card-title">
-                    {upcomingTheme?.name || upcomingRoom?.RoomName || upcomingRoom?.name || "Your Upcoming Stay"}
-                  </h4>
-                  <p className="stay-card-dates">
-                    {new Date(upcomingStay.requestedCheckin).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                    {" - "}
-                    {new Date(upcomingStay.requestedCheckout).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                  </p>
-                  <div className="stay-card-tags">
-                    {upcomingTheme?.city && (
-                      <span className="tag ocean-view">{upcomingTheme.city}</span>
-                    )}
-                    {upcomingTheme?.theme && (
-                      <span className="tag king-bed">{upcomingTheme.theme}</span>
-                    )}
-                  </div>
-                  <button className="stay-manage-btn" onClick={() => navigate(`/reservation/${upcomingStay.ReservationId}`)}>Manage</button>
-                </div>
-              </div>
+          <div
+            className={`rewards-visual ${showcaseImage ? "" : "empty"}`}
+            style={showcaseImage ? { backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0), rgba(46,35,21,0.08)), url("${showcaseImage}")` } : undefined}
+          >
+            <div className="rewards-visual-card">
+              <strong>cityscape</strong>
+              <em>"Every return should feel remembered."</em>
             </div>
-          )}
+          </div>
         </section>
 
-        {/* AVAILABLE REWARDS CAROUSEL */}
-        <section className="luxury-rewards-section">
-          <div className="rewards-section-header">
+        {upcomingStay && (
+          <section className="rewards-upcoming-strip">
             <div>
-              <h3 className="section-label">CURATED FOR YOU</h3>
-              <h2 className="section-title">Available Rewards</h2>
+              <p>Upcoming Stay</p>
+              <h2>{upcomingTheme?.name || upcomingRoom?.RoomName || upcomingRoom?.name || "Your Upcoming Stay"}</h2>
+              <span>
+                {new Date(upcomingStay.requestedCheckin).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                {" - "}
+                {new Date(upcomingStay.requestedCheckout).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+              </span>
             </div>
-            {rewards.length > 3 && (
-              <div className="carousel-controls">
-                <button className="carousel-btn" onClick={handlePrevCarousel}>‹</button>
-                <button className="carousel-btn" onClick={handleNextCarousel}>›</button>
-              </div>
-            )}
+            <button type="button" onClick={() => navigate(`/reservation/${upcomingStay.ReservationId}`)}>Manage stay</button>
+          </section>
+        )}
+
+        <section className="rewards-boutique-selection" id="rewards-selection">
+          <div className="rewards-ledger-heading">
+            <div>
+              <p>Selection</p>
+              <h2>The Boutique Reward Collection</h2>
+            </div>
+            <button type="button" onClick={scrollToSelection}>Discover all rewards</button>
           </div>
 
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#999' }}>
-              Loading rewards...
-            </div>
+            <div className="rewards-state">Loading rewards...</div>
           ) : rewards.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#999' }}>
-              No rewards available at the moment.
-            </div>
+            <div className="rewards-state">No rewards available at the moment.</div>
           ) : (
-            <div className="rewards-carousel">
-              {visibleRewards.map((reward, idx) => (
-                <div key={reward.RewardId || idx} className="luxury-reward-card">
-                  <div 
-                    className="reward-card-image"
-                    style={{ 
-                      backgroundImage: reward.image 
-                        ? `url('${toImageUrl(reward.image)}')`
-                        : 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)'
-                    }}
+            <div className="boutique-reward-grid">
+              {rewards.map((reward, idx) => (
+                <article key={reward.RewardId || idx} className="boutique-reward-card">
+                  <div className="boutique-reward-image">
+                    {reward.image ? (
+                      <img src={toImageUrl(reward.image)} alt={reward.title} />
+                    ) : (
+                      <div className="reward-image-fallback" />
+                    )}
+                    <span>{Number(reward.points || 0).toLocaleString()} pts</span>
+                  </div>
+                  <p>{reward.category || "Reward"}</p>
+                  <h3>{reward.title}</h3>
+                  <span>{reward.desc}</span>
+                  <button
+                    type="button"
+                    className={activePoints < reward.points ? "disabled" : ""}
+                    disabled={activePoints < reward.points}
+                    onClick={() => redeemReward(reward)}
                   >
-                    <div className="reward-card-cost">{reward.points}p</div>
-                  </div>
-                  <div className="luxury-reward-content">
-                    <h4 className="reward-title">{reward.title}</h4>
-                    <p className="reward-desc">{reward.desc}</p>
-                    <button 
-                      className={`luxury-redeem-btn ${activePoints < reward.points ? 'disabled' : ''}`}
-                      disabled={activePoints < reward.points}
-                      onClick={() => redeemReward(reward)}
-                    >
-                      {activePoints < reward.points ? "NOT ENOUGH POINTS" : "REDEEM"}
-                    </button>
-                  </div>
-                </div>
+                    {activePoints < reward.points ? "Not enough points" : "Redeem reward"}
+                  </button>
+                </article>
               ))}
             </div>
           )}
         </section>
 
-        {/* POINTS HISTORY */}
-        <section className="luxury-history-section">
-          <h2 className="section-title">Points History</h2>
+        <section className="rewards-history-section">
+          <div className="rewards-ledger-heading compact">
+            <div>
+              <p>Ledger</p>
+              <h2>Points History</h2>
+            </div>
+          </div>
           <div className="history-table-wrapper">
-            <table className="luxury-history-table">
+            <table className="rewards-history-table">
               <thead>
                 <tr>
                   <th>Transaction</th>
@@ -327,19 +272,17 @@ export default function Rewards() {
               <tbody>
                 {history.length === 0 ? (
                   <tr>
-                    <td colSpan="4" style={{ textAlign: 'center', color: '#999', padding: '40px 20px' }}>
-                      No transactions yet
-                    </td>
+                    <td colSpan="4" className="empty-history">No transactions yet</td>
                   </tr>
                 ) : (
-                  history.slice(0, 10).map(h => (
-                    <tr key={h.id}>
-                      <td>{h.label}</td>
-                      <td>{h.date}</td>
-                      <td><span className={`status-badge ${h.status.toLowerCase()}`}>{h.status}</span></td>
+                  history.slice(0, 10).map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.label}</td>
+                      <td>{item.date}</td>
+                      <td><span className={`status-badge ${item.status.toLowerCase()}`}>{item.status}</span></td>
                       <td className="text-right">
-                        <span className={`amount ${h.amount.startsWith('+') ? 'positive' : 'negative'}`}>
-                          {h.amount}
+                        <span className={`amount ${item.amount.startsWith("+") ? "positive" : "negative"}`}>
+                          {item.amount}
                         </span>
                       </td>
                     </tr>
