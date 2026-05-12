@@ -4,9 +4,7 @@ import Navbar from "../Dashboard/Navbar";
 import "./Rewards.css";
 import { getUserActivePoints, getUserPendingPoints, getUserPoints, getAllRewards } from "../../services/rewardService";
 import { API_BASE_URL } from "../../config/runtimeUrls";
-
-// Get userId from localStorage (set during login)
-const USER_ID = parseInt(localStorage.getItem("userId")) || 1;
+import { getDashboardData } from "../../services/dashboardService";
 
 const getStayRoom = (stay) => stay?.room || stay?.RoomReservations?.[0]?.Room || null;
 const getStayTheme = (stay) => getStayRoom(stay)?.RoomTheme || null;
@@ -16,6 +14,11 @@ const toImageUrl = (path) => {
 };
 
 const getPointReservation = (point) => point.Reservation || point.reservation || null;
+
+const getStoredUserId = () => {
+  const value = parseInt(localStorage.getItem("userId"), 10);
+  return Number.isFinite(value) && value > 0 ? value : 1;
+};
 
 const getPointTheme = (point) => {
   const reservation = getPointReservation(point);
@@ -68,15 +71,33 @@ export default function Rewards() {
   // Function to fetch data - can be called multiple times
   const fetchData = async () => {
     try {
-      const active = await getUserActivePoints(USER_ID);
-      const pending = await getUserPendingPoints(USER_ID);
-      const all = await getUserPoints(USER_ID);
+      let userId = getStoredUserId();
+      let dashboardData = null;
+
+      try {
+        dashboardData = await getDashboardData();
+        const dashboardUserId = Number(
+          dashboardData?.client?.ClientId ||
+          dashboardData?.client?.clientId ||
+          dashboardData?.client?.id
+        );
+        if (Number.isFinite(dashboardUserId) && dashboardUserId > 0) {
+          userId = dashboardUserId;
+          localStorage.setItem("userId", String(userId));
+        }
+      } catch (dashboardErr) {
+        console.warn("Could not resolve authenticated rewards user:", dashboardErr.message);
+      }
+
+      const active = await getUserActivePoints(userId);
+      const pending = await getUserPendingPoints(userId);
+      const all = await getUserPoints(userId);
       const rewardsData = await getAllRewards();
 
-      setActivePoints(active.activePoints);
-      setPendingPoints(pending.pendingPoints);
+      setActivePoints(Number(dashboardData?.cityPoints ?? active.activePoints ?? 0));
+      setPendingPoints(Number(pending.pendingPoints || 0));
       setHistory(
-        all.map((p) => ({
+        (Array.isArray(all) ? all : []).map((p) => ({
           id: p.RewardPointId,
           label: cleanPointDescription(p),
           date: new Date(p.createdAt).toLocaleDateString(),
@@ -94,7 +115,7 @@ export default function Rewards() {
 
       // Fetch upcoming stay
       try {
-        const res = await fetch(`${API_BASE_URL}/api/reservations/upcoming/${USER_ID}`);
+        const res = await fetch(`${API_BASE_URL}/api/reservations/upcoming/${userId}`);
         console.log("Upcoming reservations API response:", res.status, res.statusText);
         if (res.ok) {
           const stay = await res.json();

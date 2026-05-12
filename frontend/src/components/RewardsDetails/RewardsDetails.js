@@ -3,8 +3,20 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getUserActivePoints } from "../../services/rewardService";
+import { API_BASE_URL } from "../../config/runtimeUrls";
+import { getDashboardData } from "../../services/dashboardService";
 import Navbar from "../Dashboard/Navbar";
 import "./RewardsDetails.css";
+
+const getStoredUserId = () => {
+  const value = parseInt(localStorage.getItem("userId"), 10);
+  return Number.isFinite(value) && value > 0 ? value : 1;
+};
+
+const toImageUrl = (path) => {
+  if (!path) return "";
+  return path.startsWith("http") ? path : `${API_BASE_URL}${path.startsWith("/") ? "" : "/"}${path}`;
+};
 
 const RewardsDetails = () => {
   const navigate = useNavigate();
@@ -19,15 +31,32 @@ const RewardsDetails = () => {
   const [guestDetails, setGuestDetails] = useState([
     { name: "", email: "" }
   ]);
-  const USER_ID = parseInt(localStorage.getItem("userId")) || 1;
+  const [userId, setUserId] = useState(getStoredUserId);
 
   useEffect(() => {
     if (location.state?.reward) setReward(location.state.reward);
     async function fetchData() {
       try {
-        const active = await getUserActivePoints(USER_ID);
+        let resolvedUserId = getStoredUserId();
+        try {
+          const dashboardData = await getDashboardData();
+          const dashboardUserId = Number(
+            dashboardData?.client?.ClientId ||
+            dashboardData?.client?.clientId ||
+            dashboardData?.client?.id
+          );
+          if (Number.isFinite(dashboardUserId) && dashboardUserId > 0) {
+            resolvedUserId = dashboardUserId;
+            localStorage.setItem("userId", String(resolvedUserId));
+          }
+        } catch (dashboardErr) {
+          console.warn("Could not resolve authenticated rewards user:", dashboardErr.message);
+        }
+
+        setUserId(resolvedUserId);
+        const active = await getUserActivePoints(resolvedUserId);
         setUserPoints(active.activePoints || 0);
-        const res = await fetch(`http://localhost:9001/api/reservations?userId=${USER_ID}`);
+        const res = await fetch(`${API_BASE_URL}/api/reservations?userId=${resolvedUserId}`);
         if (res.ok) {
           const reservations = await res.json();
           const now = new Date();
@@ -44,7 +73,7 @@ const RewardsDetails = () => {
       }
     }
     fetchData();
-  }, [USER_ID, location.state]);
+  }, [location.state]);
 
   const calculatePointsToDeduct = () => {
     if (reward?.rewardType === 'per_person') {
@@ -65,11 +94,11 @@ const RewardsDetails = () => {
     }
     setApplying(true);
     try {
-      const res = await fetch("http://localhost:9001/api/rewards/apply", {
+      const res = await fetch(`${API_BASE_URL}/api/rewards/apply`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: USER_ID,
+          userId,
           rewardId: reward.RewardId,
           reservationId: selectedStay.ReservationId,
           points: pointsToDeduct,
@@ -140,7 +169,7 @@ const RewardsDetails = () => {
               <div className="premium-section-title"><span>I.</span> Selected Reward</div>
               <div className="premium-reward-card">
                 {reward.image && (
-                  <img src={`http://localhost:9001${reward.image}`} alt={reward.title} className="premium-reward-img" />
+                  <img src={toImageUrl(reward.image)} alt={reward.title} className="premium-reward-img" />
                 )}
                 <div className="premium-reward-info">
                   <div className="premium-reward-header-row">
