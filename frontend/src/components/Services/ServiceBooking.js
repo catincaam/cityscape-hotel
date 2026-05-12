@@ -1,35 +1,87 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+  ArrowUpRight,
+  CalendarDays,
+  Check,
+  ChevronRight,
+  Clock3,
+  MapPin,
+  Pencil,
+  ShieldCheck,
+  Users
+} from "lucide-react";
 import Navbar from "../Dashboard/Navbar";
-import "../Rewards/Rewards.css";
 import "./ServiceBooking.css";
 import { isValidEmail, isValidPersonName } from "../../utils/validators";
+import { API_BASE_URL } from "../../config/runtimeUrls";
+import { getDashboardData } from "../../services/dashboardService";
+
+const getStoredUserId = () => {
+  const value = parseInt(localStorage.getItem("userId"), 10);
+  return Number.isFinite(value) && value > 0 ? value : 1;
+};
+
+const toImageUrl = (path) => {
+  if (!path) return "";
+  return path.startsWith("http") ? path : `${API_BASE_URL}${path.startsWith("/") ? "" : "/"}${path}`;
+};
+
+const getServiceName = (service) => service?.serviceName || service?.name || "Selected Service";
+const formatDate = (date, options) => new Date(date).toLocaleDateString("en-US", options);
+const formatReservationRef = (id) => `BK-${String(id || "").padStart(4, "0")}`;
 
 export default function ServiceBooking() {
   const navigate = useNavigate();
   const location = useLocation();
+  const service = location.state?.service || (() => {
+    try {
+      return JSON.parse(sessionStorage.getItem("selectedService") || "null");
+    } catch {
+      return null;
+    }
+  })();
+  const isPerPerson = service?.priceType === "per_person";
+
   const [upcomingStays, setUpcomingStays] = useState([]);
   const [selectedStay, setSelectedStay] = useState(null);
+  const [client, setClient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [successMessage, setSuccessMessage] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [personDetails, setPersonDetails] = useState([{ name: "", email: "" }]);
-  const USER_ID = parseInt(localStorage.getItem("userId")) || 1;
-  const service = location.state?.service;
-  const isPerPerson = service?.priceType === "per_person";
 
   useEffect(() => {
     async function fetchStays() {
       setLoading(true);
       try {
-        const res = await fetch(`http://localhost:9001/api/reservations?userId=${USER_ID}`);
+        let userId = getStoredUserId();
+
+        try {
+          const dashboardData = await getDashboardData();
+          setClient(dashboardData?.client || null);
+          const dashboardUserId = Number(
+            dashboardData?.client?.ClientId ||
+            dashboardData?.client?.clientId ||
+            dashboardData?.client?.id
+          );
+
+          if (Number.isFinite(dashboardUserId) && dashboardUserId > 0) {
+            userId = dashboardUserId;
+            localStorage.setItem("userId", String(userId));
+          }
+        } catch (dashboardErr) {
+          console.warn("Could not resolve authenticated service booking user:", dashboardErr.message);
+        }
+
+        const res = await fetch(`${API_BASE_URL}/api/reservations?userId=${userId}`);
         if (res.ok) {
           const reservations = await res.json();
           const now = new Date();
           const upcoming = reservations
-            .filter(r => new Date(r.requestedCheckin) > now && r.status !== 'cancelled')
+            .filter((reservation) => new Date(reservation.requestedCheckin) > now && reservation.status !== "cancelled")
             .sort((a, b) => new Date(a.requestedCheckin) - new Date(b.requestedCheckin));
-          setUpcomingStays(upcoming.length ? upcoming : []);
+          setUpcomingStays(upcoming);
         } else {
           setUpcomingStays([]);
         }
@@ -39,22 +91,19 @@ export default function ServiceBooking() {
         setLoading(false);
       }
     }
+
     fetchStays();
-  }, [USER_ID]);
+  }, []);
 
   if (!service) {
     return (
       <>
         <Navbar />
-        <main className="rewards-luxury-page">
-          <section className="luxury-sanctuary" style={{ textAlign: 'center', marginBottom: 60 }}>
-            <p style={{ color: '#999', fontSize: 18 }}>No service selected</p>
-            <button 
-              className="luxury-redeem-btn" 
-              onClick={() => navigate("/services")}
-              style={{ marginTop: 20 }}
-            >
-              ← Back to Services
+        <main className="service-booking-page">
+          <section className="service-booking-empty">
+            <p>No service selected.</p>
+            <button type="button" onClick={() => navigate("/services")}>
+              Back to Services
             </button>
           </section>
         </main>
@@ -66,29 +115,36 @@ export default function ServiceBooking() {
   const selectedStayGuestLimit = selectedStay?.nrPeople || 1;
   const selectedPersonCount = isPerPerson ? personDetails.length : 1;
   const serviceTotal = servicePrice * selectedPersonCount;
+  const serviceName = getServiceName(service);
+  const serviceImage = toImageUrl(service.image);
+  const selectedRoom = selectedStay?.RoomReservations?.[0]?.Room;
+  const selectedTheme = selectedRoom?.RoomTheme;
+  const clientName = [client?.FirstName || client?.firstName, client?.LastName || client?.lastName].filter(Boolean).join(" ") || localStorage.getItem("userName") || "Cityscape Guest";
+  const clientEmail = client?.Email || client?.email || "guest@cityscape.com";
+  const clientPhone = client?.Phone || client?.phone || client?.phoneNumber || "+40 000 000 000";
 
   const handleSelectStay = (stay) => {
     setSelectedStay(stay);
     const maxGuests = stay?.nrPeople || 1;
-    setPersonDetails(prev => {
+    setPersonDetails((prev) => {
       const current = prev.length ? prev : [{ name: "", email: "" }];
       return current.slice(0, maxGuests);
     });
   };
 
   const handlePersonChange = (idx, field, value) => {
-    setPersonDetails(prev => prev.map((person, i) => (
+    setPersonDetails((prev) => prev.map((person, i) => (
       i === idx ? { ...person, [field]: value } : person
     )));
   };
 
   const handleAddPerson = () => {
     if (!selectedStay || personDetails.length >= selectedStayGuestLimit) return;
-    setPersonDetails(prev => [...prev, { name: "", email: "" }]);
+    setPersonDetails((prev) => [...prev, { name: "", email: "" }]);
   };
 
   const handleRemovePerson = (idx) => {
-    setPersonDetails(prev => prev.length === 1 ? prev : prev.filter((_, i) => i !== idx));
+    setPersonDetails((prev) => prev.length === 1 ? prev : prev.filter((_, i) => i !== idx));
   };
 
   const handleConfirm = async () => {
@@ -96,19 +152,21 @@ export default function ServiceBooking() {
       alert("Please select a stay");
       return;
     }
+
     if (isPerPerson) {
-      const hasInvalidPerson = personDetails.some(person => (
+      const hasInvalidPerson = personDetails.some((person) => (
         !isValidPersonName(person.name) || !isValidEmail(person.email)
       ));
+
       if (hasInvalidPerson) {
         alert("Please add a valid full name and email for each person.");
         return;
       }
     }
+
     setConfirming(true);
     try {
-      // POST to backend to add service to reservation
-      const res = await fetch("http://localhost:9001/api/reservation-services", {
+      const res = await fetch(`${API_BASE_URL}/api/reservation-services`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -119,8 +177,9 @@ export default function ServiceBooking() {
           personDetails: isPerPerson ? personDetails : null
         })
       });
+
       if (res.ok) {
-        setSuccessMessage("Service added to reservation! Payment will be made at checkout.");
+        setSuccessMessage("Service added to your reservation. Payment will be collected at checkout.");
         setTimeout(() => {
           navigate(`/reservation/${selectedStay.ReservationId}`);
         }, 2200);
@@ -129,7 +188,7 @@ export default function ServiceBooking() {
         alert(errorData.message || "Error adding service");
       }
     } catch {
-      alert("Eroare la adăugarea serviciului");
+      alert("Could not add this service. Please try again.");
     } finally {
       setConfirming(false);
     }
@@ -138,54 +197,67 @@ export default function ServiceBooking() {
   return (
     <>
       <Navbar />
-      <main className="rewards-luxury-page service-booking-page">
-        {/* HEADER SECTION */}
-        <section className="luxury-sanctuary">
-          <div className="sanctuary-label">ADD SERVICE TO YOUR STAY</div>
-          <p className="sanctuary-subtitle">
-            Enhance your experience with our premium services. Payment will be collected at checkout.
-          </p>
+      <main className="service-booking-page">
+        <section
+          className={`service-booking-hero ${serviceImage ? "" : "empty"}`}
+          style={serviceImage ? { backgroundImage: `linear-gradient(90deg, rgba(18, 16, 12, 0.74), rgba(18, 16, 12, 0.42)), url("${serviceImage}")` } : undefined}
+        >
+          <div className="service-hero-content">
+            <p>{service.category || "Premium Service"}</p>
+            <h1>{serviceName}</h1>
+            <span>{service.description || "Enhance your stay with a curated Cityscape experience."}</span>
+            <div className="service-hero-actions">
+              <div>
+                <small>{isPerPerson ? "Investment / person" : "Investment / booking"}</small>
+                <strong>{servicePrice.toFixed(2)} EUR</strong>
+              </div>
+              <button type="button" onClick={() => document.getElementById("booking-flow")?.scrollIntoView({ behavior: "smooth" })}>
+                Reserve experience
+                <ArrowUpRight size={18} />
+              </button>
+            </div>
+          </div>
         </section>
 
-        {/* CONTENT: Two-column layout */}
-        <section className="service-booking-content">
-          {/* LEFT COLUMN: Service Details & Stay Selection */}
+        <section className="service-booking-content" id="booking-flow">
+          <div className="booking-timeline" aria-hidden="true" />
+
           <div className="service-booking-main">
-            {/* I. Selected Service */}
-            <div className="booking-section">
-              <h3 className="booking-section-title">
-                <span className="section-number">I.</span> Selected Service
-              </h3>
-              <div className="luxury-reward-card service-card-large">
-                <div 
-                  className="reward-card-image"
-                  style={{ 
-                    backgroundImage: service.image 
-                      ? `url('http://localhost:9001${service.image}')` 
-                      : 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
-                    minHeight: '280px'
-                  }}
-                >
-                  <div className="reward-card-cost">{servicePrice.toFixed(2)} EUR</div>
-                </div>
-                <div className="luxury-reward-content">
-                  <h4 className="reward-title">{service.serviceName || service.name}</h4>
-                  <p className="reward-desc">{service.description}</p>
-                  <div className="service-meta-row">
-                    <div className="service-category-badge">{service.category}</div>
-                    <span className="service-price-type-badge">
-                      {isPerPerson ? "PER PERSON" : "PER BOOKING"}
-                    </span>
+            <section className="booking-step">
+              <div className="step-marker">1</div>
+              <div className="step-copy">
+                <h2>Selected Service</h2>
+                <p>Confirm your preferred experience before selecting a stay.</p>
+              </div>
+              <article className="selected-service-row">
+                <img src={serviceImage || "/logo192.png"} alt={serviceName} />
+                <div className="selected-service-copy">
+                  <h3>{serviceName}</h3>
+                  <p>{service.description || "Curated Cityscape experience"}</p>
+                  <div className="selected-service-meta">
+                    <span><Clock3 size={14} /> Upon request</span>
+                    <span><Users size={14} /> {isPerPerson ? `Max ${selectedStayGuestLimit} guests` : "Private booking"}</span>
                   </div>
                 </div>
-              </div>
-            </div>
+                <button type="button" onClick={() => navigate("/services")}>
+                  Modify
+                  <Pencil size={13} />
+                </button>
+              </article>
+            </section>
 
-            {/* II. Select Upcoming Stay */}
-            <div className="booking-section">
-              <h3 className="booking-section-title">
-                <span className="section-number">II.</span> Select Your Stay
-              </h3>
+            <section className="booking-step">
+              <div className="step-marker">2</div>
+              <div className="step-header-row">
+                <div className="step-copy">
+                  <h2>Choose Reservation</h2>
+                  <p>Associate this experience with one of your active stays.</p>
+                </div>
+                <button type="button" className="all-stays-link" onClick={() => navigate("/reservations")}>
+                  All reservations
+                  <ChevronRight size={14} />
+                </button>
+              </div>
               <div className="stays-selection">
                 {loading ? (
                   <div className="stays-empty">
@@ -194,83 +266,86 @@ export default function ServiceBooking() {
                 ) : upcomingStays.length === 0 ? (
                   <div className="stays-empty">
                     <p>No upcoming stays found.</p>
-                    <p style={{ fontSize: '14px', color: '#999', marginTop: '8px' }}>
-                      Book a room to add services to your reservation.
-                    </p>
-                    <button 
-                      onClick={() => navigate("/booking")}
-                      className="luxury-redeem-btn"
-                      style={{ marginTop: '16px' }}
-                    >
+                    <span>Book a room to add services to your reservation.</span>
+                    <button type="button" onClick={() => navigate("/booking")} className="empty-action">
                       Book a Stay
                     </button>
                   </div>
                 ) : (
-                  upcomingStays.map(stay => {
-                    const roomRes = Array.isArray(stay.RoomReservations) && stay.RoomReservations.length > 0 
-                      ? stay.RoomReservations[0] 
-                      : null;
+                  upcomingStays.map((stay) => {
+                    const roomRes = Array.isArray(stay.RoomReservations) && stay.RoomReservations.length > 0 ? stay.RoomReservations[0] : null;
                     const room = roomRes?.Room;
                     const theme = room?.RoomTheme;
-                    const isSelected = selectedStay && selectedStay.ReservationId === stay.ReservationId;
+                    const isSelected = selectedStay?.ReservationId === stay.ReservationId;
                     const checkIn = new Date(stay.requestedCheckin);
                     const checkOut = new Date(stay.requestedCheckout);
-                    
+
                     return (
-                      <div
+                      <button
+                        type="button"
                         key={stay.ReservationId}
-                        className={`stay-option ${isSelected ? 'selected' : ''}`}
+                        className={`stay-option ${isSelected ? "selected" : ""}`}
                         onClick={() => handleSelectStay(stay)}
                       >
-                        <div className="stay-option-header">
-                          <div>
-                            <h4 className="stay-room-name">{room?.RoomName || 'Your Room'}</h4>
-                            <p className="stay-room-theme">{theme?.city || ''} — {theme?.name || ''}</p>
+                        <div className="stay-date-tile">
+                          <span>{formatDate(checkIn, { month: "short" })}</span>
+                          <strong>{formatDate(checkIn, { day: "2-digit" })}-{formatDate(checkOut, { day: "2-digit" })}</strong>
+                        </div>
+                        <div className="stay-option-body">
+                          <div className="stay-option-title-row">
+                            <h3>{theme?.name || room?.RoomName || "Your Room"}</h3>
+                            <span>Premium stay</span>
                           </div>
-                          {isSelected && <span className="stay-selected-badge">✓ SELECTED</span>}
+                          <div className="stay-option-meta">
+                            <span><MapPin size={14} /> {theme?.city || "Cityscape"}</span>
+                            <span><Users size={14} /> {stay.nrPeople || 1} guest{(stay.nrPeople || 1) > 1 ? "s" : ""}</span>
+                            <span>{formatReservationRef(stay.ReservationId)}</span>
+                          </div>
                         </div>
-                        <div className="stay-option-dates">
-                          <span>{checkIn.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {checkOut.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                          <span className="stay-guests">{stay.nrPeople || 1} guest{(stay.nrPeople || 1) > 1 ? 's' : ''}</span>
+                        <div className="stay-selected-icon">
+                          {isSelected ? <Check size={19} /> : <ChevronRight size={20} />}
                         </div>
-                      </div>
+                      </button>
                     );
                   })
                 )}
               </div>
-            </div>
+            </section>
 
-            {isPerPerson && (
-              <div className="booking-section">
-                <h3 className="booking-section-title service-person-title">
-                  <span className="section-number">III.</span> Person Details
+            <section className="booking-step">
+              <div className="step-marker muted">3</div>
+              <div className="step-copy">
+                <h2>{isPerPerson ? "Guest Details" : "Contact Details"}</h2>
+                <p>{isPerPerson ? "Information required to confirm each participant." : "Information used for the reservation confirmation."}</p>
+              </div>
+
+              {isPerPerson ? (
+                <div className="service-person-list">
                   <button
                     className="service-add-person"
                     type="button"
                     onClick={handleAddPerson}
                     disabled={!selectedStay || personDetails.length >= selectedStayGuestLimit}
                   >
-                    + ADD PERSON
+                    Add person
                   </button>
-                </h3>
-                <div className="service-person-list">
                   {personDetails.map((person, idx) => (
                     <div className="service-person-row" key={idx}>
                       <div className="service-person-field">
-                        <label>FULL NAME</label>
+                        <label>Full name</label>
                         <input
                           type="text"
                           value={person.name}
-                          onChange={e => handlePersonChange(idx, "name", e.target.value)}
+                          onChange={(event) => handlePersonChange(idx, "name", event.target.value)}
                           placeholder="Full Name"
                         />
                       </div>
                       <div className="service-person-field">
-                        <label>EMAIL ADDRESS</label>
+                        <label>Email address</label>
                         <input
                           type="email"
                           value={person.email}
-                          onChange={e => handlePersonChange(idx, "email", e.target.value)}
+                          onChange={(event) => handlePersonChange(idx, "email", event.target.value)}
                           placeholder="Email Address"
                         />
                       </div>
@@ -287,61 +362,67 @@ export default function ServiceBooking() {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="contact-card">
+                  <div className="contact-field">
+                    <label>Full name</label>
+                    <strong>{clientName}</strong>
+                  </div>
+                  <div className="contact-field">
+                    <label>Email address</label>
+                    <strong>{clientEmail}</strong>
+                  </div>
+                  <div className="contact-field">
+                    <label>Phone number</label>
+                    <strong>{clientPhone}</strong>
+                  </div>
+                </div>
+              )}
+            </section>
           </div>
 
-          {/* RIGHT COLUMN: Summary Card */}
           <aside className="service-booking-sidebar">
             <div className="booking-summary-card">
-              <h3 className="summary-title">Booking Summary</h3>
-              
-              <div className="summary-row">
-                <span className="summary-label">Service</span>
-                <span className="summary-value">{service.serviceName || service.name}</span>
-              </div>
-              
-              <div className="summary-row">
-                <span className="summary-label">Price</span>
-                <span className="summary-value">{servicePrice.toFixed(2)} EUR{isPerPerson ? " / person" : ""}</span>
+              <h3>Reservation Summary</h3>
+
+              <div className="summary-block">
+                <p>Selected services</p>
+                <div className="summary-line">
+                  <span>
+                    <strong>{serviceName}</strong>
+                    <small>x{selectedPersonCount} {isPerPerson ? "person" : "booking"}</small>
+                  </span>
+                  <b>{serviceTotal.toFixed(2)} EUR</b>
+                </div>
               </div>
 
-              {isPerPerson && (
-                <div className="summary-row">
-                  <span className="summary-label">Number of People</span>
-                  <span className="summary-value">{String(selectedPersonCount).padStart(2, "0")}</span>
+              {selectedStay && (
+                <div className="summary-block">
+                  <p>Stay details</p>
+                  <div className="summary-stay">
+                    <CalendarDays size={15} />
+                    <span>{selectedTheme?.name || selectedRoom?.RoomName || "Selected stay"}</span>
+                  </div>
                 </div>
               )}
 
-              {selectedStay && (
-                <>
-                  <div className="summary-row">
-                    <span className="summary-label">Stay</span>
-                    <span className="summary-value" style={{ fontSize: '13px' }}>
-                      {selectedStay.RoomReservations?.[0]?.Room?.RoomName || 'Selected'}
-                    </span>
-                  </div>
-                </>
-              )}
-
-              <div className="summary-divider"></div>
-
-              <div className="summary-row summary-total">
-                <span className="summary-label">Total</span>
-                <span className="summary-value">{serviceTotal.toFixed(2)} EUR</span>
+              <div className="summary-total">
+                <span>Total estimate</span>
+                <strong>{serviceTotal.toFixed(2)} EUR</strong>
               </div>
 
               <button
                 className="summary-btn"
+                type="button"
                 onClick={handleConfirm}
                 disabled={confirming || !selectedStay || (isPerPerson && personDetails.length < 1)}
               >
-                {confirming ? 'Adding Service...' : 'ADD TO RESERVATION'}
+                {confirming ? "Adding Service..." : "Add to Reservation"}
               </button>
 
-              <p className="summary-note">
-                Payment will be collected at checkout or at the hotel upon arrival.
-              </p>
+              <div className="secure-note"><ShieldCheck size={14} /> Secure transaction</div>
+
+              <p className="summary-note">Payment is collected at reception or checkout. This service will be added to the final room folio.</p>
 
               {successMessage && <div className="summary-success">{successMessage}</div>}
             </div>

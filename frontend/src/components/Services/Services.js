@@ -34,6 +34,11 @@ export default function Services() {
     document.getElementById("services-selection")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  const bookService = (service) => {
+    sessionStorage.setItem("selectedService", JSON.stringify(service));
+    navigate("/services/book", { state: { service } });
+  };
+
   return (
     <>
       <Navbar />
@@ -92,7 +97,7 @@ export default function Services() {
                   <p>{service.category || "Service"}</p>
                   <h3>{service.serviceName || service.name}</h3>
                   <span>{service.description}</span>
-                  <button type="button" onClick={() => navigate("/services/book", { state: { service } })}>
+                  <button type="button" onClick={() => bookService(service)}>
                     Reserve service
                   </button>
                 </article>
