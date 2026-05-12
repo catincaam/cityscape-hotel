@@ -23,6 +23,19 @@ const ChatbotWidget = () => {
     setIsLoggedIn(!!token);
   }, []);
 
+  useEffect(() => {
+    const openChatbot = () => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        setIsLoggedIn(true);
+        setIsOpen(true);
+      }
+    };
+
+    window.addEventListener("cityscape:open-chatbot", openChatbot);
+    return () => window.removeEventListener("cityscape:open-chatbot", openChatbot);
+  }, []);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
