@@ -294,7 +294,6 @@ export default function ServiceBooking() {
                         <div className="stay-option-body">
                           <div className="stay-option-title-row">
                             <h3>{theme?.name || room?.RoomName || "Your Room"}</h3>
-                            <span>Premium stay</span>
                           </div>
                           <div className="stay-option-meta">
                             <span><MapPin size={14} /> {theme?.city || "Cityscape"}</span>

@@ -360,17 +360,6 @@
   line-height: 1.2;
 }
 
-.stay-option-title-row span {
-  border-radius: 999px;
-  background: #836326;
-  color: #fff;
-  padding: 5px 10px;
-  font-size: 8px;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
 .stay-option-meta {
   margin-top: 13px;
   color: #8d8172;
