@@ -5,12 +5,12 @@
 
 .profile-collection {
   width: 100%;
-  max-width: 1360px;
-  margin: 0 auto;
-  padding: 0 clamp(24px, 3vw, 48px) 64px;
+  max-width: none;
+  margin: 0;
+  padding: 0 clamp(32px, 2.6vw, 56px) 72px;
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr);
-  gap: clamp(34px, 4vw, 58px);
+  gap: clamp(34px, 3.2vw, 52px);
 }
 
 .profile-sidebar {
@@ -255,8 +255,8 @@
 
 .profile-stay-card {
   display: grid;
-  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
-  gap: clamp(24px, 3vw, 38px);
+  grid-template-columns: minmax(260px, clamp(300px, 24vw, 430px)) minmax(0, 1fr);
+  gap: clamp(26px, 3vw, 48px);
   align-items: stretch;
   padding-bottom: 18px;
   border-bottom: 1px solid rgba(222, 207, 185, 0.72);
@@ -264,7 +264,7 @@
 
 .profile-stay-visual {
   min-height: 150px;
-  height: 150px;
+  height: clamp(150px, 10vw, 190px);
   border-radius: 3px;
   background:
     linear-gradient(145deg, rgba(14, 17, 20, 0.16), rgba(14, 17, 20, 0.42)),
@@ -356,7 +356,7 @@
 }
 
 .profile-stay-details h3 {
-  max-width: 520px;
+  max-width: 720px;
   margin: 0 0 14px;
   color: #0e0e0e;
   font-family: Georgia, "Times New Roman", serif;
@@ -368,7 +368,7 @@
 .profile-stay-meta {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: clamp(24px, 5vw, 110px);
+  gap: clamp(24px, 4vw, 96px);
   padding: 11px 0;
   border-top: 1px solid #eadfce;
   border-bottom: 1px solid #eadfce;
