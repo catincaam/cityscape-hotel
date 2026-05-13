@@ -121,57 +121,59 @@ export default function ProfilePage() {
     <>
       <Navbar />
 
-      <main className="profile-page profile-collection">
-        <aside className="profile-sidebar">
-          <div className="profile-portrait">
-            <img
-              src={resolveProfilePicture(userData?.client?.profilePicture)}
-              alt="User avatar"
-              onError={(event) => { event.currentTarget.src = profilePicture; }}
-            />
+      <main className="profile-page">
+        <header className="profile-hero">
+          <span className="profile-hero-rule" />
+          <div>
+            <p className="profile-kicker">Archive & Future</p>
+            <h1>Your Collection</h1>
+            <p className="profile-subtitle">
+              Welcome back, {user.firstName}. Revisit your stays, rewards, and favorite Cityscape moments.
+            </p>
           </div>
-          <h2>{user.firstName} {user.lastName}</h2>
-          <p>{user.level}</p>
-
-          <nav className="profile-side-nav" aria-label="Profile sections">
-            <button type="button" className="active" onClick={() => navigate("/reservations")}>
-              <CalendarDays size={16} />
-              My Stays
-            </button>
-            <button type="button" onClick={() => navigate("/rewards")}>
-              <Gift size={16} />
-              Member Rewards
-            </button>
-            <button type="button" onClick={() => navigate("/services")}>
-              <Sparkles size={16} />
-              Hotel Services
-            </button>
-            <button type="button" onClick={() => navigate("/profile/edit")}>
-              <Settings size={16} />
-              Account Settings
-            </button>
-          </nav>
-
-          <button className="profile-book-btn" onClick={() => navigate("/booking")}>
-            Book New Stay
+          <button className="profile-edit-action" onClick={() => navigate("/profile/edit")}>
+            <UserRound size={16} />
+            Edit Profile
           </button>
-        </aside>
+        </header>
 
-        <section className="profile-content">
-          <header className="profile-hero">
-            <div>
-              <p className="profile-kicker">Archive & Future</p>
-              <h1>Your Collection</h1>
-              <p className="profile-subtitle">
-                Welcome back, {user.firstName}. Revisit your stays, rewards, and favorite Cityscape moments.
-              </p>
+        <section className="profile-collection">
+          <aside className="profile-sidebar">
+            <div className="profile-portrait">
+              <img
+                src={resolveProfilePicture(userData?.client?.profilePicture)}
+                alt="User avatar"
+                onError={(event) => { event.currentTarget.src = profilePicture; }}
+              />
             </div>
-            <button className="profile-edit-action" onClick={() => navigate("/profile/edit")}>
-              <UserRound size={16} />
-              Edit Profile
-            </button>
-          </header>
+            <h2>{user.firstName} {user.lastName}</h2>
+            <p>{user.level}</p>
 
+            <nav className="profile-side-nav" aria-label="Profile sections">
+              <button type="button" className="active" onClick={() => navigate("/reservations")}>
+                <CalendarDays size={16} />
+                My Stays
+              </button>
+              <button type="button" onClick={() => navigate("/rewards")}>
+                <Gift size={16} />
+                Member Rewards
+              </button>
+              <button type="button" onClick={() => navigate("/services")}>
+                <Sparkles size={16} />
+                Hotel Services
+              </button>
+              <button type="button" onClick={() => navigate("/profile/edit")}>
+                <Settings size={16} />
+                Account Settings
+              </button>
+            </nav>
+
+            <button className="profile-book-btn" onClick={() => navigate("/booking")}>
+              Book New Stay
+            </button>
+          </aside>
+
+          <section className="profile-content">
           <section className="profile-summary-strip">
             <div>
               <span>Loyalty Points</span>
@@ -262,6 +264,7 @@ export default function ProfilePage() {
               <span>A quiet overview of your completed Cityscape journey.</span>
               <button onClick={() => navigate("/reservations")}>See Stays</button>
             </div>
+          </section>
           </section>
         </section>
       </main>
