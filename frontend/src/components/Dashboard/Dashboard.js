@@ -155,7 +155,7 @@ export default function Dashboard() {
             <div className="section-heading">
               <h2>Upcoming Stays</h2>
               <button type="button" onClick={() => navigate("/reservations")}>
-                {upcomingStays.length} reservations active
+                View all reservations
               </button>
             </div>
 
