@@ -1,153 +1,215 @@
-/* Presentation styles - inherits Georgia from global */
-
 .presentation-page {
-  font-family: 'Georgia', serif;
-  background: #f6f7f8;
   min-height: 100vh;
+  background: #f7f4ef;
+  color: #111827;
+  font-family: Georgia, "Times New Roman", serif;
+  padding: 84px clamp(18px, 4vw, 72px) 110px;
 }
 
-/* =========================
-   HERO
-========================= */
-.hero {
-  position: relative;
-  height: 460px;
-  background-image: url("../../assets/world-map.jpg");
-  background-size: cover;
-  background-position: center;
-  border-radius: 22px;
-  margin: 32px auto;
-  max-width: 1200px;
-  overflow: hidden;
-}
-
-.hero-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    rgba(0, 0, 0, 0.35),
-    rgba(0, 0, 0, 0.6)
-  );
-}
-
-.hero-content {
-  position: relative;
-  z-index: 2;
-  color: white;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+.presentation-loading,
+.presentation-empty {
+  color: #8c8377;
+  font-size: 15px;
   text-align: center;
-  padding: 40px;
 }
 
-.hero-content h1 {
-  font-size: 3rem;
-  font-weight: 800;
-  margin-bottom: 16px;
-}
-
-.hero-content p {
-  max-width: 620px;
-  font-size: 1.1rem;
-  opacity: 0.95;
-  margin-bottom: 28px;
-}
-
-.hero-btn {
-  padding: 14px 36px;
-  border-radius: 16px;
-  border: none;
-  background: #1f2937;
-  color: white;
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.hero-btn:hover {
-  background: #0f66c3;
-}
-
-/* =========================
-   FILTERS
-========================= */
-.filters {
-  max-width: 1200px;
-  margin: 20px auto 10px;
+.presentation-filters {
   display: flex;
-  gap: 12px;
-  padding: 0 12px;
+  justify-content: center;
+  gap: 16px;
+  margin: 0 auto 78px;
+  max-width: 760px;
 }
 
-.filters button {
-  padding: 10px 22px;
-  border-radius: 999px;
-  border: 1px solid #e5e7eb;
-  background: white;
-  font-weight: 600;
+.presentation-filters button {
+  min-width: 104px;
+  border: 0;
+  border-radius: 10px;
+  background: #f1eee9;
+  color: #8b8073;
   cursor: pointer;
+  font-family: "Plus Jakarta Sans", Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  padding: 12px 22px;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
-.filters button.active {
+.presentation-filters button:hover {
+  background: #e9e3db;
+  color: #111827;
+  transform: translateY(-1px);
+}
+
+.presentation-filters button.active {
   background: #111827;
-  color: white;
-  border-color: #111827;
+  color: #fff;
 }
 
-/* =========================
-   GRID
-========================= */
 .cities-grid {
-  max-width: 1200px;
-  margin: 30px auto 80px;
-  padding: 0 12px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(30px, 4vw, 52px);
+  margin: 0 auto;
+  max-width: 1460px;
+  align-items: start;
 }
 
-/* =========================
-   CITY CARD
-========================= */
 .city-card {
-  position: relative;
-  height: 360px;
-  border-radius: 22px;
-  overflow: hidden;
   cursor: pointer;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+  min-width: 0;
 }
 
-.city-card img {
+.city-card-1,
+.city-card-3 {
+  margin-top: 58px;
+}
+
+.city-image-frame {
+  position: relative;
+  height: 380px;
+  border-radius: 7px;
+  overflow: hidden;
+  background: #e6dfd5;
+  box-shadow: 0 18px 42px rgba(38, 31, 23, 0.1);
+}
+
+.city-card-0 .city-image-frame,
+.city-card-2 .city-image-frame {
+  height: 430px;
+}
+
+.city-image-frame img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.6s ease;
+  transition: transform 0.65s ease;
 }
 
-.city-card:hover img {
-  transform: scale(1.08);
+.city-card:hover .city-image-frame img {
+  transform: scale(1.05);
 }
 
 .city-overlay {
   position: absolute;
   inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 26px 28px;
   background: linear-gradient(
     to top,
-    rgba(0,0,0,0.8),
-    rgba(0,0,0,0.2),
-    transparent
+    rgba(7, 10, 14, 0.78),
+    rgba(7, 10, 14, 0.22) 46%,
+    rgba(7, 10, 14, 0.02)
   );
-  display: flex;
-  align-items: flex-end;
-  padding: 24px;
+  color: #fff;
+}
+
+.city-overlay span {
+  color: #cda767;
+  font-family: "Plus Jakarta Sans", Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
 }
 
 .city-overlay h3 {
-  color: white;
-  font-size: 1.6rem;
+  color: #fff;
+  font-size: clamp(26px, 2.4vw, 34px);
+  font-weight: 500;
+  line-height: 1;
+  margin: 8px 0 0;
+}
+
+.city-card-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px 4px 0;
+}
+
+.city-card-footer div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.city-card-footer span {
+  color: #b7b0a7;
+  font-family: "Plus Jakarta Sans", Arial, sans-serif;
+  font-size: 10px;
   font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.city-card-footer strong {
+  color: #141414;
+  font-family: "Plus Jakarta Sans", Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.city-card-footer button {
+  align-self: flex-end;
+  background: transparent;
+  border: 0;
+  color: #80643f;
+  cursor: pointer;
+  font-family: "Plus Jakarta Sans", Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  padding: 0 0 2px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.city-card-footer button:hover {
+  color: #111827;
+}
+
+@media (max-width: 1180px) {
+  .cities-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 860px;
+  }
+}
+
+@media (max-width: 720px) {
+  .presentation-page {
+    padding: 48px 18px 80px;
+  }
+
+  .presentation-filters {
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 42px;
+  }
+
+  .presentation-filters button {
+    min-width: 0;
+    flex: 1 1 42%;
+  }
+
+  .cities-grid {
+    grid-template-columns: 1fr;
+    gap: 34px;
+  }
+
+  .city-card-1,
+  .city-card-3 {
+    margin-top: 0;
+  }
+
+  .city-image-frame,
+  .city-card-0 .city-image-frame,
+  .city-card-2 .city-image-frame {
+    height: 370px;
+  }
 }

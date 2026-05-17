@@ -1,7 +1,25 @@
 import "./Presentation.css";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { getRoomThemes } from "../../services/roomThemeService";
+import { API_BASE_URL } from "../../config/runtimeUrls";
+
+const displayNames = {
+  Europa: "Europe",
+  Lisabona: "Lisbon"
+};
+
+function formatDisplay(value) {
+  return displayNames[value] || value || "";
+}
+
+function formatPrice(value) {
+  return Number(value || 0).toLocaleString("en-US", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 0
+  });
+}
 
 export default function Presentation() {
   const navigate = useNavigate();
@@ -14,30 +32,25 @@ export default function Presentation() {
     async function loadShowcases() {
       try {
         const themes = await getRoomThemes();
-        
-        // Filtrezi doar temele care au showcaseImage
+
         const showcases = themes
-          .filter(t => t.showcaseImage)
-          .map(t => ({
-            id: t.RoomThemeId,
-            title: t.city,
-            img: `http://localhost:9001${t.showcaseImage}`,
-            continent: t.continent || "Other", // Dacă din DB nu ai continent, defaultează la "Other"
-            theme: t.theme
+          .filter((theme) => theme.showcaseImage)
+          .map((theme) => ({
+            id: theme.RoomThemeId,
+            title: formatDisplay(theme.city),
+            img: `${API_BASE_URL}${theme.showcaseImage}`,
+            continent: formatDisplay(theme.continent || "Other"),
+            price: theme.basePrice
           }))
-          // Elimini duplicate pe baza city-ului (dacă sunt mai multe teme același oraș)
           .filter((item, index, self) =>
-            index === self.findIndex(t => t.title === item.title)
+            index === self.findIndex((theme) => theme.title === item.title)
           );
-        
+
         setCities(showcases);
-        
-        // Extrag continentele unice
-        const uniqueContinents = ["All", ...new Set(showcases.map(c => c.continent))];
-        setContinents(uniqueContinents);
-        setLoading(false);
+        setContinents(["All", ...new Set(showcases.map((city) => city.continent))]);
       } catch (err) {
         console.error("Error loading themes:", err);
+      } finally {
         setLoading(false);
       }
     }
@@ -51,70 +64,67 @@ export default function Presentation() {
       : cities.filter((city) => city.continent === filter);
 
   if (loading) {
-    return <div className="presentation-page"><p>Loading...</p></div>;
+    return (
+      <main className="presentation-page">
+        <p className="presentation-loading">Loading destinations...</p>
+      </main>
+    );
   }
 
   return (
-    <div className="presentation-page">
-      {/* HERO */}
-      <section className="hero">
-        <div className="hero-overlay" />
-        <div className="hero-content">
-          <h1>
-            Travel the world,<br />one room at a time.
-          </h1>
-
-          <p>
-            Discover our themed rooms inspired by the world's most beautiful
-            cities.
-          </p>
-
-          <button className="hero-btn" onClick={() => navigate("/booking")}>
-            Book Room →
-          </button>
-        </div>
-      </section>
-
-      {/* FILTERS */}
-      <section className="filters">
-        {continents.map((c) => (
+    <main className="presentation-page">
+      <section className="presentation-filters" aria-label="Destination filters">
+        {continents.map((continent) => (
           <button
-            key={c}
-            className={filter === c ? "active" : ""}
-            onClick={() => setFilter(c)}
+            key={continent}
+            className={filter === continent ? "active" : ""}
+            onClick={() => setFilter(continent)}
+            type="button"
           >
-            {c === "All" ? "All" : c}
+            {continent}
           </button>
         ))}
       </section>
 
-      {/* CITIES GRID */}
       <section className="cities-grid">
         {filteredCities.length > 0 ? (
-          filteredCities.map((city) => (
+          filteredCities.map((city, index) => (
             <CityCard
               key={city.id}
+              index={index}
               title={city.title}
+              continent={city.continent}
               img={city.img}
+              price={city.price}
               onClick={() => navigate("/booking")}
             />
           ))
         ) : (
-          <p>No themes to display</p>
+          <p className="presentation-empty">No destinations to display.</p>
         )}
       </section>
-    </div>
+    </main>
   );
 }
 
-function CityCard({ title, img, onClick }) {
+function CityCard({ title, continent, img, price, index, onClick }) {
   return (
-    <div className="city-card" onClick={onClick}>
-      <img src={img} alt={title} />
-      <div className="city-overlay">
-        <h3>{title}</h3>
-        <span>Book Room →</span>
+    <article className={`city-card city-card-${index % 4}`} onClick={onClick}>
+      <div className="city-image-frame">
+        <img src={img} alt={title} />
+        <div className="city-overlay">
+          <span>{continent}</span>
+          <h3>{title}</h3>
+        </div>
       </div>
-    </div>
+
+      <footer className="city-card-footer">
+        <div>
+          <span>From</span>
+          <strong>{formatPrice(price)} / night</strong>
+        </div>
+        <button type="button">Explore -&gt;</button>
+      </footer>
+    </article>
   );
 }
