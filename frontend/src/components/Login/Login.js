@@ -104,7 +104,12 @@ export default function Login() {
       });
       // Save JWT and user info (you can use localStorage/sessionStorage)
       localStorage.setItem("token", res.data.token);
-      localStorage.setItem("userId", res.data.client.ClientId);
+      const firstName = res.data.client.FirstName || res.data.client.firstName || "";
+      const lastName = res.data.client.LastName || res.data.client.lastName || "";
+      const userName = `${firstName} ${lastName}`.trim();
+      const userId = res.data.client.ClientId || res.data.client.clientId || res.data.client.id;
+      if (userName) localStorage.setItem("userName", userName);
+      if (userId) localStorage.setItem("userId", userId);
       // Redirect to dashboard or main page with a personalized message
       if (res.data.client.TypeClientTip === "Admin") {
         sessionStorage.removeItem("postLoginRedirect");

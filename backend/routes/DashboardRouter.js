@@ -35,7 +35,10 @@ const getReservationTotal = (reservation, roomTheme, invoice) => {
 router.get("/dashboard", authClient, async (req, res) => {
   try {
     // 🔑 ID vine din JWT
-    const clientId = req.client.id;
+    const clientId = req.client.id || req.client.ClientId || req.client.clientId;
+    if (!clientId) {
+      return res.status(401).json({ message: "Invalid client token" });
+    }
 
     const client = await getClientById(clientId);
     if (!client) {

@@ -19,9 +19,12 @@ export async function login(email, password) {
   
   // Store user info
   if (data.client) {
-    const userName = `${data.client.FirstName} ${data.client.LastName}`.trim();
+    const firstName = data.client.FirstName || data.client.firstName || "";
+    const lastName = data.client.LastName || data.client.lastName || "";
+    const userName = `${firstName} ${lastName}`.trim();
+    const userId = data.client.ClientId || data.client.clientId || data.client.id;
     localStorage.setItem("userName", userName);
-    localStorage.setItem("userId", data.client.ClientId);
+    if (userId) localStorage.setItem("userId", userId);
   }
   
   return data;

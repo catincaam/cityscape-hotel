@@ -18,9 +18,15 @@ export default function authClient(req, res, next) {
   try {
     // Verificăm token-ul cu secretul din .env
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const clientId = decoded.id || decoded.ClientId || decoded.clientId;
 
     // Punem datele clientului în req pentru a fi folosite în route-uri
-    req.client = decoded; // { ClientId, FirstName, LastName, TypeClientTip, ... }
+    req.client = {
+      ...decoded,
+      id: clientId,
+      ClientId: decoded.ClientId || clientId,
+      clientId: decoded.clientId || clientId
+    };
     next();
   } catch (err) {
     return res.status(401).json({ message: "Invalid token" });

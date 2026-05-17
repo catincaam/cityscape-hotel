@@ -15,6 +15,16 @@ const getTierName = (clientTier) => {
   return clientTier.name || clientTier.tierName || clientTier.currentTier || "Member";
 };
 
+const getClientFirstName = (client) => {
+  const apiName = client?.FirstName || client?.firstName || client?.name;
+  if (apiName && String(apiName).trim()) return String(apiName).trim().split(" ")[0];
+
+  const storedName = localStorage.getItem("userName");
+  if (storedName && storedName.trim()) return storedName.trim().split(" ")[0];
+
+  return "Guest";
+};
+
 export default function Dashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -75,7 +85,7 @@ export default function Dashboard() {
     );
   }
 
-  const firstName = data?.client?.FirstName || data?.client?.firstName || "Guest";
+  const firstName = getClientFirstName(data?.client);
   const points = Number(data?.cityPoints || 0);
   const tierName = getTierName(data?.clientTier);
   const progress = Math.min(98, Math.max(12, Math.round((points % 10000) / 100)));
