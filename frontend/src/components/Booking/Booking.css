@@ -91,6 +91,7 @@
   align-items: flex-end;
   gap: 40px;
   margin: 58px 0 34px;
+  padding: 0 8px;
 }
 
 .booking-hero-text h1 {
