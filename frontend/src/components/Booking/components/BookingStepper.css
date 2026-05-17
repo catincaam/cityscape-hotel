@@ -3,12 +3,12 @@
   align-items: center;
   justify-content: center;
   gap: 0;
-  margin-bottom: 48px;
+  margin-bottom: 0;
   padding: 28px clamp(22px, 3vw, 44px);
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  border: 1px solid #f0f4f8;
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 24px;
+  box-shadow: 0 18px 44px rgba(48, 37, 23, 0.06);
+  border: 1px solid #ebe3d8;
   width: 100%;
 }
 
@@ -34,7 +34,7 @@
 }
 
 .step-item.active {
-  color: #1f2937;
+  color: #765b2d;
 }
 
 .step-circle {
@@ -60,7 +60,7 @@
 }
 
 .step-circle.done {
-  background: linear-gradient(135deg, #d4b896, #b8956d);
+  background: #d8ba94;
   color: white;
   box-shadow: 0 4px 12px rgba(212, 184, 150, 0.2);
 }
@@ -72,7 +72,7 @@
 }
 
 .step-item.active .step-circle {
-  background: #d4b896;
+  background: #d8ba94;
   color: white;
   box-shadow: 0 6px 20px rgba(212, 184, 150, 0.2);
   transform: scale(1.12);
@@ -87,8 +87,8 @@
 
 .step-line {
   width: 48px;
-  height: 3px;
-  background: linear-gradient(to right, #e5e7eb, #d1d5db);
+  height: 1px;
+  background: #d6c1a4;
   margin: 0 -6px;
   transition: all 0.3s ease;
   position: relative;
@@ -96,5 +96,5 @@
 
 .step-item.active ~ .step-line,
 .step-item:last-child .step-line {
-  background: #d4b896;
+  background: #d8ba94;
 }

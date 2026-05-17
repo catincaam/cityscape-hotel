@@ -11,20 +11,20 @@
 ========================= */
 
 .booking-page {
-  padding-top: 42px;
-  background: var(--bg);
+  padding-top: 0;
+  background: #f7f4ef;
   min-height: 100vh;
 }
 
 .rooms-layout {
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr) 290px;
-  gap: 22px;
+  grid-template-columns: 272px minmax(0, 1fr) 320px;
+  gap: 36px;
   width: 100%;
   max-width: none;
   margin: 0 auto;
   padding: 0 0 140px;
-  background: var(--bg);
+  background: #f7f4ef;
   align-items: start;
 }
 
