@@ -8,7 +8,7 @@
 .reservations-header,
 .reservations-controls,
 .reservations-grid-section {
-  width: min(100%, 1120px);
+  width: min(100%, 1560px);
   margin-left: auto;
   margin-right: auto;
 }
@@ -123,7 +123,7 @@
 
 .reservations-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 30px;
 }
 
@@ -382,13 +382,16 @@
 
 @media (max-width: 980px) {
   .header-content,
-  .reservations-controls,
-  .reservations-grid {
+  .reservations-controls {
     grid-template-columns: 1fr;
   }
 
   .reservations-controls {
     gap: 22px;
+  }
+
+  .reservations-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -403,6 +406,10 @@
 
   .tabs-container {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reservations-grid {
+    grid-template-columns: 1fr;
   }
 
   .tab-button:nth-child(3n) {
