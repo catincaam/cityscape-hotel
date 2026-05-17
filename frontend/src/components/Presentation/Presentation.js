@@ -1,8 +1,10 @@
 import "./Presentation.css";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import Navbar from "../Dashboard/Navbar";
 import { getRoomThemes } from "../../services/roomThemeService";
 import { API_BASE_URL } from "../../config/runtimeUrls";
+import heroImage from "../../assets/world-map.jpg";
 
 const displayNames = {
   Europa: "Europe",
@@ -72,50 +74,56 @@ export default function Presentation() {
   }
 
   return (
-    <main className="presentation-page">
-      <section className="presentation-hero">
-        <div className="presentation-hero-overlay" />
-        <div className="presentation-hero-content">
-          <span>Cityscape Collection</span>
-          <h1>Travel the world, one room at a time.</h1>
-          <p>Discover signature stays inspired by captivating destinations and timeless city stories.</p>
-          <button type="button" onClick={() => navigate("/booking")}>
-            Explore Stays
-          </button>
-        </div>
-      </section>
+    <>
+      <Navbar />
+      <main className="presentation-page">
+        <section
+          className="presentation-hero"
+          style={{ backgroundImage: `url(${heroImage})` }}
+        >
+          <div className="presentation-hero-overlay" />
+          <div className="presentation-hero-content">
+            <span>Cityscape Collection</span>
+            <h1>Travel the world, one room at a time.</h1>
+            <p>Discover signature stays inspired by captivating destinations and timeless city stories.</p>
+            <button type="button" onClick={() => navigate("/booking")}>
+              Explore Stays
+            </button>
+          </div>
+        </section>
 
-      <section className="presentation-filters" aria-label="Destination filters">
-        {continents.map((continent) => (
-          <button
-            key={continent}
-            className={filter === continent ? "active" : ""}
-            onClick={() => setFilter(continent)}
-            type="button"
-          >
-            {continent}
-          </button>
-        ))}
-      </section>
+        <section className="presentation-filters" aria-label="Destination filters">
+          {continents.map((continent) => (
+            <button
+              key={continent}
+              className={filter === continent ? "active" : ""}
+              onClick={() => setFilter(continent)}
+              type="button"
+            >
+              {continent}
+            </button>
+          ))}
+        </section>
 
-      <section className="cities-grid">
-        {filteredCities.length > 0 ? (
-          filteredCities.map((city, index) => (
-            <CityCard
-              key={city.id}
-              index={index}
-              title={city.title}
-              continent={city.continent}
-              img={city.img}
-              price={city.price}
-              onClick={() => navigate("/booking")}
-            />
-          ))
-        ) : (
-          <p className="presentation-empty">No destinations to display.</p>
-        )}
-      </section>
-    </main>
+        <section className="cities-grid">
+          {filteredCities.length > 0 ? (
+            filteredCities.map((city, index) => (
+              <CityCard
+                key={city.id}
+                index={index}
+                title={city.title}
+                continent={city.continent}
+                img={city.img}
+                price={city.price}
+                onClick={() => navigate("/booking")}
+              />
+            ))
+          ) : (
+            <p className="presentation-empty">No destinations to display.</p>
+          )}
+        </section>
+      </main>
+    </>
   );
 }
 
