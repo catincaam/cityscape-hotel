@@ -364,10 +364,10 @@ export default function AllReservations() {
                 <div className="new-chapter-icon">
                   <Sparkles size={22} strokeWidth={1.7} />
                 </div>
-                <h3>Begin a New Chapter</h3>
-                <p>Discover a sanctuary curated to your specific tastes. Our concierge is ready to assist in your next departure.</p>
+                <h3>Find Your Next Escape</h3>
+                <p>Curated stays inspired by the world's most captivating destinations. From timeless cities to hidden sanctuaries, discover where your next story begins.</p>
                 <button type="button" onClick={() => navigate("/explore")}>
-                  Explore destinations
+                  Explore Stays
                 </button>
               </article>
             </div>
