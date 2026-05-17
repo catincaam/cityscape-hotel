@@ -2,6 +2,16 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./StepRooms.css";
 
+function cleanDisplayText(value) {
+  return String(value || "")
+    .replace(/â€™|â€˜|�T|�™/g, "'")
+    .replace(/â€œ|â€�/g, '"')
+    .replace(/Ã©/g, "e")
+    .replace(/È™/g, "s")
+    .replace(/È›/g, "t")
+    .replace(/Äƒ/g, "a");
+}
+
 export default function StepRooms({ bookingData, onSelectRoom, onBack, onNext }) {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,16 +50,16 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack, onNext })
           return {
             id: r.RoomTheme?.RoomThemeId || r.RoomThemeId,
             roomId: r.RoomId,
-            name: r.RoomTheme?.name || 'Unknown Room',
-            description: r.RoomTheme?.description || '',
+            name: cleanDisplayText(r.RoomTheme?.name || 'Unknown Room'),
+            description: cleanDisplayText(r.RoomTheme?.description || ''),
             image: imageUrl 
               ? `http://localhost:9001${imageUrl}` 
               : 'https://via.placeholder.com/220?text=No+Image',
             amenities: r.RoomTheme?.amenities ? (Array.isArray(r.RoomTheme.amenities) ? r.RoomTheme.amenities : JSON.parse(r.RoomTheme.amenities)) : [],
             basePrice: r.RoomTheme?.basePrice || 0,
-            city: r.RoomTheme?.city || '',
-            continent: r.RoomTheme?.continent || '',
-            theme: r.RoomTheme?.theme || '',
+            city: cleanDisplayText(r.RoomTheme?.city || ''),
+            continent: cleanDisplayText(r.RoomTheme?.continent || ''),
+            theme: cleanDisplayText(r.RoomTheme?.theme || ''),
             maxGuests: r.RoomTheme?.maxGuests || 2,
             availableCount: r.availableCount || 1
           };
