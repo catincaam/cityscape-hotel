@@ -1,8 +1,7 @@
 .services-layout {
   display: grid;
-  grid-template-columns: minmax(0, 900px) 330px;
-  gap: 28px;
-  justify-content: center;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  gap: 30px;
   padding: 28px 0;
   width: 100%;
   margin: 0 auto;
@@ -573,7 +572,7 @@
   border-radius: 14px;
   box-shadow: 0 16px 34px rgba(17, 24, 39, 0.06);
   font-family: Arial, sans-serif;
-  max-width: 310px;
+  max-width: none;
 }
 
 .services-summary h3 {

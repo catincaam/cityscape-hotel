@@ -9,7 +9,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) 360px;
   gap: 32px;
-  width: min(1500px, calc(100vw - 64px));
+  width: min(1560px, calc(100vw - 64px));
   max-width: none;
   margin: 0 auto;
 }
@@ -594,10 +594,10 @@
 }
 
 .confirmation-container {
-  grid-template-columns: minmax(0, 780px) 320px;
+  grid-template-columns: minmax(0, 1fr) 340px;
   gap: 34px;
-  justify-content: center;
-  width: min(1160px, calc(100vw - 64px));
+  justify-content: stretch;
+  width: min(1560px, calc(100vw - 64px));
 }
 
 .confirmation-content {

@@ -66,7 +66,7 @@
 ========================= */
 
 .booking-shell {
-  width: min(1500px, calc(100vw - 64px));
+  width: min(1560px, calc(100vw - 64px));
   max-width: none;
   margin: 0 auto;
   padding: 40px 0 140px;
