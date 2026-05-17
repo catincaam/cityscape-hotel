@@ -73,6 +73,18 @@ export default function Presentation() {
 
   return (
     <main className="presentation-page">
+      <section className="presentation-hero">
+        <div className="presentation-hero-overlay" />
+        <div className="presentation-hero-content">
+          <span>Cityscape Collection</span>
+          <h1>Travel the world, one room at a time.</h1>
+          <p>Discover signature stays inspired by captivating destinations and timeless city stories.</p>
+          <button type="button" onClick={() => navigate("/booking")}>
+            Explore Stays
+          </button>
+        </div>
+      </section>
+
       <section className="presentation-filters" aria-label="Destination filters">
         {continents.map((continent) => (
           <button

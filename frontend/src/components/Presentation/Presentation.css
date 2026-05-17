@@ -3,7 +3,7 @@
   background: #f7f4ef;
   color: #111827;
   font-family: Georgia, "Times New Roman", serif;
-  padding: 84px clamp(18px, 4vw, 72px) 110px;
+  padding: 42px clamp(18px, 4vw, 72px) 110px;
 }
 
 .presentation-loading,
@@ -11,6 +11,85 @@
   color: #8c8377;
   font-size: 15px;
   text-align: center;
+}
+
+.presentation-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 430px;
+  max-width: 1460px;
+  margin: 0 auto 58px;
+  overflow: hidden;
+  border-radius: 10px;
+  background-image: url("../../assets/world-map.jpg");
+  background-position: center;
+  background-size: cover;
+  box-shadow: 0 22px 54px rgba(38, 31, 23, 0.12);
+}
+
+.presentation-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, rgba(7, 10, 14, 0.1), rgba(7, 10, 14, 0.64)),
+    radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.1), transparent 42%);
+}
+
+.presentation-hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 760px;
+  padding: 48px 24px;
+  color: #fff;
+  text-align: center;
+}
+
+.presentation-hero-content span {
+  color: #d8ba94;
+  font-family: "Plus Jakarta Sans", Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.presentation-hero-content h1 {
+  font-size: clamp(44px, 6vw, 76px);
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 0.98;
+  margin: 16px 0 18px;
+}
+
+.presentation-hero-content p {
+  color: rgba(255, 255, 255, 0.82);
+  font-family: "Plus Jakarta Sans", Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+  margin: 0 auto 30px;
+  max-width: 560px;
+}
+
+.presentation-hero-content button {
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 0;
+  background: #80643f;
+  color: #fff;
+  cursor: pointer;
+  font-family: "Plus Jakarta Sans", Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  padding: 15px 34px;
+  text-transform: uppercase;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.presentation-hero-content button:hover {
+  background: #111827;
+  transform: translateY(-1px);
 }
 
 .presentation-filters {
@@ -183,7 +262,16 @@
 
 @media (max-width: 720px) {
   .presentation-page {
-    padding: 48px 18px 80px;
+    padding: 22px 18px 80px;
+  }
+
+  .presentation-hero {
+    min-height: 390px;
+    margin-bottom: 42px;
+  }
+
+  .presentation-hero-content h1 {
+    font-size: 42px;
   }
 
   .presentation-filters {
