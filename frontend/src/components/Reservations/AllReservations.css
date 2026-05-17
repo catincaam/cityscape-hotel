@@ -51,7 +51,7 @@
 
 .tabs-container {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0;
   background: #f0eee9;
   border: 1px solid #ebe5dc;
@@ -73,12 +73,8 @@
   transition: background 0.2s ease, color 0.2s ease;
 }
 
-.tab-button:nth-child(3n) {
+.tab-button:nth-child(4n) {
   border-right: 0;
-}
-
-.tab-button:nth-child(n + 4) {
-  border-top: 1px solid #ebe5dc;
 }
 
 .tab-button:hover,
