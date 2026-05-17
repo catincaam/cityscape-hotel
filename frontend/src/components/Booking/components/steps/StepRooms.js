@@ -4,8 +4,10 @@ import "./StepRooms.css";
 
 function cleanDisplayText(value) {
   return String(value || "")
+    .replace(/([A-Za-z])\uFFFD\??T?s/g, "$1's")
+    .replace(/([A-Za-z])\uFFFD\??s/g, "$1's")
     .replace(/â€™|â€˜|�T|�™/g, "'")
-    .replace(/â€œ|â€�/g, '"')
+    .replace(/â€œ|â€�|�/g, '"')
     .replace(/Ã©/g, "e")
     .replace(/È™/g, "s")
     .replace(/È›/g, "t")
