@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Search, Sparkles } from "lucide-react";
 import Navbar from "../Dashboard/Navbar";
 import { getDashboardData } from "../../services/dashboardService";
 import { API_BASE_URL } from "../../config/runtimeUrls";
@@ -129,6 +130,13 @@ export default function AllReservations() {
     };
   };
 
+  const getGuestInitials = () => {
+    const storedName = localStorage.getItem("userName") || "Cityscape Guest";
+    const parts = storedName.trim().split(/\s+/).filter(Boolean);
+    const initials = parts.slice(0, 2).map((part) => part[0]?.toUpperCase()).join("");
+    return initials || "CG";
+  };
+
   const reservationCounts = TABS.reduce((acc, tab) => {
     acc[tab] = reservations.filter((reservation) => getTimelineStatus(reservation) === tab).length;
     return acc;
@@ -193,6 +201,10 @@ export default function AllReservations() {
     return date.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
   };
 
+  const formatDateRange = (reservation) => {
+    return `${formatDate(getCheckIn(reservation))} - ${formatDate(getCheckOut(reservation))}`;
+  };
+
   const getNights = (reservation) => {
     return calculateNights(reservation);
   };
@@ -248,14 +260,14 @@ export default function AllReservations() {
                 className={`tab-button ${activeTab === tab ? "active" : ""}`}
                 onClick={() => handleTabChange(tab)}
               >
-                <span>{tab}</span>
-                <strong>{reservationCounts[tab] || 0}</strong>
+                {tab} ({reservationCounts[tab] || 0})
               </button>
             ))}
           </div>
 
           <div className="search-container">
             <div className="search-box">
+              <Search size={16} strokeWidth={1.7} />
               <input
                 type="text"
                 placeholder="Search by city or stay name..."
@@ -292,57 +304,72 @@ export default function AllReservations() {
                 const image = getReservationImage(reservation);
                 const reservationId = getReservationId(reservation);
                 const guests = reservation.guests || reservation.nrPeople || 1;
+                const initials = getGuestInitials();
 
                 return (
-                  <div key={reservationId} className="reservation-card">
+                  <article key={reservationId} className="reservation-card">
                     <div className="card-image-container">
                       <img src={image} alt={info.roomName} className="card-image" />
                       <span className="status-badge">{getStatusBadge(reservation)}</span>
                     </div>
 
                     <div className="card-content">
-                      <h3 className="card-title">{info.roomName}</h3>
-                      <p className="card-location">
-                        {info.city?.toUpperCase()} {info.themeName ? "- " + info.themeName : ""}
-                      </p>
-
-                      <p className="card-price">
-                        EUR {info.totalAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        <span className="price-label">TOTAL STAY</span>
-                      </p>
-
-                      <div className="card-dates">
-                        <span>{formatDate(getCheckIn(reservation))}</span>
-                        <span className="date-separator">-</span>
-                        <span>{formatDate(getCheckOut(reservation))}</span>
-                      </div>
-
-                      <div className="card-meta-row">
-                        <span>
-                          {getNights(reservation)} {getNights(reservation) === 1 ? "night" : "nights"}
-                        </span>
-                        <span>
-                          {guests} {guests === 1 ? "guest" : "guests"}
-                        </span>
-                      </div>
-
-                      {(info.city || info.themeName) && (
-                        <div className="card-tags">
-                          {info.city && <span className="tag">{info.city}</span>}
-                          {info.themeName && <span className="tag">{info.themeName}</span>}
+                      <div className="card-heading-row">
+                        <div>
+                          <p className="card-location">{info.city}</p>
+                          <h3 className="card-title">{info.roomName}</h3>
                         </div>
-                      )}
+                        <div className="card-total">
+                          <span>Total stay</span>
+                          <strong>
+                            EUR {info.totalAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </strong>
+                        </div>
+                      </div>
 
-                      <button
-                        className="view-details-btn"
-                        onClick={() => navigate(`/reservation/${reservationId}`)}
-                      >
-                        VIEW DETAILS
-                      </button>
+                      <div className="card-stay-grid">
+                        <div>
+                          <span>Schedule</span>
+                          <strong>{formatDateRange(reservation)}</strong>
+                          <small>
+                            {getNights(reservation)} {getNights(reservation) === 1 ? "night" : "nights"}
+                          </small>
+                        </div>
+                        <div>
+                          <span>Occupancy</span>
+                          <strong>
+                            {guests} {guests === 1 ? "Guest" : "Guests"}
+                          </strong>
+                        </div>
+                      </div>
+
+                      <div className="card-footer-row">
+                        <button
+                          className="view-details-btn"
+                          onClick={() => navigate(`/reservation/${reservationId}`)}
+                        >
+                          View details
+                        </button>
+                        <div className="guest-badges" aria-label="Guest initials">
+                          <span>{initials}</span>
+                          {guests > 1 && <span>+{guests - 1}</span>}
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  </article>
                 );
               })}
+
+              <article className="new-chapter-card">
+                <div className="new-chapter-icon">
+                  <Sparkles size={22} strokeWidth={1.7} />
+                </div>
+                <h3>Begin a New Chapter</h3>
+                <p>Discover a sanctuary curated to your specific tastes. Our concierge is ready to assist in your next departure.</p>
+                <button type="button" onClick={() => navigate("/explore")}>
+                  Explore destinations
+                </button>
+              </article>
             </div>
           )}
         </section>
