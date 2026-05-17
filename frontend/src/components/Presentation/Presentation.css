@@ -139,23 +139,13 @@
   min-width: 0;
 }
 
-.city-card-1,
-.city-card-3 {
-  margin-top: 58px;
-}
-
 .city-image-frame {
   position: relative;
-  height: 380px;
+  height: 430px;
   border-radius: 7px;
   overflow: hidden;
   background: #e6dfd5;
   box-shadow: 0 18px 42px rgba(38, 31, 23, 0.1);
-}
-
-.city-card-0 .city-image-frame,
-.city-card-2 .city-image-frame {
-  height: 430px;
 }
 
 .city-image-frame img {
@@ -294,9 +284,7 @@
     margin-top: 0;
   }
 
-  .city-image-frame,
-  .city-card-0 .city-image-frame,
-  .city-card-2 .city-image-frame {
+  .city-image-frame {
     height: 370px;
   }
 }
