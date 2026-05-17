@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BedDouble, ChevronRight, MessageCircle, Sparkles, UtensilsCrossed, Waves } from "lucide-react";
+import { BedDouble, ChevronRight, Sparkles, UtensilsCrossed, Waves } from "lucide-react";
 import { getDashboardData } from "../../services/dashboardService";
 import Navbar from "./Navbar";
 import "./Dashboard.css";
@@ -89,9 +89,6 @@ export default function Dashboard() {
   const points = Number(data?.cityPoints || 0);
   const tierName = getTierName(data?.clientTier);
   const progress = Math.min(98, Math.max(12, Math.round((points % 10000) / 100)));
-  const openChatbot = () => {
-    window.dispatchEvent(new Event("cityscape:open-chatbot"));
-  };
 
   return (
     <>
@@ -238,10 +235,6 @@ export default function Dashboard() {
             </div>
           </section>
         </section>
-
-        <button type="button" className="floating-concierge" onClick={openChatbot} aria-label="Open chatbot">
-          <MessageCircle size={20} strokeWidth={1.9} />
-        </button>
       </main>
     </>
   );
