@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo, useRef } from "react";
 import { ReactComponent as FilterIcon } from '../../../assets/icons/filter.svg';
 import { ReactComponent as SortIcon } from '../../../assets/icons/sort.svg';
 import { API_BASE_URL } from "../../../config/runtimeUrls";
+import defaultProfilePicture from "../../../assets/profilePicture.jpg";
 import "./AdminBookings.css";
 import "../rewards/AdminRewards.css";
 
@@ -232,6 +233,14 @@ export default function AdminBookings() {
     if (status === "completed") return "Stay completed";
     if (status === "cancelled") return "Reservation cancelled";
     return "Upcoming stay";
+  };
+
+  const getGuestAvatar = (booking) => {
+    const avatar = booking?.guestAvatar;
+    if (!avatar || String(avatar).includes("/assets/profilePicture.jpg")) {
+      return defaultProfilePicture;
+    }
+    return avatar;
   };
 
   return (
@@ -571,7 +580,11 @@ export default function AdminBookings() {
                 <section>
                   <p className="admin-booking-eyebrow">Guest Information</p>
                   <div className="admin-booking-guest-card">
-                    <img src={selectedBooking.guestAvatar || "/assets/profilePicture.jpg"} alt={selectedBooking.guestName} />
+                    <img
+                      src={getGuestAvatar(selectedBooking)}
+                      alt={selectedBooking.guestName}
+                      onError={(event) => { event.currentTarget.src = defaultProfilePicture; }}
+                    />
                     <div>
                       <strong>{selectedBooking.guestName}</strong>
                       <span>{selectedBooking.guestTier || "Cityscape Member"}</span>

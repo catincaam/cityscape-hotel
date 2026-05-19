@@ -1067,6 +1067,80 @@
   color: #1d1814;
 }
 
+/* Larger, closer to the operator reference */
+.admin-booking-modal {
+  width: min(1210px, calc(100vw - 28px));
+  max-height: min(94vh, 900px);
+  border-radius: 6px;
+}
+
+.admin-booking-modal-header {
+  padding: 34px 38px;
+}
+
+.admin-booking-modal-header h2 {
+  font-size: 33px;
+}
+
+.admin-booking-operator-layout {
+  grid-template-columns: 325px minmax(0, 1fr);
+  gap: 46px;
+  padding: 34px 38px 40px;
+}
+
+.admin-booking-guest-card img {
+  width: 66px;
+  height: 66px;
+  border-radius: 10px;
+}
+
+.admin-booking-guest-card strong {
+  font-size: 24px;
+}
+
+.admin-booking-contact-list,
+.admin-booking-overview-grid strong {
+  font-size: 16px;
+}
+
+.admin-booking-room-visual {
+  height: 315px;
+}
+
+.admin-booking-room-visual strong {
+  font-size: 34px;
+}
+
+.admin-booking-room-tags span {
+  min-width: 120px;
+  text-align: center;
+}
+
+.admin-booking-extra-grid {
+  grid-template-columns: repeat(auto-fit, minmax(205px, 1fr));
+}
+
+.admin-booking-extra-grid article {
+  min-height: 138px;
+  padding: 22px;
+}
+
+.admin-booking-extra-grid strong {
+  font-size: 17px;
+}
+
+.admin-booking-financial-grid div {
+  padding: 25px 24px;
+}
+
+.admin-booking-financial-grid strong {
+  font-size: 25px;
+}
+
+.admin-booking-modal-footer {
+  padding: 24px 38px;
+}
+
 /* BOOKING PAGINATION */
 .booking-pagination {
   display: flex;
