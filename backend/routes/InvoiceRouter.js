@@ -21,7 +21,7 @@ const formatDate = (value) => {
   }).format(new Date(value));
 };
 
-const money = (value) => `${Number(value || 0).toFixed(2)} EUR`;
+const money = (value) => `${Number(value || 0).toFixed(2)}\u00A0EUR`;
 
 const drawLabel = (doc, label, value, x, y, width = 140, options = {}) => {
   doc.fontSize(options.labelSize || 6.8).font("Helvetica-Bold").fillColor(options.labelColor || "#a67f54")
@@ -70,10 +70,10 @@ const drawInvoiceTableRow = (doc, y, description, meta, quantity, unitPrice, amo
       .text(meta, 72, y + 16, { width: 258, lineGap: 2 });
   }
   doc.fontSize(9).font("Helvetica").fillColor("#111827")
-    .text(String(quantity), 350, y + 4, { width: 30, align: "center" });
-  doc.text(money(unitPrice), 400, y + 4, { width: 70, align: "right" });
+    .text(String(quantity), 342, y + 4, { width: 30, align: "center" });
+  doc.text(money(unitPrice), 388, y + 4, { width: 74, align: "right" });
   doc.font("Helvetica-Bold")
-    .text(money(amount), 484, y + 4, { width: 58, align: "right" });
+    .text(money(amount), 470, y + 4, { width: 72, align: "right" });
 };
 
 /* CREATE */
@@ -212,9 +212,9 @@ invoiceRouter.get("/:reservationId/download-pdf", async (req, res) => {
 
     doc.fontSize(10).font("Helvetica").fillColor("#9a6f36")
       .text("DESCRIPTION", 84, 432, { characterSpacing: 1.4 });
-    doc.text("QTY", 350, 432, { width: 30, align: "center", characterSpacing: 1.4 });
-    doc.text("UNIT PRICE", 400, 432, { width: 70, align: "right", characterSpacing: 1.4 });
-    doc.text("AMOUNT", 484, 432, { width: 58, align: "right", characterSpacing: 1.4 });
+    doc.text("QTY", 342, 432, { width: 30, align: "center", characterSpacing: 1.4 });
+    doc.text("UNIT PRICE", 388, 432, { width: 74, align: "right", characterSpacing: 1.4 });
+    doc.text("AMOUNT", 470, 432, { width: 72, align: "right", characterSpacing: 1.4 });
     doc.moveTo(84, 454).lineTo(542, 454).strokeColor("#eee8df").lineWidth(1).stroke();
 
     let rowY = 482;
@@ -265,8 +265,8 @@ invoiceRouter.get("/:reservationId/download-pdf", async (req, res) => {
     doc.moveTo(summaryX, totalsY + 98).lineTo(542, totalsY + 98).strokeColor("#d9c5a8").lineWidth(1).stroke();
     doc.fontSize(15).font("Times-Italic").fillColor("#9a6f36")
       .text("Total Amount", summaryX, totalsY + 116);
-    doc.fontSize(24).font("Helvetica-Bold").fillColor("#0f172a")
-      .text(money(totalAmount), 430, totalsY + 110, { width: 112, align: "right" });
+    doc.fontSize(22).font("Helvetica-Bold").fillColor("#0f172a")
+      .text(money(totalAmount), 388, totalsY + 110, { width: 154, align: "right" });
 
     const isPaid = remainingAmount <= 0;
     doc.rect(348, totalsY + 144, 194, 26).fill("#f7f3ed");

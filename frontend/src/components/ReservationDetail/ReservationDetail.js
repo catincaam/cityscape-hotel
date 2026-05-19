@@ -400,7 +400,6 @@ const ReservationDetail = () => {
             </div>
             <div className="booking-actions">
               <button type="button" onClick={handleDownloadReceipt}>Print</button>
-              <button type="button">Share</button>
             </div>
           </div>
 
