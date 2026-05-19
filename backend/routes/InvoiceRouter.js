@@ -248,7 +248,7 @@ invoiceRouter.get("/:reservationId/download-pdf", async (req, res) => {
     doc.fontSize(10).font("Helvetica").fillColor("#9a6f36")
       .text("LOYALTY ACCRUAL", 126, totalsY + 48, { characterSpacing: 1.1 });
     doc.fontSize(9).font("Helvetica").fillColor("#0f172a")
-      .text(`This stay has earned you ${Math.round(totalAmount * 10).toLocaleString("en-US")} Cityscape Points.`, 108, totalsY + 74, {
+      .text(`${Math.round(totalAmount * 10).toLocaleString("en-US")} Cityscape Points will be added when your stay begins.`, 108, totalsY + 74, {
         width: 136,
         lineGap: 3
       });
