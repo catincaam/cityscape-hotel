@@ -698,9 +698,6 @@ export default function AdminBookings() {
             <footer className="admin-booking-modal-footer">
               <button type="button" className="admin-booking-danger-action" onClick={closeBookingDetails}>Close Details</button>
               <div>
-                <a className="admin-booking-outline-action" href={selectedBooking.guestEmail ? `mailto:${selectedBooking.guestEmail}` : undefined}>
-                  Contact Guest
-                </a>
                 <button type="button" className="admin-booking-primary-action" disabled>
                   {getPrimaryActionLabel(selectedBooking)}
                 </button>
