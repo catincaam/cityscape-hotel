@@ -55,6 +55,7 @@ export default function AdminBookings() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [selectedBooking, setSelectedBooking] = useState(null);
 
   // Auto-hide notifications
   useEffect(() => {
@@ -201,6 +202,23 @@ export default function AdminBookings() {
         return { bg: '#f3f4f6', color: '#6b7280' };
     }
   };
+
+  const formatCurrency = (value) => {
+    const amount = Number(value || 0);
+    return `EUR ${Number.isFinite(amount) ? amount.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }) : "0.00"}`;
+  };
+
+  const formatDate = (value) => {
+    if (!value) return "Not available";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  };
+
+  const closeBookingDetails = () => setSelectedBooking(null);
 
   return (
     <div className="admin-rewards-container">
@@ -434,7 +452,13 @@ export default function AdminBookings() {
 
                       {/* VIEW DETAILS LINK */}
                       <div className="booking-portfolio-action">
-                        <span className="booking-view-details">VIEW DETAILS</span>
+                        <button
+                          type="button"
+                          className="booking-view-details"
+                          onClick={() => setSelectedBooking(b)}
+                        >
+                          VIEW DETAILS
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -495,6 +519,130 @@ export default function AdminBookings() {
         <div className="toast toast-error">
           <div className="toast-icon">!</div>
           <div className="toast-message">{error}</div>
+        </div>
+      )}
+
+      {selectedBooking && (
+        <div className="admin-booking-modal-backdrop" role="presentation" onClick={closeBookingDetails}>
+          <section
+            className="admin-booking-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="admin-booking-modal-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button type="button" className="admin-booking-modal-close" onClick={closeBookingDetails} aria-label="Close booking details">
+              Close
+            </button>
+
+            <div className="admin-booking-modal-hero">
+              {selectedBooking.roomImage ? (
+                <img src={selectedBooking.roomImage} alt={selectedBooking.roomTheme} />
+              ) : (
+                <div className="admin-booking-modal-image-empty">No image</div>
+              )}
+              <div className="admin-booking-modal-shade" />
+              <div className="admin-booking-modal-hero-copy">
+                <span>{selectedBooking.bookingId}</span>
+                <h2 id="admin-booking-modal-title">{selectedBooking.roomTheme || selectedBooking.roomName}</h2>
+                <p>{selectedBooking.city || "Cityscape"} · {selectedBooking.guests || 1} {(selectedBooking.guests || 1) === 1 ? "guest" : "guests"} · {selectedBooking.nights || 0} nights</p>
+              </div>
+            </div>
+
+            <div className="admin-booking-modal-body">
+              <div className="admin-booking-modal-summary">
+                <div>
+                  <span>Guest</span>
+                  <strong>{selectedBooking.guestName}</strong>
+                  <small>{selectedBooking.guestEmail || "No email recorded"}</small>
+                </div>
+                <div>
+                  <span>Status</span>
+                  <strong>{selectedBooking.status}</strong>
+                  <small>{selectedBooking.paymentStatus?.replace("_", " ") || "Payment pending"}</small>
+                </div>
+                <div>
+                  <span>Total</span>
+                  <strong>{formatCurrency(selectedBooking.totalPrice)}</strong>
+                  <small>{formatCurrency(selectedBooking.remainingDue)} remaining</small>
+                </div>
+              </div>
+
+              <div className="admin-booking-detail-grid">
+                <article>
+                  <p>Stay Details</p>
+                  <div className="admin-booking-info-row"><span>Check-in</span><strong>{formatDate(selectedBooking.checkin)}</strong></div>
+                  <div className="admin-booking-info-row"><span>Check-out</span><strong>{formatDate(selectedBooking.checkout)}</strong></div>
+                  <div className="admin-booking-info-row"><span>Room</span><strong>{selectedBooking.roomName || selectedBooking.roomTheme}</strong></div>
+                  <div className="admin-booking-info-row"><span>Booking method</span><strong>{selectedBooking.bookingMethod || "online"}</strong></div>
+                </article>
+
+                <article>
+                  <p>Payment Summary</p>
+                  <div className="admin-booking-info-row"><span>Invoice</span><strong>{selectedBooking.invoiceId ? `INV-${String(selectedBooking.invoiceId).padStart(4, "0")}` : "Not issued"}</strong></div>
+                  <div className="admin-booking-info-row"><span>Received</span><strong>{formatCurrency(selectedBooking.totalPaid)}</strong></div>
+                  <div className="admin-booking-info-row"><span>Deposit required</span><strong>{formatCurrency(selectedBooking.depositRequired)}</strong></div>
+                  <div className="admin-booking-progress" aria-label="Payment progress">
+                    <span style={{ width: `${Math.min(100, (Number(selectedBooking.totalPaid || 0) / Math.max(1, Number(selectedBooking.totalPrice || 0))) * 100)}%` }} />
+                  </div>
+                </article>
+              </div>
+
+              <div className="admin-booking-items-section">
+                <div className="admin-booking-section-title">
+                  <p>Services & Rewards</p>
+                  <span>{(selectedBooking.services?.length || 0) + (selectedBooking.rewards?.length || 0)} items</span>
+                </div>
+
+                {selectedBooking.services?.length || selectedBooking.rewards?.length ? (
+                  <div className="admin-booking-items-list">
+                    {selectedBooking.services?.map((service) => (
+                      <div className="admin-booking-item-row" key={`service-${service.id}`}>
+                        {service.image ? <img src={service.image} alt={service.name} /> : <div className="admin-booking-item-fallback">SV</div>}
+                        <div>
+                          <strong>{service.name}</strong>
+                          <span>{service.description || service.category || "Hotel service"} · Qty {service.quantity}</span>
+                        </div>
+                        <p>{formatCurrency(service.total)}</p>
+                      </div>
+                    ))}
+                    {selectedBooking.rewards?.map((reward) => (
+                      <div className="admin-booking-item-row" key={`reward-${reward.id}`}>
+                        {reward.image ? <img src={reward.image} alt={reward.title} /> : <div className="admin-booking-item-fallback">RW</div>}
+                        <div>
+                          <strong>{reward.title}</strong>
+                          <span>{reward.description || reward.category || "Reward applied to this stay"}</span>
+                        </div>
+                        <p>{Number(reward.points || 0).toLocaleString()} pts</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="admin-booking-empty-detail">No services or rewards attached to this reservation yet.</div>
+                )}
+              </div>
+
+              <div className="admin-booking-items-section">
+                <div className="admin-booking-section-title">
+                  <p>Payment Activity</p>
+                  <span>{selectedBooking.payments?.length || 0} records</span>
+                </div>
+
+                {selectedBooking.payments?.length ? (
+                  <div className="admin-booking-payment-list">
+                    {selectedBooking.payments.map((payment) => (
+                      <div className="admin-booking-payment-row" key={payment.id}>
+                        <span>{formatDate(payment.paymentDate)}</span>
+                        <strong>{formatCurrency(payment.amount)}</strong>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="admin-booking-empty-detail">No payment records found.</div>
+                )}
+              </div>
+            </div>
+          </section>
         </div>
       )}
     </div>

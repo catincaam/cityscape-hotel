@@ -5,6 +5,10 @@ import RoomTheme from "../entities/RoomTheme.js";
 import Room from "../entities/Room.js";
 import Reservation from "../entities/Reservation.js";
 import RoomReservation from "../entities/RoomReservation.js";
+import ReservationService from "../entities/ReservationService.js";
+import Service from "../entities/Service.js";
+import RewardPoint from "../entities/RewardPoint.js";
+import Reward from "../entities/Reward.js";
 import express from "express";
 import { Op } from "sequelize";
 import { createInvoice, getInvoiceByReservationId, getRemainingAmount } from "../dataAccess/InvoiceDA.js";
@@ -54,7 +58,7 @@ bookingRouter.get("/admin/bookings", async (req, res) => {
       include: [
         {
           model: Client,
-          attributes: ["ClientId", "FirstName", "LastName"]
+          attributes: ["ClientId", "FirstName", "LastName", "Email", "TypeClientTip", "profilePicture"]
         },
         {
           model: RoomReservation,
@@ -76,12 +80,12 @@ bookingRouter.get("/admin/bookings", async (req, res) => {
         {
           model: invoiceModel,
           required: false,
-          attributes: ["InvoiceId", "totalAmount", "status"],
+          attributes: ["InvoiceId", "issueDate", "totalAmount", "status"],
           include: [
             {
               model: Payment,
               required: false,
-              attributes: ["id", "amount"],
+              attributes: ["id", "amount", "paymentDate", "paymentType", "createdAt"],
               as: "payments"
             }
           ]
@@ -93,6 +97,58 @@ bookingRouter.get("/admin/bookings", async (req, res) => {
     console.log("[ADMIN BOOKINGS] Total reservations found:", reservations.length);
     
     // Map all bookings except ghost (for total)
+    const reservationIds = reservations.map((reservation) => reservation.ReservationId);
+    const reservationServices = reservationIds.length
+      ? await ReservationService.findAll({
+          where: { ReservationId: { [Op.in]: reservationIds } },
+          include: [{ model: Service, required: false }]
+        })
+      : [];
+    const servicesByReservation = reservationServices.reduce((map, item) => {
+      const key = String(item.ReservationId);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(item);
+      return map;
+    }, new Map());
+
+    const rewardRedemptions = reservationIds.length
+      ? await RewardPoint.findAll({
+          where: {
+            ReservationId: { [Op.in]: reservationIds },
+            amount: { [Op.lt]: 0 },
+            description: { [Op.like]: "Reward redeemed:%" }
+          },
+          order: [["createdAt", "DESC"]]
+        })
+      : [];
+    const redeemedTitles = [
+      ...new Set(
+        rewardRedemptions
+          .map((point) => String(point.description || "").replace(/^Reward redeemed:\s*/i, "").trim())
+          .filter(Boolean)
+      )
+    ];
+    const rewardRows = redeemedTitles.length
+      ? await Reward.findAll({ where: { title: { [Op.in]: redeemedTitles } } })
+      : [];
+    const rewardsByTitle = new Map(rewardRows.map((reward) => [reward.title, reward]));
+    const rewardsByReservation = rewardRedemptions.reduce((map, point) => {
+      const key = String(point.ReservationId);
+      const title = String(point.description || "").replace(/^Reward redeemed:\s*/i, "").trim() || "Reward";
+      const reward = rewardsByTitle.get(title);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push({
+        id: point.RewardPointId,
+        title,
+        description: reward?.desc || "Cityscape reward redeemed for this stay.",
+        category: reward?.category || "Reward",
+        image: publicAssetUrl(reward?.image),
+        points: Math.abs(Number(point.amount || 0)),
+        redeemedAt: point.createdAt
+      });
+      return map;
+    }, new Map());
+
     const allBookings = reservations.map((r, idx) => {
       const client = r.Client || {};
       const roomRes = r.RoomReservations && r.RoomReservations[0];
@@ -124,6 +180,9 @@ bookingRouter.get("/admin/bookings", async (req, res) => {
       const checkin = r.requestedCheckin?.toISOString().slice(0, 10) || "N/A";
       const checkout = r.requestedCheckout?.toISOString().slice(0, 10) || "N/A";
       const dates = `${checkin} - ${checkout}`;
+      const nights = r.requestedCheckin && r.requestedCheckout
+        ? Math.max(1, Math.ceil((new Date(r.requestedCheckout) - new Date(r.requestedCheckin)) / (1000 * 60 * 60 * 24)))
+        : 0;
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const checkoutDate = new Date(r.requestedCheckout);
@@ -140,14 +199,41 @@ bookingRouter.get("/admin/bookings", async (req, res) => {
       } else if (checkinDateNormalized > today) {
         status = "Upcoming";
       }
+      const bookingServices = (servicesByReservation.get(String(r.ReservationId)) || []).map((item) => {
+        const service = item.Service || {};
+        const quantity = Number(item.quantity || 1);
+        const unitPrice = Number(item.unitPrice ?? service.price ?? 0);
+        return {
+          id: item.ServiceId,
+          name: service.name || "Hotel Service",
+          description: service.description || "",
+          category: service.category || "Service",
+          image: publicAssetUrl(service.image),
+          quantity,
+          unitPrice,
+          total: Math.round(quantity * unitPrice * 100) / 100,
+          priceType: service.priceType || "per_booking",
+          personDetails: item.personDetails || null
+        };
+      });
+      const bookingRewards = rewardsByReservation.get(String(r.ReservationId)) || [];
       return {
         reservationId: r.ReservationId,
         bookingId: `#BK-${String(r.ReservationId).padStart(4, "0")}`,
         guestName: client.FirstName ? `${client.FirstName} ${client.LastName}` : "-",
-        guestAvatar: "/assets/profilePicture.jpg",
+        guestEmail: client.Email || "",
+        guestTier: client.TypeClientTip || "Guest",
+        guestAvatar: publicAssetUrl(client.profilePicture) || "/assets/profilePicture.jpg",
         roomTheme: themeName,
+        roomName: room?.RoomName || themeName,
+        city: theme?.city || "",
+        theme: theme?.theme || "",
         roomImage: publicAssetUrl(showcaseImg),
+        checkin,
+        checkout,
         dates: dates,
+        nights,
+        guests: r.nrPeople || 1,
         totalPrice: totalPrice,
         totalPaid: Math.round(totalPaid * 100) / 100,
         remainingDue: Math.max(0, Math.round(remainingDue * 100) / 100),
@@ -155,7 +241,18 @@ bookingRouter.get("/admin/bookings", async (req, res) => {
         paymentStatus: paymentStatus,
         depositRequired: Math.round(depositRequired * 100) / 100,
         hoursUntilCheckin: Math.round(hoursUntilCheckin * 100) / 100,
-        createdAt: r.createdAt
+        createdAt: r.createdAt,
+        bookingMethod: r.bookingMethod || "online",
+        invoiceId: invoice.InvoiceId || null,
+        invoiceStatus: invoice.status || "",
+        invoiceIssueDate: invoice.issueDate || null,
+        payments: payments.map((payment) => ({
+          id: payment.id,
+          amount: Number(payment.amount || 0),
+          paymentDate: payment.paymentDate || payment.createdAt || null
+        })),
+        services: bookingServices,
+        rewards: bookingRewards
       };
     })
     // FILTER: exclude abandoned/ghost bookings. A real booking needs a valid
