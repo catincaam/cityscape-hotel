@@ -153,11 +153,13 @@ export default function RewardsDetails() {
       });
 
       if (res.ok) {
-        setUserPoints(userPoints - pointsToDeduct);
+        const data = await res.json().catch(() => ({}));
+        setUserPoints(Number(data.activePoints ?? (userPoints - pointsToDeduct)));
         setSuccessMessage("Reward applied to your selected stay.");
-        setTimeout(() => navigate("/rewards"), 2000);
+        setTimeout(() => navigate(`/reservation/${selectedStay.ReservationId}`), 1200);
       } else {
-        alert("Failed to apply reward");
+        const data = await res.json().catch(() => ({}));
+        alert(data.message || "Failed to apply reward");
       }
     } catch {
       alert("Failed to apply reward");

@@ -1923,6 +1923,16 @@
   letter-spacing: 0.08em;
 }
 
+.booking-service-icon.reward,
+.booking-reward-row .booking-service-icon {
+  background: #f3eadc;
+  color: #8a672f;
+}
+
+.booking-reward-row p {
+  color: #8a672f;
+}
+
 .booking-service-image {
   width: 54px;
   height: 54px;

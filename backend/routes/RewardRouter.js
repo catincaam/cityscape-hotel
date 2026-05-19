@@ -4,6 +4,8 @@ import RewardPoint from '../entities/RewardPoint.js';
 import Reservation from '../entities/Reservation.js';
 import Client from '../entities/Client.js';
 import { sendRewardRedeemedEmail } from '../services/emailService.js';
+import { Op } from 'sequelize';
+import { publicAssetUrl } from '../utils/publicUrl.js';
 
 const router = express.Router();
 
@@ -68,18 +70,17 @@ router.post('/apply', async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // Check if user has enough points
-    const userPoints = await RewardPoint.findAll({
-      where: { UserId: userId, status: 'active' }
-    });
+    const parsedUserId = parseInt(userId, 10);
+    const parsedRewardId = parseInt(rewardId, 10);
+    const parsedReservationId = parseInt(reservationId, 10);
+    const parsedPoints = parseInt(points, 10);
 
-    const totalPoints = userPoints.reduce((sum, p) => sum + p.amount, 0);
-    if (totalPoints < points) {
-      return res.status(400).json({ message: "Not enough points" });
+    if (![parsedUserId, parsedRewardId, parsedReservationId, parsedPoints].every(Number.isFinite) || parsedPoints <= 0) {
+      return res.status(400).json({ message: "Invalid reward redemption request" });
     }
 
-    const reward = await Reward.findByPk(rewardId);
-    const reservation = await Reservation.findByPk(reservationId);
+    const reward = await Reward.findByPk(parsedRewardId);
+    const reservation = await Reservation.findByPk(parsedReservationId);
 
     if (!reward) {
       return res.status(404).json({ message: "Reward not found" });
@@ -89,23 +90,36 @@ router.post('/apply', async (req, res) => {
       return res.status(404).json({ message: "Reservation not found" });
     }
 
-    // Deduct points from user
+    if (Number(reservation.ClientId) !== parsedUserId) {
+      return res.status(403).json({ message: "This reward can only be applied to your own reservation" });
+    }
+
+    const userPoints = await RewardPoint.findAll({
+      where: { UserId: parsedUserId, status: 'active' }
+    });
+
+    const totalPoints = userPoints.reduce((sum, p) => sum + p.amount, 0);
+    if (totalPoints < parsedPoints) {
+      return res.status(400).json({ message: "Not enough points" });
+    }
+
     const redemption = await RewardPoint.create({
-      UserId: userId,
-      ReservationId: reservationId,
-      amount: -points,
+      UserId: parsedUserId,
+      ReservationId: parsedReservationId,
+      amount: -parsedPoints,
       description: `Reward redeemed: ${reward.title}`,
-      status: 'redeemed'
+      status: 'active',
+      availableAt: new Date()
     });
 
     let emailResult = { success: false, error: "Email was not attempted." };
     try {
-      const client = await Client.findByPk(userId);
+      const client = await Client.findByPk(parsedUserId);
       emailResult = await sendRewardRedeemedEmail({
         client,
         reservation,
         reward,
-        points
+        points: parsedPoints
       });
 
       if (!emailResult.success) {
@@ -119,6 +133,7 @@ router.post('/apply', async (req, res) => {
     res.json({
       message: "Reward applied successfully",
       redemption,
+      activePoints: totalPoints - parsedPoints,
       email: {
         sent: Boolean(emailResult.success),
         error: emailResult.success ? undefined : emailResult.error
@@ -126,6 +141,58 @@ router.post('/apply', async (req, res) => {
     });
   } catch (err) {
     console.error("Error applying reward:", err);
+    res.status(500).json({ message: "server error", error: err.message });
+  }
+});
+
+// GET - Rewards applied to a reservation
+router.get('/reservation/:reservationId/applied', async (req, res) => {
+  try {
+    const reservationId = parseInt(req.params.reservationId, 10);
+    if (!Number.isFinite(reservationId)) {
+      return res.status(400).json({ message: "Invalid reservation id" });
+    }
+
+    const redemptions = await RewardPoint.findAll({
+      where: {
+        ReservationId: reservationId,
+        amount: { [Op.lt]: 0 },
+        description: { [Op.like]: 'Reward redeemed:%' }
+      },
+      order: [['createdAt', 'DESC']]
+    });
+
+    if (!redemptions.length) {
+      return res.json([]);
+    }
+
+    const rewards = await Reward.findAll({
+      where: {
+        title: {
+          [Op.in]: redemptions
+            .map((point) => String(point.description || '').replace(/^Reward redeemed:\s*/i, '').trim())
+            .filter(Boolean)
+        }
+      }
+    });
+    const rewardsByTitle = new Map(rewards.map((reward) => [reward.title, reward]));
+
+    res.json(redemptions.map((point) => {
+      const title = String(point.description || '').replace(/^Reward redeemed:\s*/i, '').trim() || 'Reward';
+      const reward = rewardsByTitle.get(title);
+      return {
+        RewardPointId: point.RewardPointId,
+        ReservationId: point.ReservationId,
+        title,
+        description: reward?.desc || 'Cityscape reward redeemed for this stay.',
+        category: reward?.category || 'Reward',
+        image: publicAssetUrl(reward?.image),
+        points: Math.abs(Number(point.amount || 0)),
+        redeemedAt: point.createdAt
+      };
+    }));
+  } catch (err) {
+    console.error("Error fetching applied rewards:", err);
     res.status(500).json({ message: "server error", error: err.message });
   }
 });

@@ -22,6 +22,7 @@ const ReservationDetail = () => {
   const [invoice, setInvoice] = useState(null);
   const [roomDetails, setRoomDetails] = useState(null);
   const [reservationServices, setReservationServices] = useState([]);
+  const [reservationRewards, setReservationRewards] = useState([]);
   const [clientData, setClientData] = useState(null);
   const [error, setError] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -109,6 +110,27 @@ const ReservationDetail = () => {
         }
       }
 
+      let rewards = [];
+      try {
+        const rewardsResponse = await fetch(`${API_BASE_URL}/api/rewards/reservation/${id}/applied`);
+        if (rewardsResponse.ok) {
+          const appliedRewards = await rewardsResponse.json();
+          rewards = Array.isArray(appliedRewards)
+            ? appliedRewards.map((reward) => ({
+                id: reward.RewardPointId,
+                title: reward.title || 'Reward',
+                description: reward.description || '',
+                category: reward.category || 'Reward',
+                image: resolveAssetUrl(reward.image || ''),
+                points: Number(reward.points || 0),
+                redeemedAt: reward.redeemedAt
+              }))
+            : [];
+        }
+      } catch (rewardsError) {
+        console.warn('Error fetching applied rewards:', rewardsError);
+      }
+
       const mappedRoomDetails = room ? {
         RoomId: room.RoomId,
         RoomName: room.RoomName,
@@ -139,6 +161,7 @@ const ReservationDetail = () => {
       setRoomDetails(mappedRoomDetails);
       setInvoice(reservationInvoice);
       setReservationServices(services);
+      setReservationRewards(rewards);
       setLoading(false);
     } catch (err) {
       console.error('Error fetching reservation details:', err);
@@ -400,11 +423,11 @@ const ReservationDetail = () => {
           </div>
 
           <div className="booking-section-heading">
-            <p>Included Services</p>
+            <p>Services & Rewards</p>
             {!isPaymentInactive && <button type="button" onClick={handleAddService}>Add Service</button>}
           </div>
 
-          {reservationServices.length > 0 ? (
+          {reservationServices.length > 0 || reservationRewards.length > 0 ? (
             <div className="booking-services-list">
               {reservationServices.map((service, index) => (
                 <div className="booking-service-row" key={`${service.ServiceId}-${index}`}>
@@ -423,10 +446,24 @@ const ReservationDetail = () => {
                   <p>{formatMoney(parseFloat(service.price || 0) * (service.quantity || 1))}</p>
                 </div>
               ))}
+              {reservationRewards.map((reward) => (
+                <div className="booking-service-row booking-reward-row" key={`reward-${reward.id}`}>
+                  {reward.image ? (
+                    <img src={reward.image} alt={reward.title} className="booking-service-image" />
+                  ) : (
+                    <div className="booking-service-icon reward">RW</div>
+                  )}
+                  <div className="booking-service-copy">
+                    <strong>{reward.title}</strong>
+                    <span>{reward.description || reward.category || 'Reward applied to this stay'}</span>
+                  </div>
+                  <p>{reward.points.toLocaleString()} pts</p>
+                </div>
+              ))}
             </div>
           ) : (
             <div className="booking-empty-services">
-              <p>No additional services booked.</p>
+              <p>No additional services or rewards booked.</p>
               {!isPaymentInactive && <button type="button" onClick={handleAddService}>Discover services</button>}
             </div>
           )}
