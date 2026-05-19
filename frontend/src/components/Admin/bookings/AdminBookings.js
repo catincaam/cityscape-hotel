@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { ReactComponent as FilterIcon } from '../../../assets/icons/filter.svg';
 import { ReactComponent as SortIcon } from '../../../assets/icons/sort.svg';
+import { API_BASE_URL } from "../../../config/runtimeUrls";
 import "./AdminBookings.css";
 import "../rewards/AdminRewards.css";
 
@@ -219,6 +220,19 @@ export default function AdminBookings() {
   };
 
   const closeBookingDetails = () => setSelectedBooking(null);
+  const getPaymentProgress = (booking) => {
+    const total = Number(booking?.totalPrice || 0);
+    if (!total) return 0;
+    return Math.min(100, (Number(booking?.totalPaid || 0) / total) * 100);
+  };
+
+  const getPrimaryActionLabel = (booking) => {
+    const status = String(booking?.status || "").toLowerCase();
+    if (status === "active") return "In-house guest";
+    if (status === "completed") return "Stay completed";
+    if (status === "cancelled") return "Reservation cancelled";
+    return "Upcoming stay";
+  };
 
   return (
     <div className="admin-rewards-container">
@@ -531,117 +545,154 @@ export default function AdminBookings() {
             aria-labelledby="admin-booking-modal-title"
             onClick={(event) => event.stopPropagation()}
           >
-            <button type="button" className="admin-booking-modal-close" onClick={closeBookingDetails} aria-label="Close booking details">
-              Close
-            </button>
-
-            <div className="admin-booking-modal-hero">
-              {selectedBooking.roomImage ? (
-                <img src={selectedBooking.roomImage} alt={selectedBooking.roomTheme} />
-              ) : (
-                <div className="admin-booking-modal-image-empty">No image</div>
-              )}
-              <div className="admin-booking-modal-shade" />
-              <div className="admin-booking-modal-hero-copy">
-                <span>{selectedBooking.bookingId}</span>
-                <h2 id="admin-booking-modal-title">{selectedBooking.roomTheme || selectedBooking.roomName}</h2>
-                <p>{selectedBooking.city || "Cityscape"} · {selectedBooking.guests || 1} {(selectedBooking.guests || 1) === 1 ? "guest" : "guests"} · {selectedBooking.nights || 0} nights</p>
+            <header className="admin-booking-modal-header">
+              <div>
+                <h2 id="admin-booking-modal-title">Booking {selectedBooking.bookingId}</h2>
+                <span className={`admin-booking-status-pill status-${String(selectedBooking.status || "pending").toLowerCase()}`}>
+                  {selectedBooking.status || "Pending"}
+                </span>
               </div>
-            </div>
-
-            <div className="admin-booking-modal-body">
-              <div className="admin-booking-modal-summary">
-                <div>
-                  <span>Guest</span>
-                  <strong>{selectedBooking.guestName}</strong>
-                  <small>{selectedBooking.guestEmail || "No email recorded"}</small>
-                </div>
-                <div>
-                  <span>Status</span>
-                  <strong>{selectedBooking.status}</strong>
-                  <small>{selectedBooking.paymentStatus?.replace("_", " ") || "Payment pending"}</small>
-                </div>
-                <div>
-                  <span>Total</span>
-                  <strong>{formatCurrency(selectedBooking.totalPrice)}</strong>
-                  <small>{formatCurrency(selectedBooking.remainingDue)} remaining</small>
-                </div>
+              <div className="admin-booking-header-actions">
+                <button
+                  type="button"
+                  className="admin-booking-gold-btn"
+                  onClick={() => window.open(`${API_BASE_URL}/api/invoices/${selectedBooking.reservationId}/download-pdf`, "_blank")}
+                >
+                  View Invoice
+                </button>
+                <button type="button" className="admin-booking-icon-close" onClick={closeBookingDetails} aria-label="Close booking details">
+                  X
+                </button>
               </div>
+            </header>
 
-              <div className="admin-booking-detail-grid">
-                <article>
-                  <p>Stay Details</p>
-                  <div className="admin-booking-info-row"><span>Check-in</span><strong>{formatDate(selectedBooking.checkin)}</strong></div>
-                  <div className="admin-booking-info-row"><span>Check-out</span><strong>{formatDate(selectedBooking.checkout)}</strong></div>
-                  <div className="admin-booking-info-row"><span>Room</span><strong>{selectedBooking.roomName || selectedBooking.roomTheme}</strong></div>
-                  <div className="admin-booking-info-row"><span>Booking method</span><strong>{selectedBooking.bookingMethod || "online"}</strong></div>
-                </article>
-
-                <article>
-                  <p>Payment Summary</p>
-                  <div className="admin-booking-info-row"><span>Invoice</span><strong>{selectedBooking.invoiceId ? `INV-${String(selectedBooking.invoiceId).padStart(4, "0")}` : "Not issued"}</strong></div>
-                  <div className="admin-booking-info-row"><span>Received</span><strong>{formatCurrency(selectedBooking.totalPaid)}</strong></div>
-                  <div className="admin-booking-info-row"><span>Deposit required</span><strong>{formatCurrency(selectedBooking.depositRequired)}</strong></div>
-                  <div className="admin-booking-progress" aria-label="Payment progress">
-                    <span style={{ width: `${Math.min(100, (Number(selectedBooking.totalPaid || 0) / Math.max(1, Number(selectedBooking.totalPrice || 0))) * 100)}%` }} />
+            <div className="admin-booking-modal-body admin-booking-operator-layout">
+              <aside className="admin-booking-guest-panel">
+                <section>
+                  <p className="admin-booking-eyebrow">Guest Information</p>
+                  <div className="admin-booking-guest-card">
+                    <img src={selectedBooking.guestAvatar || "/assets/profilePicture.jpg"} alt={selectedBooking.guestName} />
+                    <div>
+                      <strong>{selectedBooking.guestName}</strong>
+                      <span>{selectedBooking.guestTier || "Cityscape Member"}</span>
+                    </div>
                   </div>
-                </article>
-              </div>
+                  <div className="admin-booking-contact-list">
+                    <span>{selectedBooking.guestEmail || "No email recorded"}</span>
+                    <span>{selectedBooking.city || "Cityscape"} guest</span>
+                    <span>{selectedBooking.bookingMethod || "online"} booking</span>
+                  </div>
+                </section>
 
-              <div className="admin-booking-items-section">
-                <div className="admin-booking-section-title">
-                  <p>Services & Rewards</p>
-                  <span>{(selectedBooking.services?.length || 0) + (selectedBooking.rewards?.length || 0)} items</span>
-                </div>
+                <section>
+                  <p className="admin-booking-eyebrow">Reservation Overview</p>
+                  <div className="admin-booking-overview-grid">
+                    <div><span>Check-in</span><strong>{formatDate(selectedBooking.checkin)}</strong></div>
+                    <div><span>Check-out</span><strong>{formatDate(selectedBooking.checkout)}</strong></div>
+                    <div><span>Duration</span><strong>{selectedBooking.nights || 0} Nights</strong></div>
+                    <div><span>Occupancy</span><strong>{selectedBooking.guests || 1} {(selectedBooking.guests || 1) === 1 ? "Guest" : "Guests"}</strong></div>
+                  </div>
+                  <small className="admin-booking-created">Created on {formatDate(selectedBooking.createdAt)}</small>
+                </section>
 
-                {selectedBooking.services?.length || selectedBooking.rewards?.length ? (
-                  <div className="admin-booking-items-list">
-                    {selectedBooking.services?.map((service) => (
-                      <div className="admin-booking-item-row" key={`service-${service.id}`}>
-                        {service.image ? <img src={service.image} alt={service.name} /> : <div className="admin-booking-item-fallback">SV</div>}
-                        <div>
+                <section>
+                  <p className="admin-booking-eyebrow">Timeline Activity</p>
+                  <div className="admin-booking-timeline">
+                    <div><span /> <p><strong>Booking Created</strong><small>{formatDate(selectedBooking.createdAt)}</small></p></div>
+                    {selectedBooking.payments?.length > 0 && (
+                      <div><span /> <p><strong>Payment Received</strong><small>{formatDate(selectedBooking.payments[0].paymentDate)}</small></p></div>
+                    )}
+                    {(selectedBooking.services?.length > 0 || selectedBooking.rewards?.length > 0) && (
+                      <div><span /> <p><strong>Stay Add-ons Updated</strong><small>{(selectedBooking.services?.length || 0) + (selectedBooking.rewards?.length || 0)} items attached</small></p></div>
+                    )}
+                  </div>
+                </section>
+              </aside>
+
+              <main className="admin-booking-detail-panel">
+                <section>
+                  <p className="admin-booking-eyebrow">Room Details</p>
+                  <div className="admin-booking-room-visual">
+                    {selectedBooking.roomImage ? (
+                      <img src={selectedBooking.roomImage} alt={selectedBooking.roomTheme} />
+                    ) : (
+                      <div className="admin-booking-modal-image-empty">No image</div>
+                    )}
+                    <div>
+                      <span>{selectedBooking.theme || selectedBooking.city || "Cityscape Room"}</span>
+                      <strong>{selectedBooking.roomTheme || selectedBooking.roomName}</strong>
+                    </div>
+                  </div>
+                  <div className="admin-booking-room-tags">
+                    <span>{selectedBooking.city || "Cityscape"}</span>
+                    <span>{selectedBooking.roomName || "Reserved room"}</span>
+                  </div>
+                </section>
+
+                <section>
+                  <div className="admin-booking-section-line">
+                    <p className="admin-booking-eyebrow">Extra Services</p>
+                    <span>{(selectedBooking.services?.length || 0) + (selectedBooking.rewards?.length || 0)} items</span>
+                  </div>
+
+                  {selectedBooking.services?.length || selectedBooking.rewards?.length ? (
+                    <div className="admin-booking-extra-grid">
+                      {selectedBooking.services?.map((service) => (
+                        <article key={`service-${service.id}`}>
+                          <span className="admin-booking-mini-icon">S</span>
                           <strong>{service.name}</strong>
-                          <span>{service.description || service.category || "Hotel service"} · Qty {service.quantity}</span>
-                        </div>
-                        <p>{formatCurrency(service.total)}</p>
-                      </div>
-                    ))}
-                    {selectedBooking.rewards?.map((reward) => (
-                      <div className="admin-booking-item-row" key={`reward-${reward.id}`}>
-                        {reward.image ? <img src={reward.image} alt={reward.title} /> : <div className="admin-booking-item-fallback">RW</div>}
-                        <div>
+                          <small>{service.description || service.category || "Hotel service"}</small>
+                          <em>{formatCurrency(service.total)}</em>
+                        </article>
+                      ))}
+                      {selectedBooking.rewards?.map((reward) => (
+                        <article key={`reward-${reward.id}`}>
+                          <span className="admin-booking-mini-icon">R</span>
                           <strong>{reward.title}</strong>
-                          <span>{reward.description || reward.category || "Reward applied to this stay"}</span>
-                        </div>
-                        <p>{Number(reward.points || 0).toLocaleString()} pts</p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="admin-booking-empty-detail">No services or rewards attached to this reservation yet.</div>
-                )}
-              </div>
+                          <small>{reward.description || reward.category || "Reward applied"}</small>
+                          <em>{Number(reward.points || 0).toLocaleString()} pts</em>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="admin-booking-empty-detail">No services or rewards attached to this reservation yet.</div>
+                  )}
+                </section>
 
-              <div className="admin-booking-items-section">
-                <div className="admin-booking-section-title">
-                  <p>Payment Activity</p>
-                  <span>{selectedBooking.payments?.length || 0} records</span>
-                </div>
-
-                {selectedBooking.payments?.length ? (
-                  <div className="admin-booking-payment-list">
-                    {selectedBooking.payments.map((payment) => (
-                      <div className="admin-booking-payment-row" key={payment.id}>
-                        <span>{formatDate(payment.paymentDate)}</span>
-                        <strong>{formatCurrency(payment.amount)}</strong>
-                      </div>
-                    ))}
+                <section>
+                  <p className="admin-booking-eyebrow">Financial Summary</p>
+                  <div className="admin-booking-financial-grid">
+                    <div><span>Total</span><strong>{formatCurrency(selectedBooking.totalPrice)}</strong></div>
+                    <div><span>Paid</span><strong>{formatCurrency(selectedBooking.totalPaid)}</strong></div>
+                    <div><span>Balance</span><strong>{formatCurrency(selectedBooking.remainingDue)}</strong></div>
                   </div>
-                ) : (
-                  <div className="admin-booking-empty-detail">No payment records found.</div>
-                )}
-              </div>
+                  <div className="admin-booking-progress" aria-label="Payment progress">
+                    <span style={{ width: `${getPaymentProgress(selectedBooking)}%` }} />
+                  </div>
+                  <div className="admin-booking-payment-note">
+                    <span>{selectedBooking.invoiceId ? `Invoice INV-${String(selectedBooking.invoiceId).padStart(4, "0")}` : "No invoice issued"}</span>
+                    <button
+                      type="button"
+                      onClick={() => window.open(`${API_BASE_URL}/api/invoices/${selectedBooking.reservationId}/download-pdf`, "_blank")}
+                    >
+                      View invoice
+                    </button>
+                  </div>
+                </section>
+              </main>
             </div>
+
+            <footer className="admin-booking-modal-footer">
+              <button type="button" className="admin-booking-danger-action" onClick={closeBookingDetails}>Close Details</button>
+              <div>
+                <a className="admin-booking-outline-action" href={selectedBooking.guestEmail ? `mailto:${selectedBooking.guestEmail}` : undefined}>
+                  Contact Guest
+                </a>
+                <button type="button" className="admin-booking-primary-action" disabled>
+                  {getPrimaryActionLabel(selectedBooking)}
+                </button>
+              </div>
+            </footer>
           </section>
         </div>
       )}
