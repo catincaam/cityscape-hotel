@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 
 function shortDate(value) {
@@ -6,12 +6,35 @@ function shortDate(value) {
   return new Date(value).toLocaleDateString('en-US', { weekday: 'short' });
 }
 
-function normalizeBars(items, key = 'value') {
+function normalizeBars(items, key = 'value', maxHeight = 92) {
   const max = Math.max(1, ...items.map((item) => Number(item[key] || 0)));
-  return items.map((item) => ({
-    ...item,
-    height: Math.max(12, (Number(item[key] || 0) / max) * 86)
-  }));
+  return items.map((item) => {
+    const value = Number(item[key] || 0);
+    return {
+      ...item,
+      height: Math.max(14, (value / max) * maxHeight),
+      percentage: Math.round((value / max) * 100)
+    };
+  });
+}
+
+function getAverage(items) {
+  return items.length
+    ? Math.round(items.reduce((sum, item) => sum + Number(item.value || 0), 0) / items.length)
+    : 0;
+}
+
+function getTrend(items) {
+  if (items.length < 2) return 0;
+  return Number(items.at(-1)?.value || 0) - Number(items[0]?.value || 0);
+}
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 0
+  }).format(Number(value || 0));
 }
 
 export default function PredictiveForecasts() {
@@ -45,15 +68,24 @@ export default function PredictiveForecasts() {
   }, []);
 
   const bookingBars = normalizeBars(predictions?.bookingForecast || []);
+  const occupancy = normalizeBars(predictions?.occupancyForecast || [], 'value', 100);
+  const revenueForecast = useMemo(
+    () => normalizeBars(predictions?.revenueForecast || [], 'value', 76),
+    [predictions]
+  );
   const revenueTotal = Number(predictions?.revenueTotal || 0);
-  const occupancy = predictions?.occupancyForecast || [];
   const lowDay = predictions?.insights?.lowOccupancyDate;
   const lowValue = predictions?.insights?.lowOccupancyValue;
+  const averageBookings = getAverage(bookingBars);
+  const bookingTrend = getTrend(bookingBars);
+  const averageOccupancy = getAverage(occupancy);
+  const revenuePerDay = predictions?.horizonDays ? Math.round(revenueTotal / predictions.horizonDays) : 0;
 
   return (
     <section className="dashboard-card predictive-forecasts">
       <div className="dashboard-card-heading">
         <div>
+          <span className="dashboard-card-kicker">Forward View</span>
           <h3>Predictive Forecasts</h3>
           <p>ML projections for the next 7 days</p>
         </div>
@@ -62,12 +94,19 @@ export default function PredictiveForecasts() {
       {error && <div className="prediction-error">{error}</div>}
 
       <div className="forecast-grid">
-        <div className="forecast-card">
+        <div className="forecast-card booking-forecast-card">
           <span>Booking Forecast</span>
           {loading ? (
             <p>Loading Python forecast...</p>
           ) : bookingBars.length ? (
             <>
+              <div className="forecast-stat-row">
+                <strong>{averageBookings}</strong>
+                <div>
+                  <small>Expected bookings/day</small>
+                  <em>{bookingTrend >= 0 ? '+' : ''}{bookingTrend} by end of week</em>
+                </div>
+              </div>
               <div className="mini-bars dynamic">
                 {bookingBars.map((item) => (
                   <div key={item.date} className="mini-bar-day" title={`${item.date}: ${item.value} bookings`}>
@@ -76,21 +115,30 @@ export default function PredictiveForecasts() {
                   </div>
                 ))}
               </div>
-              <p>Expected average: {Math.round(bookingBars.reduce((sum, item) => sum + item.value, 0) / bookingBars.length)} bookings/day.</p>
+              <p>Projected guest arrival rhythm for the next seven days.</p>
             </>
           ) : (
             <p>Booking forecast appears as soon as prediction data is available.</p>
           )}
         </div>
 
-        <div className="forecast-card">
+        <div className="forecast-card revenue-forecast-card">
           <span>Revenue Forecast</span>
           {loading ? (
             <p>Loading revenue projection...</p>
           ) : predictions ? (
             <>
-              <strong>€{Math.round(revenueTotal).toLocaleString()}</strong>
+              <strong>{formatCurrency(revenueTotal)}</strong>
               <p>Projected total revenue over the next {predictions.horizonDays} days.</p>
+              <div className="revenue-sparkline" aria-hidden="true">
+                {revenueForecast.map((item) => (
+                  <i key={item.date} style={{ height: `${item.height}px` }} />
+                ))}
+              </div>
+              <div className="revenue-note">
+                <span>{formatCurrency(revenuePerDay)}</span>
+                <small>average projected per day</small>
+              </div>
             </>
           ) : (
             <>
@@ -100,7 +148,7 @@ export default function PredictiveForecasts() {
           )}
         </div>
 
-        <div className="forecast-card">
+        <div className="forecast-card occupancy-forecast-card">
           <span>Occupancy Forecast</span>
           {loading ? (
             <p>Loading occupancy projection...</p>
@@ -110,15 +158,16 @@ export default function PredictiveForecasts() {
                 {occupancy.map((item) => (
                   <div key={item.date}>
                     <span>{shortDate(item.date)}</span>
+                    <i><b style={{ width: `${item.percentage}%` }} /></i>
                     <strong>{item.value}%</strong>
                   </div>
                 ))}
               </div>
-              <p>{lowDay ? `Lowest predicted occupancy: ${lowValue}% on ${shortDate(lowDay)}.` : 'No low-occupancy risk detected.'}</p>
+              <p>{lowDay ? `Lowest predicted occupancy: ${lowValue}% on ${shortDate(lowDay)}.` : `Average predicted occupancy: ${averageOccupancy}%.`}</p>
             </>
           ) : (
             <>
-              <strong>TODO</strong>
+              <strong>Pending</strong>
               <p>Occupancy forecast appears after prediction data is available.</p>
             </>
           )}
