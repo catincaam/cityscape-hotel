@@ -5,9 +5,11 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 import DB_Init from "./entities/DB_Init.js";
+import { normalizeTextValues } from "./utils/normalizeText.js";
 // Import explicit pentru relații Sequelize corecte
 import "./entities/Reservation.js";
 import { seedAdmin } from "./seedAdmin.js";
+import { repairRoomThemeText } from "./services/roomThemeTextRepairService.js";
 
 // Routes
 import authRouter from "./routes/authRouter.js";
@@ -87,6 +89,13 @@ app.use(cors(corsOptions));
 /** 3) Body parsing */
 app.use(express.json({ limit: "5mb" }));
 
+/** Return catalog text without legacy encoding artifacts. */
+app.use((req, res, next) => {
+  const sendJson = res.json.bind(res);
+  res.json = (payload) => sendJson(normalizeTextValues(payload));
+  next();
+});
+
 /** 3.5) Servim folderul uploads ca static */
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
@@ -137,7 +146,15 @@ app.use((err, req, res, next) => {
 
 
 /** 7) Init database */
-DB_Init().then(() => seedAdmin()).catch((err) => console.error("DB init failed:", err));
+DB_Init()
+  .then(async () => {
+    await seedAdmin();
+    const repairedThemes = await repairRoomThemeText();
+    if (repairedThemes > 0) {
+      console.log(`Normalized text encoding for ${repairedThemes} room theme(s).`);
+    }
+  })
+  .catch((err) => console.error("DB init failed:", err));
 
 const PORT = process.env.PORT || 9001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

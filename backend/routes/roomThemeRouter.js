@@ -8,13 +8,14 @@ import {
 } from "../dataAccess/RoomThemeDA.js";
 import Room from "../entities/Room.js";
 import RoomImage from "../entities/RoomImage.js";
+import { normalizeTextValues } from "../utils/normalizeText.js";
 
 const roomThemeRouter = express.Router();
 
 /* CREATE */
 roomThemeRouter.post("/", async (req, res) => {
   try {
-    const { images, ...themeData } = req.body;
+    const { images, ...themeData } = normalizeTextValues(req.body);
     
     // Convertim string-uri goale în null pentru INTEGER fields
     if (themeData.size === '' || themeData.size === undefined) {
@@ -112,8 +113,31 @@ roomThemeRouter.get("/:id", async (req, res) => {
 /* UPDATE */
 roomThemeRouter.put("/:id", async (req, res) => {
   try {
-    const updated = await updateRoomTheme(req.params.id, req.body);
+    const { images, ...themeData } = normalizeTextValues(req.body);
+    if (themeData.size === "" || themeData.size === undefined) {
+      themeData.size = null;
+    }
+    if (themeData.bedType === "") {
+      themeData.bedType = null;
+    }
+
+    const updated = await updateRoomTheme(req.params.id, themeData);
     if (!updated) return res.status(404).json({ message: "not found" });
+
+    if (Array.isArray(images) && images.length > 0) {
+      await RoomImage.destroy({ where: { RoomThemeId: req.params.id } });
+      await Promise.all(
+        images.map((imageUrl, index) =>
+          RoomImage.create({
+            RoomThemeId: req.params.id,
+            imageUrl,
+            isPrimary: index === 0,
+            orderIndex: index
+          })
+        )
+      );
+    }
+
     res.status(200).json(updated);
   } catch (err) {
     console.error(err);

@@ -2,9 +2,11 @@ import { useEffect, useState, useMemo } from "react";
 import {
   getRoomThemes,
   createRoomTheme,
+  updateRoomTheme,
   uploadMultipleImages,
   deleteRoomTheme
 } from "../../../services/roomThemeService";
+import { API_BASE_URL } from "../../../config/runtimeUrls";
 import "./AdminThemes.css";
 import "../rewards/AdminRewards.css";
 
@@ -21,31 +23,52 @@ const AMENITIES = [
   "Spa access"
 ];
 
+const INITIAL_FORM_STATE = {
+  city: "",
+  continent: "",
+  theme: "",
+  name: "",
+  basePrice: "",
+  maxGuests: 2,
+  size: "",
+  bedType: "",
+  description: "",
+  amenities: []
+};
+
+function imageUrl(path) {
+  if (!path) return "";
+  return path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
+}
+
+function getAmenities(theme) {
+  if (Array.isArray(theme.amenities)) return theme.amenities;
+  if (typeof theme.amenities !== "string") return [];
+
+  try {
+    const amenities = JSON.parse(theme.amenities);
+    return Array.isArray(amenities) ? amenities : [];
+  } catch {
+    return [];
+  }
+}
+
 export default function AdminThemes() {
   const [themes, setThemes] = useState([]);
   const [themeImages, setThemeImages] = useState([]);
   const [themePreviews, setThemePreviews] = useState([]);
   const [showcaseImage, setShowcaseImage] = useState(null);
   const [showcasePreview, setShowcasePreview] = useState("");
+  const [showcaseRemoved, setShowcaseRemoved] = useState(false);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [editingId, setEditingId] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleteConfirmTitle, setDeleteConfirmTitle] = useState("");
 
-  const [form, setForm] = useState({
-    city: "",
-    continent: "",
-    theme: "",
-    name: "",
-    basePrice: "",
-    maxGuests: 2,
-    size: "",
-    bedType: "",
-    description: "",
-    amenities: []
-  });
+  const [form, setForm] = useState(INITIAL_FORM_STATE);
   const [continentFilter, setContinentFilter] = useState('All');
 
   // Unique continents for filter and dropdown
@@ -110,11 +133,13 @@ export default function AdminThemes() {
     if (!file) return;
     setShowcaseImage(file);
     setShowcasePreview(URL.createObjectURL(file));
+    setShowcaseRemoved(false);
   }
 
   function removeShowcaseImage() {
     setShowcaseImage(null);
     setShowcasePreview("");
+    setShowcaseRemoved(true);
   }
 
   function toggleAmenity(amenity) {
@@ -137,13 +162,13 @@ export default function AdminThemes() {
       return;
     }
 
-    if (themeImages.length === 0) {
+    if (!editingId && themeImages.length === 0) {
       setError("At least one theme image is required!");
       setLoading(false);
       return;
     }
 
-    if (!showcaseImage) {
+    if (!editingId && !showcaseImage) {
       setError("Showcase image is required!");
       setLoading(false);
       return;
@@ -163,7 +188,7 @@ export default function AdminThemes() {
         showcasePath = showcaseUpload.imageUrls ? showcaseUpload.imageUrls[0] : null;
       }
 
-      await createRoomTheme({
+      const payload = {
         city: form.city.trim(),
         continent: form.continent || "",
         theme: form.theme.trim(),
@@ -175,32 +200,64 @@ export default function AdminThemes() {
         description: form.description.trim(),
         amenities: form.amenities,
         images: imagePaths.length > 0 ? imagePaths : undefined,
-        showcaseImage: showcasePath || undefined
-      });
+        showcaseImage: showcasePath || (editingId && showcaseRemoved ? null : undefined)
+      };
 
-      setSuccess("Theme created successfully!");
-      setForm({
-        city: "",
-        continent: "",
-        theme: "",
-        name: "",
-        basePrice: "",
-        maxGuests: 2,
-        size: "",
-        bedType: "",
-        description: "",
-        amenities: []
-      });
+      if (editingId) {
+        await updateRoomTheme(editingId, payload);
+        setSuccess("Theme updated successfully!");
+      } else {
+        await createRoomTheme(payload);
+        setSuccess("Theme created successfully!");
+      }
+
+      setForm(INITIAL_FORM_STATE);
+      setEditingId(null);
       setThemeImages([]);
       setThemePreviews([]);
       setShowcaseImage(null);
       setShowcasePreview("");
+      setShowcaseRemoved(false);
       await fetchThemes();
     } catch (err) {
       setError(err.message || "Error creating theme!");
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleEdit(theme) {
+    setEditingId(theme.RoomThemeId);
+    setForm({
+      city: theme.city || "",
+      continent: theme.continent || "",
+      theme: theme.theme || "",
+      name: theme.name || "",
+      basePrice: theme.basePrice || "",
+      maxGuests: theme.maxGuests || 2,
+      size: theme.size || "",
+      bedType: theme.bedType || "",
+      description: theme.description || "",
+      amenities: getAmenities(theme)
+    });
+    setThemeImages([]);
+    setThemePreviews([]);
+    setShowcaseImage(null);
+    setShowcasePreview(imageUrl(theme.showcaseImage));
+    setShowcaseRemoved(false);
+    setError("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setForm(INITIAL_FORM_STATE);
+    setThemeImages([]);
+    setThemePreviews([]);
+    setShowcaseImage(null);
+    setShowcasePreview("");
+    setShowcaseRemoved(false);
+    setError("");
   }
 
   const filteredThemes = useMemo(() => {
@@ -256,7 +313,7 @@ export default function AdminThemes() {
         {/* LEFT: FORM */}
         <div className="rewards-form-wrapper">
           <div className="form-header">
-            <h2>Add New Theme</h2>
+            <h2>{editingId ? "Edit Theme" : "Add New Theme"}</h2>
           </div>
 
           <form onSubmit={handleSubmit} className="rewards-form">
@@ -473,8 +530,13 @@ export default function AdminThemes() {
             {/* BUTTON */}
             <div className="form-actions">
               <button type="submit" disabled={loading} className="btn-primary">
-                Publish Theme
+                {editingId ? "Update Theme" : "Publish Theme"}
               </button>
+              {editingId && (
+                <button type="button" onClick={cancelEdit} className="btn-secondary">
+                  Cancel
+                </button>
+              )}
             </div>
           </form>
         </div>
@@ -571,9 +633,9 @@ export default function AdminThemes() {
               <div key={t.RoomThemeId} className="reward-card">
                 <div className="reward-card-image">
                   {t.showcaseImage ? (
-                    <img src={`http://localhost:9001${t.showcaseImage}`} alt={t.name} />
+                    <img src={imageUrl(t.showcaseImage)} alt={t.name} />
                   ) : t.images && t.images.length > 0 ? (
-                    <img src={`http://localhost:9001${t.images[0]}`} alt={t.name} />
+                    <img src={imageUrl(t.images[0])} alt={t.name} />
                   ) : (
                     <div className="no-image">[No Image]</div>
                   )}
@@ -593,6 +655,9 @@ export default function AdminThemes() {
                 </div>
 
                 <div className="reward-card-actions">
+                  <button className="action-btn edit" onClick={() => handleEdit(t)} title="Edit">
+                    Edit
+                  </button>
                   <button className="action-btn delete" onClick={() => handleDelete(t.RoomThemeId)} title="Delete">
                     Delete
                   </button>
