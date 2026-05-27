@@ -1,6 +1,6 @@
 import React from 'react';
 
-const colors = ['#806329', '#aebce6', '#9da9cc', '#e5e1da', '#c8b99d'];
+const colors = ['#7a5732', '#ba9460', '#dec8a2', '#8d7655', '#c8b99d'];
 
 export default function ServiceUsage({ data, loading }) {
   const total = data.reduce((sum, item) => sum + Number(item.count || 0), 0);
@@ -11,7 +11,8 @@ export default function ServiceUsage({ data, loading }) {
       ...item,
       color: colors[index % colors.length],
       dash: `${percentage} ${100 - percentage}`,
-      offset
+      offset,
+      percentage: Math.round(percentage)
     };
     offset -= percentage;
     return segment;
@@ -20,7 +21,11 @@ export default function ServiceUsage({ data, loading }) {
   return (
     <section className="dashboard-card service-usage">
       <div className="dashboard-card-heading">
-        <h3>Service Usage</h3>
+        <div>
+          <span className="dashboard-card-kicker">Guest Add-Ons</span>
+          <h3>Service Usage</h3>
+          <p>Distribution of booked services in the selected period.</p>
+        </div>
       </div>
       {loading ? (
         <div className="dashboard-empty">Loading services...</div>
@@ -28,7 +33,7 @@ export default function ServiceUsage({ data, loading }) {
         <div className="service-usage-layout">
           <div className="donut">
             <svg viewBox="0 0 42 42">
-              <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#f0eee9" strokeWidth="5" />
+              <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#f1e7d7" strokeWidth="4.8" />
               {segments.map((segment) => (
                 <circle
                   key={segment.category}
@@ -37,7 +42,7 @@ export default function ServiceUsage({ data, loading }) {
                   r="15.915"
                   fill="transparent"
                   stroke={segment.color}
-                  strokeWidth="5"
+                  strokeWidth="4.8"
                   strokeDasharray={segment.dash}
                   strokeDashoffset={segment.offset}
                 />
@@ -50,10 +55,17 @@ export default function ServiceUsage({ data, loading }) {
           </div>
           <div className="service-legend">
             {segments.map((item) => (
-              <div key={item.category}>
-                <i style={{ background: item.color }} />
-                <span>{item.category} ({item.percentage}%)</span>
-              </div>
+              <article key={item.category}>
+                <div className="service-legend-top">
+                  <i style={{ background: item.color }} />
+                  <span>{item.category}</span>
+                  <strong>{item.percentage}%</strong>
+                </div>
+                <div className="service-legend-bar">
+                  <span style={{ width: `${item.percentage}%`, background: item.color }} />
+                </div>
+                <small>{item.count} booked</small>
+              </article>
             ))}
           </div>
         </div>

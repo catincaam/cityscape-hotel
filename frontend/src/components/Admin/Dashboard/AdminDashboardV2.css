@@ -443,18 +443,25 @@
   box-shadow: inset 0 0 0 1px rgba(123, 93, 50, 0.08);
 }
 
+.service-usage {
+  background:
+    radial-gradient(circle at top left, rgba(182, 151, 94, 0.1), transparent 34%),
+    #fffdf9;
+}
+
 .service-usage-layout {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(220px, 0.9fr) minmax(260px, 1.1fr);
   align-items: center;
-  justify-content: center;
-  gap: clamp(34px, 5vw, 72px);
-  min-height: 190px;
+  gap: clamp(30px, 4vw, 56px);
+  min-height: 310px;
 }
 
 .donut {
   position: relative;
-  width: 170px;
-  height: 170px;
+  width: clamp(220px, 17vw, 270px);
+  height: clamp(220px, 17vw, 270px);
+  justify-self: center;
 }
 
 .donut svg {
@@ -474,14 +481,16 @@
 
 .donut strong {
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 26px;
+  font-size: 42px;
+  line-height: 0.95;
 }
 
 .donut span {
-  color: #9b9185;
-  font-size: 10px;
+  margin-top: 6px;
+  color: #8d7655;
+  font-size: 11px;
   font-weight: 900;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
@@ -489,20 +498,66 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  font-size: 13px;
+  width: 100%;
+  max-width: 360px;
   font-weight: 700;
 }
 
-.service-legend div {
+.service-legend article {
+  padding: 14px 15px;
+  border: 1px solid #eee4d5;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fffdf8, #f8f1e7);
+}
+
+.service-legend-top {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 11px;
 }
 
 .service-legend i {
-  width: 13px;
-  height: 13px;
-  border-radius: 2px;
+  width: 11px;
+  height: 11px;
+  flex: 0 0 11px;
+  border-radius: 3px;
+}
+
+.service-legend span {
+  flex: 1;
+  color: #2b2118;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.service-legend strong {
+  color: #7a5732;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+}
+
+.service-legend-bar {
+  height: 7px;
+  margin-top: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #efe7db;
+}
+
+.service-legend-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.service-legend small {
+  display: block;
+  margin-top: 8px;
+  color: #a29889;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .predictive-forecasts {
@@ -735,6 +790,15 @@
   .sentiment-grid,
   .service-usage-layout {
     grid-template-columns: 1fr;
+  }
+
+  .service-legend {
+    max-width: none;
+  }
+
+  .donut {
+    width: min(240px, 72vw);
+    height: min(240px, 72vw);
   }
 
   .dashboard-period-tabs {
