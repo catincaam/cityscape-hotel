@@ -533,13 +533,17 @@ export default function AdminThemes() {
           </div>
 
           {showcasePreview ? (
-            <div className="preview-card">
+            <div className="preview-card premium-preview-card">
               <div className="preview-image-wrapper">
                 <img src={showcasePreview} alt="preview" className="preview-image" />
                 <div className="preview-badge">{form.basePrice} EUR</div>
               </div>
 
               <div className="preview-content">
+                <div className="preview-live-strip">
+                  <span>{form.continent || "Destination"}</span>
+                  <span>{form.maxGuests || "--"} guests</span>
+                </div>
                 <div className="preview-category">{form.city}</div>
                 <h3 className="preview-title">{form.name || "Theme Name"}</h3>
                 <p className="preview-description">{form.description || "Theme description will appear here"}</p>
@@ -559,9 +563,15 @@ export default function AdminThemes() {
               </div>
             </div>
           ) : (
-            <div className="preview-empty">
+            <div className="preview-empty premium-preview-empty">
               <div className="empty-icon">🎨</div>
-              <p>Upload showcase image to see your theme preview here</p>
+              <div className="preview-blueprint theme-blueprint">
+                <span />
+                <span />
+                <span />
+              </div>
+              <strong>Theme preview needs a hero image</strong>
+              <p>Upload a showcase image and the room story will appear as a polished guest card.</p>
             </div>
           )}
         </div>

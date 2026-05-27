@@ -6,6 +6,7 @@ import {
   deleteService
 } from "../../../services/serviceService";
 import { uploadImage } from "../../../services/roomThemeService";
+import { API_BASE_URL } from "../../../config/runtimeUrls";
 import "./AdminServices.css";
 import "../rewards/AdminRewards.css";
 
@@ -13,6 +14,11 @@ const PRICING_TYPES = [
   { value: "per_person", label: "Per Person" },
   { value: "per_booking", label: "Per Booking" },
 ];
+
+function imageUrl(path) {
+  if (!path) return "";
+  return path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
+}
 
 export default function AdminServices() {
   const [services, setServices] = useState([]);
@@ -234,7 +240,7 @@ export default function AdminServices() {
     setDeleteConfirmTitle("");
   }
 
-  const previewImage = previews.length > 0 ? previews[0] : (form.image ? `http://localhost:9001${form.image}` : null);
+  const previewImage = previews.length > 0 ? previews[0] : (form.image ? imageUrl(form.image) : null);
   const categoryLabel = uniqueCategories.find(c => c === form.category) || form.category;
   const pricingLabel = PRICING_TYPES.find(p => p.value === form.priceType)?.label || form.priceType;
 
@@ -404,13 +410,17 @@ export default function AdminServices() {
           </div>
 
           {previewImage ? (
-            <div className="preview-card">
+            <div className="preview-card premium-preview-card">
               <div className="preview-image-wrapper">
                 <img src={previewImage} alt="preview" className="preview-image" />
                 <div className="preview-badge">{form.price} EUR</div>
               </div>
 
               <div className="preview-content">
+                <div className="preview-live-strip">
+                  <span>{form.bookableOnline ? "Online booking" : "Concierge only"}</span>
+                  <span>{pricingLabel}</span>
+                </div>
                 <div className="preview-category">{categoryLabel}</div>
                 <h3 className="preview-title">{form.name || "Service Name"}</h3>
                 <p className="preview-description">{form.description || "Service description will appear here"}</p>
@@ -430,9 +440,15 @@ export default function AdminServices() {
               </div>
             </div>
           ) : (
-            <div className="preview-empty">
+            <div className="preview-empty premium-preview-empty">
               <div className="empty-icon">🛎️</div>
-              <p>Fill in the form and upload an image to see your service preview here</p>
+              <div className="preview-blueprint service-blueprint">
+                <span />
+                <span />
+                <span />
+              </div>
+              <strong>Service preview is ready to compose</strong>
+              <p>Add the service details and image to see the guest-facing offer card.</p>
             </div>
           )}
         </div>
@@ -488,7 +504,7 @@ export default function AdminServices() {
               <div key={s.ServiceId} className="reward-card">
                 <div className="reward-card-image">
                   {s.image ? (
-                    <img src={`http://localhost:9001${s.image}`} alt={s.name} />
+                    <img src={imageUrl(s.image)} alt={s.name} />
                   ) : (
                     <div className="no-image">[No Image]</div>
                   )}

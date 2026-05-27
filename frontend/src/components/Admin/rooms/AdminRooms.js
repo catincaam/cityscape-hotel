@@ -1,7 +1,13 @@
 import { useEffect, useState, useMemo } from "react";
 import { deleteRoom } from "../../../services/roomService";
+import { API_BASE_URL } from "../../../config/runtimeUrls";
 import "./AdminRooms.css";
 import "../rewards/AdminRewards.css";
+
+function imageUrl(path) {
+  if (!path) return "";
+  return path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
+}
 
 export default function AdminRooms() {
   const [rooms, setRooms] = useState([]);
@@ -43,8 +49,8 @@ export default function AdminRooms() {
     setLoading(true);
     try {
       const [roomRes, themeRes] = await Promise.all([
-        fetch("http://localhost:9001/api/rooms"),
-        fetch("http://localhost:9001/api/room-themes")
+        fetch(`${API_BASE_URL}/api/rooms`),
+        fetch(`${API_BASE_URL}/api/room-themes`)
       ]);
       
       const roomsData = await roomRes.json();
@@ -73,7 +79,7 @@ export default function AdminRooms() {
     }
 
     try {
-      const response = await fetch("http://localhost:9001/api/rooms", {
+      const response = await fetch(`${API_BASE_URL}/api/rooms`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -237,27 +243,33 @@ export default function AdminRooms() {
           </div>
 
           {selectedTheme ? (
-            <div className="preview-card">
+            <div className="preview-card premium-preview-card">
               <div className="preview-image-wrapper">
                 {selectedTheme.showcaseImage ? (
                   <img 
-                    src={`http://localhost:9001${selectedTheme.showcaseImage}`} 
+                    src={imageUrl(selectedTheme.showcaseImage)}
                     alt={selectedTheme.name} 
                     className="preview-image" 
                   />
                 ) : selectedTheme.images && selectedTheme.images.length > 0 ? (
                   <img 
-                    src={`http://localhost:9001${selectedTheme.images[0]}`} 
+                    src={imageUrl(selectedTheme.images[0])}
                     alt={selectedTheme.name} 
                     className="preview-image" 
                   />
                 ) : (
-                  <div className="no-image-preview">[No Image]</div>
+                  <div className="no-image-preview premium-image-fallback">
+                    <span>Room Visual</span>
+                  </div>
                 )}
                 <div className={`preview-badge ${statusBadgeClass}`}>{form.status}</div>
               </div>
 
               <div className="preview-content">
+                <div className="preview-live-strip">
+                  <span>Room floor {form.floor || "--"}</span>
+                  <span>Configured preview</span>
+                </div>
                 <div className="preview-category">{selectedTheme.city}</div>
                 <h3 className="preview-title">{selectedTheme.name}</h3>
                 <p className="preview-description">{selectedTheme.description}</p>
@@ -281,9 +293,15 @@ export default function AdminRooms() {
               </div>
             </div>
           ) : (
-            <div className="preview-empty">
+            <div className="preview-empty premium-preview-empty">
               <div className="empty-icon">🏨</div>
-              <p>Select a theme to preview your room configuration</p>
+              <div className="preview-blueprint">
+                <span />
+                <span />
+                <span />
+              </div>
+              <strong>Room preview awaits a theme</strong>
+              <p>Select a theme and the card will render the room as guests will experience it.</p>
             </div>
           )}
         </div>
@@ -328,9 +346,9 @@ export default function AdminRooms() {
                 <div key={r.RoomId} className="reward-card">
                   <div className="reward-card-image">
                     {theme?.showcaseImage ? (
-                      <img src={`http://localhost:9001${theme.showcaseImage}`} alt={theme.name} />
+                      <img src={imageUrl(theme.showcaseImage)} alt={theme.name} />
                     ) : theme?.images && theme.images.length > 0 ? (
-                      <img src={`http://localhost:9001${theme.images[0]}`} alt={theme.name} />
+                      <img src={imageUrl(theme.images[0])} alt={theme.name} />
                     ) : (
                       <div className="no-image">[No Image]</div>
                     )}
