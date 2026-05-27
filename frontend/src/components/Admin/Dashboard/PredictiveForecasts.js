@@ -87,7 +87,7 @@ export default function PredictiveForecasts() {
         <div>
           <span className="dashboard-card-kicker">Forward View</span>
           <h3>Predictive Forecasts</h3>
-          <p>ML projections for the next 7 days</p>
+          <p>ML projections based on paid stay revenue for the next 7 days</p>
         </div>
       </div>
 
@@ -129,7 +129,7 @@ export default function PredictiveForecasts() {
           ) : predictions ? (
             <>
               <strong>{formatCurrency(revenueTotal)}</strong>
-              <p>Projected total revenue over the next {predictions.horizonDays} days.</p>
+              <p>Projected paid revenue over the next {predictions.horizonDays} days.</p>
               <div className="revenue-sparkline" aria-hidden="true">
                 {revenueForecast.map((item) => (
                   <i key={item.date} style={{ height: `${item.height}px` }} />

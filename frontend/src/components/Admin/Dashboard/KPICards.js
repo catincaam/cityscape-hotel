@@ -1,10 +1,16 @@
 import React from 'react';
 import { Bed, CreditCard, Star, Ticket } from 'lucide-react';
 
+const formatEuro = (value) => new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'EUR',
+  maximumFractionDigits: 0
+}).format(Number(value || 0));
+
 const cards = [
-  { key: 'revenue', label: 'Total Revenue', icon: CreditCard, format: (value) => `€${Number(value || 0).toLocaleString()}`, changeKey: 'revenueChange' },
+  { key: 'revenue', label: 'Paid Revenue', icon: CreditCard, format: formatEuro, changeKey: 'revenueChange' },
   { key: 'occupancyRate', label: 'Occupancy Rate', icon: Bed, format: (value) => `${Number(value || 0)}%`, changeKey: 'occupancyChange' },
-  { key: 'avgBookingValue', label: 'Avg Booking Value', icon: Ticket, format: (value) => `€${Number(value || 0).toLocaleString()}`, changeKey: 'avgBookingChange' },
+  { key: 'avgBookingValue', label: 'Avg Paid Stay', icon: Ticket, format: formatEuro, changeKey: 'avgBookingChange' },
   { key: 'satisfaction', label: 'Satisfaction Score', icon: Star, format: (value) => `${Number(value || 0).toFixed(1)}/5`, changeKey: 'satisfactionChange' }
 ];
 

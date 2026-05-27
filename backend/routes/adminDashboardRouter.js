@@ -213,6 +213,10 @@ function isRealBooking(reservation) {
   return total > 0 && paid >= total * 0.2;
 }
 
+function getPaidAmount(reservation) {
+  return (reservation.Invoice?.payments || []).reduce((sum, payment) => sum + toNumber(payment.amount), 0);
+}
+
 function getBusinessStatus(reservation, now = new Date()) {
   if (reservation.status === "cancelled") return "cancelled";
   const checkin = new Date(reservation.requestedCheckin);
@@ -386,24 +390,24 @@ dashboardRouter.get("/overview", async (req, res) => {
       const status = getBusinessStatus(reservation, now);
       if (!["active", "completed"].includes(status)) return sum;
       if (reservation.status === "cancelled") return sum;
-      return sum + (reservation.Invoice?.payments || []).reduce((paid, payment) => paid + toNumber(payment.amount), 0);
+      return sum + getPaidAmount(reservation);
     }, 0);
 
     const revenue = getRecognizedRevenue(periodReservations);
     const previousRevenue = getRecognizedRevenue(previousReservations);
-    const invoiceValues = periodReservations
-      .filter((reservation) => reservation.status !== "cancelled")
-      .map((reservation) => toNumber(reservation.Invoice?.totalAmount))
+    const paidStayValues = periodReservations
+      .filter((reservation) => ["active", "completed"].includes(getBusinessStatus(reservation, now)))
+      .map(getPaidAmount)
       .filter(Boolean);
-    const previousInvoiceValues = previousReservations
-      .filter((reservation) => reservation.status !== "cancelled")
-      .map((reservation) => toNumber(reservation.Invoice?.totalAmount))
+    const previousPaidStayValues = previousReservations
+      .filter((reservation) => ["active", "completed"].includes(getBusinessStatus(reservation, now)))
+      .map(getPaidAmount)
       .filter(Boolean);
-    const avgBookingValue = invoiceValues.length
-      ? Math.round(invoiceValues.reduce((sum, value) => sum + value, 0) / invoiceValues.length)
+    const avgBookingValue = paidStayValues.length
+      ? Math.round(paidStayValues.reduce((sum, value) => sum + value, 0) / paidStayValues.length)
       : 0;
-    const previousAvgBookingValue = previousInvoiceValues.length
-      ? Math.round(previousInvoiceValues.reduce((sum, value) => sum + value, 0) / previousInvoiceValues.length)
+    const previousAvgBookingValue = previousPaidStayValues.length
+      ? Math.round(previousPaidStayValues.reduce((sum, value) => sum + value, 0) / previousPaidStayValues.length)
       : 0;
 
     const getOccupiedRoomNights = (list, rangeStart, rangeEnd) => list.reduce((sum, reservation) => {
@@ -463,8 +467,9 @@ dashboardRouter.get("/overview", async (req, res) => {
 
     const revenueByCityMap = {};
     periodReservations.forEach((reservation) => {
-      if (reservation.status === "cancelled") return;
-      const amount = toNumber(reservation.Invoice?.totalAmount);
+      if (!["active", "completed"].includes(getBusinessStatus(reservation, now))) return;
+      const amount = getPaidAmount(reservation);
+      if (!amount) return;
       const roomTheme = reservation.RoomReservations?.[0]?.Room?.RoomTheme;
       const city = roomTheme?.city || "Unknown";
       revenueByCityMap[city] = (revenueByCityMap[city] || 0) + amount;
@@ -568,8 +573,7 @@ dashboardRouter.get("/overview", async (req, res) => {
       revenueByCity,
       occupancyHeatmap,
       serviceUsage,
-      recentFeedback,
-      predictiveTodo: true
+      recentFeedback
     });
   } catch (err) {
     console.error("[DASHBOARD OVERVIEW ERROR]", err);
@@ -605,7 +609,7 @@ dashboardRouter.get("/predictions", async (req, res) => {
         const checkin = new Date(reservation.requestedCheckin);
         const checkout = new Date(reservation.requestedCheckout);
         const nights = getDaysBetween(checkin, checkout);
-        return sum + (toNumber(reservation.Invoice?.totalAmount) / nights);
+        return sum + (getPaidAmount(reservation) / nights);
       }, 0);
 
       const occupiedRoomNights = activeReservations.reduce(
