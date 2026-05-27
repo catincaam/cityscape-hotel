@@ -273,13 +273,14 @@
   min-height: 258px;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   justify-content: center;
 }
 
 .heatmap-board {
-  width: fit-content;
+  width: 100%;
   max-width: 100%;
-  padding: 16px;
+  padding: 18px 20px;
   border: 1px solid #eee5d8;
   border-radius: 18px;
   background: linear-gradient(145deg, #fffaf2, #fbf7f0);
@@ -289,16 +290,19 @@
 .heatmap-axis,
 .heatmap-grid {
   display: grid;
-  grid-template-columns: 42px repeat(7, 42px);
+  grid-template-columns: 48px repeat(7, 48px);
   gap: 8px;
   width: fit-content;
   max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .heatmap-month-grid {
   display: grid;
   grid-template-columns: repeat(4, 78px);
   gap: 10px;
+  justify-content: center;
 }
 
 .heatmap-axis {
@@ -311,7 +315,7 @@
 }
 
 .heatmap-grid {
-  margin: 8px 0 0;
+  margin-top: 8px;
 }
 
 .heatmap-week-label {
@@ -324,8 +328,8 @@
 }
 
 .heat-cell {
-  width: 42px;
-  height: 36px;
+  width: 48px;
+  height: 38px;
   min-height: 0;
   display: inline-flex;
   align-items: center;
@@ -420,6 +424,7 @@
 .heatmap-legend {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
   margin-top: 16px;
   color: #8a7a65;
@@ -430,7 +435,7 @@
 }
 
 .heatmap-legend i {
-  width: min(180px, 28vw);
+  width: min(260px, 42vw);
   height: 8px;
   min-height: 8px;
   border-radius: 999px;
