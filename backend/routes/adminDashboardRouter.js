@@ -73,6 +73,14 @@ function getDaysBetween(start, end) {
   return Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
 }
 
+function getCalendarDaysInclusive(start, end) {
+  const startDay = new Date(start);
+  const endDay = new Date(end);
+  startDay.setHours(0, 0, 0, 0);
+  endDay.setHours(0, 0, 0, 0);
+  return Math.max(1, Math.round((endDay - startDay) / (1000 * 60 * 60 * 24)) + 1);
+}
+
 function clampDate(date, min, max) {
   return new Date(Math.min(Math.max(date.getTime(), min.getTime()), max.getTime()));
 }
@@ -90,6 +98,16 @@ function formatDateKey(date) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function formatMonthKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+}
+
+function formatMonthLabel(date) {
+  return date.toLocaleDateString("en-US", { month: "short" });
 }
 
 function toNumber(value) {
@@ -456,20 +474,36 @@ dashboardRouter.get("/overview", async (req, res) => {
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 5);
 
-    const heatmapStart = new Date(end);
-    heatmapStart.setDate(end.getDate() - 34);
-    heatmapStart.setHours(0, 0, 0, 0);
     const occupancyHeatmap = [];
-    for (let index = 0; index < 35; index += 1) {
-      const dayStart = new Date(heatmapStart);
-      dayStart.setDate(heatmapStart.getDate() + index);
-      const dayEnd = new Date(dayStart);
-      dayEnd.setDate(dayEnd.getDate() + 1);
-      const occupied = getOccupiedRoomNights(reservations, dayStart, dayEnd);
-      occupancyHeatmap.push({
-        date: formatDateKey(dayStart),
-        value: Math.round((occupied / Math.max(1, totalRooms)) * 100)
-      });
+    const heatmapMode = period === "thisYear" ? "monthly" : "daily";
+    if (heatmapMode === "monthly") {
+      for (let monthIndex = 0; monthIndex <= end.getMonth(); monthIndex += 1) {
+        const monthStart = new Date(end.getFullYear(), monthIndex, 1);
+        const monthEnd = new Date(end.getFullYear(), monthIndex + 1, 1);
+        const rangeEnd = monthEnd > end ? end : monthEnd;
+        const occupied = getOccupiedRoomNights(reservations, monthStart, rangeEnd);
+        const days = getDaysBetween(monthStart, rangeEnd);
+        occupancyHeatmap.push({
+          date: formatMonthKey(monthStart),
+          label: formatMonthLabel(monthStart),
+          value: Math.round((occupied / Math.max(1, totalRooms * days)) * 100)
+        });
+      }
+    } else {
+      const heatmapStart = new Date(start);
+      heatmapStart.setHours(0, 0, 0, 0);
+      const heatmapDays = getCalendarDaysInclusive(start, end);
+      for (let index = 0; index < heatmapDays; index += 1) {
+        const dayStart = new Date(heatmapStart);
+        dayStart.setDate(heatmapStart.getDate() + index);
+        const dayEnd = new Date(dayStart);
+        dayEnd.setDate(dayEnd.getDate() + 1);
+        const occupied = getOccupiedRoomNights(reservations, dayStart, dayEnd);
+        occupancyHeatmap.push({
+          date: formatDateKey(dayStart),
+          value: Math.round((occupied / Math.max(1, totalRooms)) * 100)
+        });
+      }
     }
 
     const periodReservationIds = periodReservations.map((reservation) => reservation.ReservationId);
@@ -519,6 +553,7 @@ dashboardRouter.get("/overview", async (req, res) => {
 
     res.json({
       period,
+      heatmapMode,
       kpis: {
         revenue: Math.round(revenue),
         revenueChange: pctChange(revenue, previousRevenue),

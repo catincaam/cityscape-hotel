@@ -71,7 +71,12 @@ export default function AdminDashboardV2({ onViewAllFeedback }) {
         <RevenueByCity data={data?.revenueByCity || []} loading={loading} />
       </div>
       <div className="dashboard-v2-row dashboard-v2-row-balanced">
-        <OccupancyHeatmap data={data?.occupancyHeatmap || []} loading={loading} />
+        <OccupancyHeatmap
+          data={data?.occupancyHeatmap || []}
+          loading={loading}
+          mode={data?.heatmapMode || 'daily'}
+          period={period}
+        />
         <ServiceUsage data={data?.serviceUsage || []} loading={loading} />
       </div>
       <PredictiveForecasts />

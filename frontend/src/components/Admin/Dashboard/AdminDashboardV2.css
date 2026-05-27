@@ -295,6 +295,12 @@
   max-width: 100%;
 }
 
+.heatmap-month-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 78px);
+  gap: 10px;
+}
+
 .heatmap-axis {
   color: #a79b8b;
   font-size: 9px;
@@ -338,6 +344,30 @@
 .heat-cell.empty {
   background: transparent;
   box-shadow: none;
+}
+
+.month-cell {
+  width: 78px;
+  height: 58px;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.month-cell small {
+  color: inherit;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.78;
+}
+
+.month-cell strong {
+  color: inherit;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  line-height: 1;
 }
 
 .level-0 { background: #f8f2e8; color: #b1a18c; }

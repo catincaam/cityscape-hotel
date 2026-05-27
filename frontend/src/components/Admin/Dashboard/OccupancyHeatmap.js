@@ -1,6 +1,12 @@
 import React from 'react';
 
 const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const PERIOD_LABELS = {
+  today: 'Today',
+  thisWeek: 'This Week',
+  thisMonth: 'This Month',
+  thisYear: 'This Year'
+};
 
 function getDate(value) {
   const date = new Date(value);
@@ -49,7 +55,25 @@ function buildWeeks(data) {
   return weeks;
 }
 
-export default function OccupancyHeatmap({ data, loading }) {
+function getPeriodCopy(period, mode, count) {
+  if (mode === 'monthly') {
+    return {
+      subtitle: 'Monthly average occupancy for the selected year.',
+      range: PERIOD_LABELS[period] || 'Selected Year',
+      averageDetail: `Across ${count} month${count === 1 ? '' : 's'}`
+    };
+  }
+
+  return {
+    subtitle: period === 'today'
+      ? 'Room occupancy for the selected day.'
+      : 'Daily room occupancy for the selected period.',
+    range: PERIOD_LABELS[period] || 'Selected Period',
+    averageDetail: `Across ${count} day${count === 1 ? '' : 's'}`
+  };
+}
+
+export default function OccupancyHeatmap({ data, loading, mode = 'daily', period = 'thisMonth' }) {
   const values = data.map((item) => Number(item.value || 0));
   const maxValue = Math.max(0, ...values);
   const average = values.length
@@ -63,21 +87,22 @@ export default function OccupancyHeatmap({ data, loading }) {
     return Number(item.value || 0) < Number(best.value || 0) ? item : best;
   }, null);
   const weeks = buildWeeks(data);
+  const copy = getPeriodCopy(period, mode, data.length);
   const metrics = [
     {
       label: 'Average Occupancy',
       value: `${average}%`,
-      detail: 'Across 35 days'
+      detail: copy.averageDetail
     },
     {
-      label: 'Peak Day',
+      label: mode === 'monthly' ? 'Peak Month' : 'Peak Day',
       value: busiest ? `${busiest.value}%` : 'N/A',
-      detail: busiest ? formatShortDate(busiest.date) : 'No data'
+      detail: busiest ? (busiest.label || formatShortDate(busiest.date)) : 'No data'
     },
     {
       label: 'Lowest Activity',
       value: quietest ? `${quietest.value}%` : 'N/A',
-      detail: quietest ? formatShortDate(quietest.date) : 'No data'
+      detail: quietest ? (quietest.label || formatShortDate(quietest.date)) : 'No data'
     }
   ];
 
@@ -87,9 +112,9 @@ export default function OccupancyHeatmap({ data, loading }) {
         <div>
           <span className="dashboard-card-kicker">Demand Pattern</span>
           <h3>Occupancy Overview</h3>
-          <p>Daily room occupancy across the past 35 days.</p>
+          <p>{copy.subtitle}</p>
         </div>
-        {!loading && data.length > 0 && <span className="heatmap-period">Last 35 Days</span>}
+        {!loading && data.length > 0 && <span className="heatmap-period">{copy.range}</span>}
       </div>
       {loading ? (
         <div className="dashboard-empty">Loading heatmap...</div>
@@ -97,34 +122,51 @@ export default function OccupancyHeatmap({ data, loading }) {
         <div className="dashboard-empty">No occupancy data yet.</div>
       ) : (
         <div className="heatmap-panel">
-          <div className="heatmap-board">
-            <div className="heatmap-axis">
-              <span />
-              {WEEK_DAYS.map((day) => <span key={day}>{day}</span>)}
-            </div>
-            <div className="heatmap-grid" aria-label="Daily occupancy by week">
-              {weeks.map((week, weekIndex) => (
-                <React.Fragment key={`week-${weekIndex}`}>
-                  <span className="heatmap-week-label">
-                    {week.find(Boolean) ? formatShortDate(week.find(Boolean).date) : ''}
+          {mode === 'monthly' ? (
+            <div className="heatmap-board monthly">
+              <div className="heatmap-month-grid" aria-label="Monthly occupancy">
+                {data.map((item) => (
+                  <span
+                    key={item.date}
+                    className={`heat-cell month-cell level-${getLevel(Number(item.value || 0), maxValue)}`}
+                    title={`${item.label || item.date}: ${item.value}% occupied`}
+                  >
+                    <small>{item.label || item.date}</small>
+                    <strong>{item.value}</strong>
                   </span>
-                  {week.map((item, dayIndex) => (
-                    item ? (
-                      <span
-                        key={item.date}
-                        className={`heat-cell level-${getLevel(Number(item.value || 0), maxValue)}`}
-                        title={`${formatShortDate(item.date)}: ${item.value}% occupied`}
-                      >
-                        {item.value}
-                      </span>
-                    ) : (
-                      <span key={`empty-${weekIndex}-${dayIndex}`} className="heat-cell empty" />
-                    )
-                  ))}
-                </React.Fragment>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="heatmap-board">
+              <div className="heatmap-axis">
+                <span />
+                {WEEK_DAYS.map((day) => <span key={day}>{day}</span>)}
+              </div>
+              <div className="heatmap-grid" aria-label="Daily occupancy by week">
+                {weeks.map((week, weekIndex) => (
+                  <React.Fragment key={`week-${weekIndex}`}>
+                    <span className="heatmap-week-label">
+                      {week.find(Boolean) ? formatShortDate(week.find(Boolean).date) : ''}
+                    </span>
+                    {week.map((item, dayIndex) => (
+                      item ? (
+                        <span
+                          key={item.date}
+                          className={`heat-cell level-${getLevel(Number(item.value || 0), maxValue)}`}
+                          title={`${formatShortDate(item.date)}: ${item.value}% occupied`}
+                        >
+                          {item.value}
+                        </span>
+                      ) : (
+                        <span key={`empty-${weekIndex}-${dayIndex}`} className="heat-cell empty" />
+                      )
+                    ))}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="heatmap-summary">
             {metrics.map((metric) => (
