@@ -26,7 +26,6 @@ const AMENITIES = [
 const INITIAL_FORM_STATE = {
   city: "",
   continent: "",
-  theme: "",
   name: "",
   basePrice: "",
   maxGuests: 2,
@@ -156,7 +155,7 @@ export default function AdminThemes() {
     setLoading(true);
     setError("");
 
-    if (!form.city || !form.theme || !form.name || !form.basePrice) {
+    if (!form.city || !form.name || !form.basePrice) {
       setError("All required fields must be filled!");
       setLoading(false);
       return;
@@ -191,7 +190,7 @@ export default function AdminThemes() {
       const payload = {
         city: form.city.trim(),
         continent: form.continent || "",
-        theme: form.theme.trim(),
+        theme: form.name.trim(),
         name: form.name.trim(),
         basePrice: parseInt(form.basePrice),
         maxGuests: parseInt(form.maxGuests),
@@ -231,7 +230,6 @@ export default function AdminThemes() {
     setForm({
       city: theme.city || "",
       continent: theme.continent || "",
-      theme: theme.theme || "",
       name: theme.name || "",
       basePrice: theme.basePrice || "",
       maxGuests: theme.maxGuests || 2,
@@ -348,30 +346,16 @@ export default function AdminThemes() {
             </div>
 
             {/* THEME NAME */}
-            <div className="form-row-2">
-              <div className="form-field">
-                <label>Theme Style</label>
-                <input
-                  type="text"
-                  placeholder="e.g., Minimalist"
-                  value={form.theme}
-                  onChange={e => setForm({ ...form, theme: e.target.value })}
-                  required
-                  className="form-input"
-                />
-              </div>
-
-              <div className="form-field">
-                <label>Theme Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g., Tokyo Neon"
-                  value={form.name}
-                  onChange={e => setForm({ ...form, name: e.target.value })}
-                  required
-                  className="form-input"
-                />
-              </div>
+            <div className="form-field">
+              <label>Theme Name</label>
+              <input
+                type="text"
+                placeholder="e.g., Tokyo Neon"
+                value={form.name}
+                onChange={e => setForm({ ...form, name: e.target.value })}
+                required
+                className="form-input"
+              />
             </div>
 
             {/* PRICE & GUESTS */}
@@ -646,12 +630,6 @@ export default function AdminThemes() {
                   <div className="reward-card-category">{t.city}</div>
                   <h4 className="reward-card-title">{t.name}</h4>
                   <p className="reward-card-desc">{t.description}</p>
-
-                  <div className="reward-card-meta">
-                    <span className={`type-badge`} style={{ background: '#dbeafe', color: '#1e40af' }}>
-                      {t.theme}
-                    </span>
-                  </div>
                 </div>
 
                 <div className="reward-card-actions">
