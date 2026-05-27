@@ -63,12 +63,33 @@ export default function OccupancyHeatmap({ data, loading }) {
     return Number(item.value || 0) < Number(best.value || 0) ? item : best;
   }, null);
   const weeks = buildWeeks(data);
+  const metrics = [
+    {
+      label: 'Average Occupancy',
+      value: `${average}%`,
+      detail: 'Across 35 days'
+    },
+    {
+      label: 'Peak Day',
+      value: busiest ? `${busiest.value}%` : 'N/A',
+      detail: busiest ? formatShortDate(busiest.date) : 'No data'
+    },
+    {
+      label: 'Lowest Activity',
+      value: quietest ? `${quietest.value}%` : 'N/A',
+      detail: quietest ? formatShortDate(quietest.date) : 'No data'
+    }
+  ];
 
   return (
     <section className="dashboard-card occupancy-heatmap">
-      <div className="dashboard-card-heading">
-        <h3>Occupancy Heatmap</h3>
-        {!loading && data.length > 0 && <span>Last 35 days</span>}
+      <div className="dashboard-card-heading heatmap-heading">
+        <div>
+          <span className="dashboard-card-kicker">Demand Pattern</span>
+          <h3>Occupancy Overview</h3>
+          <p>Daily room occupancy across the past 35 days.</p>
+        </div>
+        {!loading && data.length > 0 && <span className="heatmap-period">Last 35 Days</span>}
       </div>
       {loading ? (
         <div className="dashboard-empty">Loading heatmap...</div>
@@ -76,55 +97,49 @@ export default function OccupancyHeatmap({ data, loading }) {
         <div className="dashboard-empty">No occupancy data yet.</div>
       ) : (
         <div className="heatmap-panel">
-          <p className="heatmap-help">
-            Each square is one day. Darker and higher percentages mean more rooms were occupied.
-          </p>
-          <div className="heatmap-axis">
-            <span />
-            {WEEK_DAYS.map((day) => <span key={day}>{day}</span>)}
+          <div className="heatmap-board">
+            <div className="heatmap-axis">
+              <span />
+              {WEEK_DAYS.map((day) => <span key={day}>{day}</span>)}
+            </div>
+            <div className="heatmap-grid" aria-label="Daily occupancy by week">
+              {weeks.map((week, weekIndex) => (
+                <React.Fragment key={`week-${weekIndex}`}>
+                  <span className="heatmap-week-label">
+                    {week.find(Boolean) ? formatShortDate(week.find(Boolean).date) : ''}
+                  </span>
+                  {week.map((item, dayIndex) => (
+                    item ? (
+                      <span
+                        key={item.date}
+                        className={`heat-cell level-${getLevel(Number(item.value || 0), maxValue)}`}
+                        title={`${formatShortDate(item.date)}: ${item.value}% occupied`}
+                      >
+                        {item.value}
+                      </span>
+                    ) : (
+                      <span key={`empty-${weekIndex}-${dayIndex}`} className="heat-cell empty" />
+                    )
+                  ))}
+                </React.Fragment>
+              ))}
+            </div>
           </div>
-          <div className="heatmap-grid" aria-label="Daily occupancy by week">
-            {weeks.map((week, weekIndex) => (
-              <React.Fragment key={`week-${weekIndex}`}>
-                <span className="heatmap-week-label">
-                  {week.find(Boolean) ? formatShortDate(week.find(Boolean).date) : ''}
-                </span>
-                {week.map((item, dayIndex) => (
-                  item ? (
-                    <span
-                      key={item.date}
-                      className={`heat-cell level-${getLevel(Number(item.value || 0), maxValue)}`}
-                      title={`${formatShortDate(item.date)}: ${item.value}% occupied`}
-                    >
-                      {item.value}%
-                    </span>
-                  ) : (
-                    <span key={`empty-${weekIndex}-${dayIndex}`} className="heat-cell empty" />
-                  )
-                ))}
-              </React.Fragment>
+
+          <div className="heatmap-summary">
+            {metrics.map((metric) => (
+              <article key={metric.label}>
+                <strong>{metric.value}</strong>
+                <span>{metric.label}</span>
+                <small>{metric.detail}</small>
+              </article>
             ))}
           </div>
-          <div className="heatmap-summary">
-            <div>
-              <span>Average</span>
-              <strong>{average}%</strong>
-            </div>
-            <div>
-              <span>Busiest</span>
-              <strong>{busiest ? `${formatShortDate(busiest.date)} · ${busiest.value}%` : 'N/A'}</strong>
-            </div>
-            <div>
-              <span>Quietest</span>
-              <strong>{quietest ? `${formatShortDate(quietest.date)} · ${quietest.value}%` : 'N/A'}</strong>
-            </div>
-          </div>
+
           <div className="heatmap-legend">
-            <span>Low demand</span>
-            <div>
-              {[0, 1, 2, 3, 4].map((level) => <i key={level} className={`level-${level}`} />)}
-            </div>
-            <span>Peak season</span>
+            <span>Low occupancy</span>
+            <i />
+            <span>High occupancy</span>
           </div>
         </div>
       )}
