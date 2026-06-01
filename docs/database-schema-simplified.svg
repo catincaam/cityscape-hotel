@@ -1,0 +1,171 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1100" viewBox="0 0 1800 1100">
+  <defs>
+    <style>
+      .bg { fill: #fbf7ef; }
+      .title { font: 700 38px Georgia, "Times New Roman", serif; fill: #20160c; }
+      .subtitle { font: 500 17px Arial, sans-serif; fill: #756553; }
+      .module { fill: #fffdf8; stroke: #dcc6a3; stroke-width: 1.4; rx: 26; filter: drop-shadow(0 18px 28px rgba(74,48,22,.08)); }
+      .module-main { fill: #fff8ec; stroke: #a17439; stroke-width: 2; rx: 28; filter: drop-shadow(0 20px 34px rgba(74,48,22,.11)); }
+      .cap { fill: #93692f; rx: 20; }
+      .cap-soft { fill: #b38a54; rx: 20; }
+      .module-title { font: 800 20px Arial, sans-serif; fill: #fffaf0; letter-spacing: .9px; }
+      .module-sub { font: 600 13px Arial, sans-serif; fill: #7d5c2b; letter-spacing: 1px; }
+      .table { font: 700 17px Arial, sans-serif; fill: #21170d; }
+      .fields { font: 14px Arial, sans-serif; fill: #665749; }
+      .note { font: 13px Arial, sans-serif; fill: #8a725a; }
+      .link { fill: none; stroke: #9d733f; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; marker-end: url(#arrow); }
+      .link-soft { fill: none; stroke: #c5a77c; stroke-width: 2.3; stroke-linecap: round; stroke-linejoin: round; marker-end: url(#arrowSoft); }
+      .label { font: 700 13px Arial, sans-serif; fill: #815f33; }
+      .legend { fill: #fffdf8; stroke: #dcc6a3; stroke-width: 1.2; rx: 18; }
+      .legend-text { font: 14px Arial, sans-serif; fill: #5d4b3d; }
+      .pill { fill: #f2e6d3; stroke: #d8bd91; stroke-width: 1; rx: 999; }
+      .pill-text { font: 700 12px Arial, sans-serif; fill: #7a5425; letter-spacing: .5px; }
+    </style>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#9d733f" />
+    </marker>
+    <marker id="arrowSoft" markerWidth="12" markerHeight="12" refX="10" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#c5a77c" />
+    </marker>
+  </defs>
+
+  <rect class="bg" width="1800" height="1100" />
+  <text class="title" x="78" y="78">Cityscape Hotel - Database Schema</text>
+  <text class="subtitle" x="80" y="112">Simplified ER diagram for documentation and presentation</text>
+
+  <rect class="legend" x="1280" y="48" width="430" height="96" />
+  <text class="legend-text" x="1306" y="82">This version shows the main entities and business relationships.</text>
+  <text class="legend-text" x="1306" y="110">Detailed columns and full FK list are documented in DATABASE_SCHEMA.md.</text>
+
+  <!-- Client module -->
+  <g id="clients">
+    <rect class="module-main" x="80" y="205" width="330" height="245" />
+    <rect class="cap" x="80" y="205" width="330" height="56" />
+    <text class="module-title" x="110" y="241">CLIENTS &amp; AUTH</text>
+    <text class="module-sub" x="110" y="294">CORE TABLES</text>
+    <text class="table" x="110" y="326">Clients</text>
+    <text class="fields" x="110" y="350">guest account, email, profile</text>
+    <text class="table" x="110" y="386">ClientTypes</text>
+    <text class="fields" x="110" y="410">tier, discount, benefits</text>
+    <text class="note" x="110" y="434">Also: Admins, PasswordResetTokens</text>
+  </g>
+
+  <!-- Inventory module -->
+  <g id="inventory">
+    <rect class="module-main" x="520" y="190" width="400" height="300" />
+    <rect class="cap" x="520" y="190" width="400" height="56" />
+    <text class="module-title" x="550" y="226">HOTEL INVENTORY</text>
+    <text class="module-sub" x="550" y="280">CORE TABLES</text>
+    <text class="table" x="550" y="312">Hotels</text>
+    <text class="fields" x="550" y="336">hotel property information</text>
+    <text class="table" x="550" y="372">Rooms</text>
+    <text class="fields" x="550" y="396">physical room, floor, status</text>
+    <text class="table" x="550" y="432">RoomThemes + RoomImages</text>
+    <text class="fields" x="550" y="456">city themes, prices, amenities, gallery</text>
+  </g>
+
+  <!-- Reservation module -->
+  <g id="booking">
+    <rect class="module-main" x="1035" y="225" width="355" height="245" />
+    <rect class="cap" x="1035" y="225" width="355" height="56" />
+    <text class="module-title" x="1065" y="261">BOOKING CORE</text>
+    <text class="module-sub" x="1065" y="314">CORE TABLES</text>
+    <text class="table" x="1065" y="346">Reservations</text>
+    <text class="fields" x="1065" y="370">dates, guests, booking status</text>
+    <text class="table" x="1065" y="406">RoomReservations</text>
+    <text class="fields" x="1065" y="430">junction table: reservation ↔ room</text>
+  </g>
+
+  <!-- Finance module -->
+  <g id="finance">
+    <rect class="module-main" x="1490" y="220" width="250" height="250" />
+    <rect class="cap" x="1490" y="220" width="250" height="56" />
+    <text class="module-title" x="1520" y="256">FINANCE</text>
+    <text class="module-sub" x="1520" y="310">CORE TABLES</text>
+    <text class="table" x="1520" y="342">Invoices</text>
+    <text class="fields" x="1520" y="366">contractual invoice value</text>
+    <text class="table" x="1520" y="402">Payments</text>
+    <text class="fields" x="1520" y="426">actual money collected</text>
+  </g>
+
+  <!-- Services module -->
+  <g id="services">
+    <rect class="module" x="1035" y="600" width="355" height="245" />
+    <rect class="cap-soft" x="1035" y="600" width="355" height="56" />
+    <text class="module-title" x="1065" y="636">SERVICES</text>
+    <text class="module-sub" x="1065" y="690">CORE TABLES</text>
+    <text class="table" x="1065" y="722">Services</text>
+    <text class="fields" x="1065" y="746">spa, experiences, add-ons</text>
+    <text class="table" x="1065" y="782">ReservationServices</text>
+    <text class="fields" x="1065" y="806">selected services before stay</text>
+  </g>
+
+  <!-- Consumed services module -->
+  <g id="consumed">
+    <rect class="module" x="1490" y="620" width="250" height="190" />
+    <rect class="cap-soft" x="1490" y="620" width="250" height="56" />
+  <text class="module-title" x="1518" y="656" style="font-size:18px">CHARGED SERVICES</text>
+    <text class="table" x="1520" y="712">ConsumedServices</text>
+    <text class="fields" x="1520" y="736">services charged on invoice</text>
+    <text class="fields" x="1520" y="762">quantity, paid price</text>
+  </g>
+
+  <!-- Experience module -->
+  <g id="experience">
+    <rect class="module" x="520" y="690" width="400" height="255" />
+    <rect class="cap-soft" x="520" y="690" width="400" height="56" />
+    <text class="module-title" x="550" y="726">EXPERIENCE &amp; LOYALTY</text>
+    <text class="module-sub" x="550" y="780">CORE TABLES</text>
+    <text class="table" x="550" y="812">Stays</text>
+    <text class="fields" x="550" y="836">actual check-in/check-out</text>
+    <text class="table" x="550" y="872">Feedback</text>
+    <text class="fields" x="550" y="896">ratings and guest comments</text>
+    <text class="table" x="550" y="932">Rewards + RewardPoints</text>
+  </g>
+
+  <!-- Staff module -->
+  <g id="staff">
+    <rect class="module" x="80" y="710" width="330" height="190" />
+    <rect class="cap-soft" x="80" y="710" width="330" height="56" />
+    <text class="module-title" x="110" y="746">OPERATIONS</text>
+    <text class="table" x="110" y="810">Staff</text>
+    <text class="fields" x="110" y="834">employees linked to hotel</text>
+    <text class="note" x="110" y="872">Supports hotel management context</text>
+  </g>
+
+  <!-- Relationship lines -->
+  <path class="link" d="M410 328 C455 328 475 328 520 328" />
+  <text class="label" x="430" y="300">selects inventory</text>
+
+  <path class="link" d="M920 350 C960 350 995 350 1035 350" />
+  <text class="label" x="946" y="322">room assignment</text>
+
+  <path class="link" d="M1390 350 C1428 350 1452 350 1490 350" />
+  <text class="label" x="1412" y="322">invoice created</text>
+
+  <path class="link-soft" d="M1212 470 L1212 600" />
+  <text class="label" x="1230" y="544">booking adds services</text>
+
+  <path class="link-soft" d="M1390 732 C1428 732 1452 722 1490 718" />
+  <text class="label" x="1406" y="705">charged later</text>
+
+  <path class="link-soft" d="M1615 470 L1615 620" />
+  <text class="label" x="1632" y="548">invoice charges</text>
+
+  <path class="link-soft" d="M1035 410 C965 510 925 625 840 690" />
+  <text class="label" x="870" y="585">completed bookings become stays</text>
+
+  <path class="link-soft" d="M410 405 C450 565 510 660 590 690" />
+  <text class="label" x="440" y="590">guests leave feedback / earn points</text>
+
+  <path class="link-soft" d="M520 825 C470 820 450 810 410 805" />
+  <text class="label" x="420" y="790">hotel operations</text>
+
+  <!-- Small pills -->
+  <rect class="pill" x="80" y="995" width="380" height="44" />
+  <text class="pill-text" x="105" y="1023">Paid revenue source: Payments.amount</text>
+  <rect class="pill" x="520" y="995" width="460" height="44" />
+  <text class="pill-text" x="545" y="1023">Many-to-many: Reservations ↔ Rooms, Reservations ↔ Services</text>
+  <rect class="pill" x="1035" y="995" width="405" height="44" />
+  <text class="pill-text" x="1060" y="1023">Actual stay tracking is separated from booking requests</text>
+</svg>
