@@ -26,6 +26,13 @@ const addDays = (days) => {
   return date;
 };
 
+const offsetToDate = (isoDate) => {
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+  const target = new Date(`${isoDate}T12:00:00`);
+  return Math.round((target - today) / (1000 * 60 * 60 * 24));
+};
+
 const getNights = (checkin, checkout) => {
   return Math.max(1, Math.round((checkout - checkin) / (1000 * 60 * 60 * 24)));
 };
@@ -274,6 +281,10 @@ function createDemoOwnershipPicker() {
   let otherClientIndex = 1;
 
   return function pickClient(seed, clients) {
+    if (seed.demoOwner) {
+      return clients[0];
+    }
+
     const isCancelled = seed.status === "cancelled";
     const isPast = seed.status === "completed" || seed.endOffset < 0;
     const isCurrentOrFuture = seed.endOffset >= 0 && !isCancelled;
@@ -306,7 +317,77 @@ export async function seedDemoData() {
     const catalog = await loadExistingCatalog(transaction);
     const clients = await createDemoClients(transaction);
 
+    const presentationDemoSeeds = [
+      {
+        demoOwner: true,
+        city: "Seoul",
+        startOffset: offsetToDate("2026-06-15"),
+        endOffset: offsetToDate("2026-06-19"),
+        createdOffset: offsetToDate("2026-05-28"),
+        guests: 2,
+        status: "paid",
+        paymentRatio: 1,
+        services: [0, 3]
+      },
+      {
+        demoOwner: true,
+        city: "Lisbon",
+        startOffset: offsetToDate("2026-06-27"),
+        endOffset: offsetToDate("2026-07-01"),
+        createdOffset: offsetToDate("2026-06-01"),
+        guests: 2,
+        status: "paid",
+        paymentRatio: 1,
+        services: [1, 4]
+      },
+      {
+        demoOwner: true,
+        city: "Cancun",
+        startOffset: offsetToDate("2026-07-04"),
+        endOffset: offsetToDate("2026-07-08"),
+        createdOffset: offsetToDate("2026-06-03"),
+        guests: 3,
+        status: "paid",
+        paymentRatio: 1,
+        services: [2, 5]
+      },
+      {
+        demoOwner: true,
+        city: "Prague",
+        startOffset: offsetToDate("2026-07-09"),
+        endOffset: offsetToDate("2026-07-13"),
+        createdOffset: offsetToDate("2026-06-04"),
+        guests: 2,
+        status: "paid",
+        paymentRatio: 1,
+        services: [0, 1, 4]
+      },
+      {
+        demoOwner: true,
+        city: "Tokyo",
+        startOffset: offsetToDate("2026-07-18"),
+        endOffset: offsetToDate("2026-07-22"),
+        createdOffset: offsetToDate("2026-06-05"),
+        guests: 2,
+        status: "partial",
+        paymentRatio: 0.2,
+        services: [3]
+      },
+      {
+        demoOwner: true,
+        city: "Shanghai",
+        startOffset: offsetToDate("2026-08-02"),
+        endOffset: offsetToDate("2026-08-06"),
+        createdOffset: offsetToDate("2026-06-06"),
+        guests: 1,
+        status: "paid",
+        paymentRatio: 1,
+        services: [0, 2]
+      }
+    ];
+
     const reservationSeeds = [
+      ...presentationDemoSeeds,
       { city: "Seoul", startOffset: -36, endOffset: -32, createdOffset: -50, guests: 2, status: "completed", paymentRatio: 1, services: [0, 3], feedback: { overall: 5, cleanliness: 5, service: 5, theme: 5, comment: "Amazing experience, I will return again." } },
       { city: "Shanghai", startOffset: -18, endOffset: -14, createdOffset: -30, guests: 2, status: "completed", paymentRatio: 1, services: [1], feedback: { overall: 4, cleanliness: 4, service: 5, theme: 4, comment: "Beautiful room and very attentive service." } },
       { city: "Alberobello", startOffset: -8, endOffset: -2, createdOffset: -20, guests: 3, status: "completed", paymentRatio: 1, services: [2, 5], feedback: { overall: 4, cleanliness: 3, service: 4, theme: 5, comment: "Good price, but the cleaning could be improved." } },
