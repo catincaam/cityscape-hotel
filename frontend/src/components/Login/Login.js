@@ -147,7 +147,7 @@ export default function Login() {
             </h2>
 
             <p className="hero-description">
-              From the tranquility of Kyoto’s temples to the energy of New York’s streets.
+              From the tranquility of Kyoto's temples to the energy of New York's streets.
               Book themed rooms and enjoy the complete experience.
             </p>
 
@@ -176,11 +176,11 @@ export default function Login() {
 
             <div className="proof-rating">
               <div className="stars">
-                <span className="star">⭐</span>
-                <span className="star">⭐</span>
-                <span className="star">⭐</span>
-                <span className="star">⭐</span>
-                <span className="star">⭐</span>
+                <span className="star">★</span>
+                <span className="star">★</span>
+                <span className="star">★</span>
+                <span className="star">★</span>
+                <span className="star">★</span>
               </div>
               <p className="rating-text">Happy travelers worldwide</p>
             </div>
@@ -288,7 +288,7 @@ export default function Login() {
                   className="form-input-with-toggle"
                   name="parola"
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
+                  placeholder="Enter password"
                   onChange={handleChange}
                   value={form.parola}
                   required
@@ -329,7 +329,7 @@ export default function Login() {
             <p>
               {mode === "login" ? (
                 <>
-                  Don’t have an account?{" "}
+                  Don't have an account?{" "}
                   <span className="switch-link" onClick={() => setMode("register")}> 
                     Sign up
                   </span>
