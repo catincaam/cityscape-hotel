@@ -353,8 +353,53 @@
 }
 
 @media (max-width: 720px) {
+  .step-wrapper {
+    padding: 28px 0 86px;
+  }
+
+  .step-header {
+    margin-bottom: 28px;
+  }
+
+  .step-header h1 {
+    font-size: clamp(30px, 10vw, 38px);
+    line-height: 1.05;
+  }
+
+  .step-header p {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .card {
+    border-radius: 18px;
+    margin-bottom: 18px;
+    padding: 20px 16px;
+  }
+
   .date-row,
   .guest-grid {
     grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .guest-card {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .counter {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .counter button {
+    width: 42px;
+    height: 42px;
+  }
+
+  .summary {
+    border-radius: 18px;
   }
 }

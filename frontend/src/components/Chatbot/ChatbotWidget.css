@@ -264,15 +264,21 @@
 /* Mobile responsive */
 @media (max-width: 480px) {
   .chatbot-widget {
-    width: calc(100vw - 20px);
-    height: 70vh;
-    bottom: 80px;
-    right: 10px;
+    width: calc(100vw - 24px);
+    max-width: 380px;
+    height: min(70svh, 560px);
+    bottom: 82px;
+    left: 12px;
+    right: 12px;
+    margin: 0 auto;
+    border-radius: 18px;
   }
 
   .chatbot-bubble {
-    bottom: 20px;
-    right: 20px;
+    bottom: 18px;
+    right: 18px;
+    width: 50px;
+    height: 50px;
   }
 
   .message-content {

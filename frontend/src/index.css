@@ -11,4 +11,37 @@
 body {
   background: #f6f7f8;
   color: #111418;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+html {
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+@media (max-width: 640px) {
+  body {
+    background: #f8f4ee;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
