@@ -11,7 +11,7 @@ export async function login(email, password) {
 
   if (!r.ok) {
     const err = await r.json().catch(() => ({}));
-    throw new Error(err.message || "Credentiale invalide");
+    throw new Error(err.message || "Registration failed");
   }
 
   const data = await r.json();
@@ -62,7 +62,7 @@ export async function register(payload) {
 
   if (!r.ok) {
     const err = await r.json().catch(() => ({}));
-    throw new Error(err.message || "Înregistrarea a eșuat");
+    throw new Error(err.message || "Invalid credentials");
   }
 
   return r.json();

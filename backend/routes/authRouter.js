@@ -5,7 +5,7 @@ import crypto from "crypto";
 import { getClientByEmail, createClient } from "../dataAccess/ClientDA.js";
 import Client from "../entities/Client.js";
 import PasswordResetToken from "../entities/PasswordResetToken.js";
-import { sendPasswordResetEmail } from "../services/emailService.js";
+import { sendAccountCreatedEmail, sendPasswordResetEmail } from "../services/emailService.js";
 import { ensureClientTypes } from "../services/clientTierService.js";
 import {
   isStrongPassword,
@@ -68,7 +68,18 @@ authRouter.post("/register", async (req, res) => {
 
     const { Password: _, ...safeClient } = client.dataValues;
 
-    res.status(201).json({ client: safeClient });
+    const emailResult = await sendAccountCreatedEmail({ client });
+    if (!emailResult.success) {
+      console.warn("[ACCOUNT CREATED EMAIL] Not sent:", emailResult.error);
+    }
+
+    res.status(201).json({
+      client: safeClient,
+      email: {
+        sent: Boolean(emailResult.success),
+        error: emailResult.success ? undefined : emailResult.error
+      }
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });

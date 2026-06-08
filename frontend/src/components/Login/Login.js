@@ -78,7 +78,7 @@ export default function Login() {
           return;
         }
 
-        await register({
+        const result = await register({
           firstName: form.prenume,
           lastName: form.nume,
           email: form.email,
@@ -86,7 +86,9 @@ export default function Login() {
           typeClientTip: "Standard",
         });
 
-        alert("Account created! You can now log in.");
+        alert(result?.email?.sent
+          ? "Account created! A confirmation email has been sent. You can now log in."
+          : "Account created! You can now log in.");
         setMode("login");
       }
     } catch (err) {

@@ -59,6 +59,9 @@ function selectRoomByCity(rooms, city, fallbackIndex) {
 
 const clientSeeds = [
   ["Catinca", "Marinescu", "Gold"],
+  ["Laura", "Bennett", "Silver"],
+  ["Andrei", "Vasilescu", "Gold"],
+  ["Bianca", "Radu", "Standard"],
   ["Elena", "Popescu", "Silver"],
   ["Julian", "Vane", "Standard"],
   ["Mihai", "Popescu", "Standard"],
@@ -281,6 +284,10 @@ function createDemoOwnershipPicker() {
   let otherClientIndex = 1;
 
   return function pickClient(seed, clients) {
+    if (Number.isInteger(seed.ownerIndex) && clients[seed.ownerIndex]) {
+      return clients[seed.ownerIndex];
+    }
+
     if (seed.demoOwner) {
       return clients[0];
     }
@@ -388,6 +395,12 @@ export async function seedDemoData() {
 
     const reservationSeeds = [
       ...presentationDemoSeeds,
+      { ownerIndex: 1, city: "Tokyo", startOffset: -44, endOffset: -40, createdOffset: -58, guests: 2, status: "completed", paymentRatio: 1, services: [1, 3], feedback: { overall: 5, cleanliness: 5, service: 5, theme: 5, comment: "Tokyo After Dark felt cinematic, elegant, and very well organized." } },
+      { ownerIndex: 1, city: "Prague", startOffset: 15, endOffset: 19, createdOffset: -5, guests: 2, status: "paid", paymentRatio: 1, services: [0, 4] },
+      { ownerIndex: 2, city: "Cancun", startOffset: -31, endOffset: -27, createdOffset: -45, guests: 3, status: "completed", paymentRatio: 1, services: [2, 5], feedback: { overall: 4, cleanliness: 4, service: 5, theme: 5, comment: "The beach suite looked premium and the extra services made the stay feel complete." } },
+      { ownerIndex: 2, city: "Seoul", startOffset: 21, endOffset: 25, createdOffset: -4, guests: 2, status: "paid", paymentRatio: 1, services: [1] },
+      { ownerIndex: 3, city: "Lisbon", startOffset: -23, endOffset: -19, createdOffset: -37, guests: 2, status: "completed", paymentRatio: 1, services: [0, 2], feedback: { overall: 5, cleanliness: 4, service: 5, theme: 4, comment: "A warm, stylish room with smooth booking and attentive service throughout." } },
+      { ownerIndex: 3, city: "Shanghai", startOffset: 26, endOffset: 30, createdOffset: -3, guests: 1, status: "paid", paymentRatio: 1, services: [3, 4] },
       { city: "Seoul", startOffset: -36, endOffset: -32, createdOffset: -50, guests: 2, status: "completed", paymentRatio: 1, services: [0, 3], feedback: { overall: 5, cleanliness: 5, service: 5, theme: 5, comment: "Amazing experience, I will return again." } },
       { city: "Shanghai", startOffset: -18, endOffset: -14, createdOffset: -30, guests: 2, status: "completed", paymentRatio: 1, services: [1], feedback: { overall: 4, cleanliness: 4, service: 5, theme: 4, comment: "Beautiful room and very attentive service." } },
       { city: "Alberobello", startOffset: -8, endOffset: -2, createdOffset: -20, guests: 3, status: "completed", paymentRatio: 1, services: [2, 5], feedback: { overall: 4, cleanliness: 3, service: 4, theme: 5, comment: "Good price, but the cleaning could be improved." } },

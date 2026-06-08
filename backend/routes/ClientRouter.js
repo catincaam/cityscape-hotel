@@ -4,6 +4,7 @@ import authMiddleware from "../middleware/authMiddleware.js";
 import bcrypt from "bcrypt";
 import Reservation from "../entities/Reservation.js";
 import { Op } from "sequelize";
+import { sendAccountDeletedEmail } from "../services/emailService.js";
 
 import {
   createClient,
@@ -148,9 +149,24 @@ clientRouter.delete("/me", authMiddleware, async (req, res) => {
       });
     }
 
+    const client = await getClientById(req.client.id);
+    if (!client) return res.status(404).json({ message: "Client not found" });
+
     const deleted = await deleteClient(req.client.id);
     if (!deleted) return res.status(404).json({ message: "Client not found" });
-    res.status(200).json({ message: "deleted" });
+
+    const emailResult = await sendAccountDeletedEmail({ client });
+    if (!emailResult.success) {
+      console.warn("[ACCOUNT DELETED EMAIL] Not sent:", emailResult.error);
+    }
+
+    res.status(200).json({
+      message: "deleted",
+      email: {
+        sent: Boolean(emailResult.success),
+        error: emailResult.success ? undefined : emailResult.error
+      }
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "server error" });
@@ -234,9 +250,24 @@ clientRouter.delete("/:id", authMiddleware, async (req, res) => {
       });
     }
 
+    const client = await getClientById(req.params.id);
+    if (!client) return res.status(404).json({ message: "not found" });
+
     const deleted = await deleteClient(req.params.id);
     if (!deleted) return res.status(404).json({ message: "not found" });
-    res.status(200).json({ message: "deleted" });
+
+    const emailResult = await sendAccountDeletedEmail({ client });
+    if (!emailResult.success) {
+      console.warn("[ACCOUNT DELETED EMAIL] Not sent:", emailResult.error);
+    }
+
+    res.status(200).json({
+      message: "deleted",
+      email: {
+        sent: Boolean(emailResult.success),
+        error: emailResult.success ? undefined : emailResult.error
+      }
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "server error" });

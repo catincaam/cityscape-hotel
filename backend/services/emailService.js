@@ -322,6 +322,86 @@ export const sendCheckInReminder = async ({ client, reservation, room }) => {
   });
 };
 
+export const sendAccountCreatedEmail = async ({ client }) => {
+  if (!client?.Email) {
+    return { success: false, error: "Client email is missing." };
+  }
+
+  const guestName = fullName(client);
+  const dashboardUrl = `${APP_URL}/dashboard`;
+
+  const html = `
+    <div style="margin:0;padding:32px;background:#f6f2ec;font-family:Georgia,serif;color:#122033;">
+      <div style="max-width:620px;margin:0 auto;background:#fffaf4;border:1px solid #e4d5c2;border-radius:18px;overflow:hidden;">
+        <div style="padding:30px 34px;border-bottom:1px solid #eadfce;">
+          <div style="font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#b8894a;font-weight:700;">Cityscape Hotel</div>
+          <h1 style="margin:12px 0 8px;font-size:32px;line-height:1.1;color:#111827;">Your account is ready</h1>
+          <p style="margin:0;color:#5d6a7a;font-size:15px;">Hello ${guestName}, welcome to your Cityscape Hotel account.</p>
+        </div>
+        <div style="padding:28px 34px;">
+          <p style="margin:0 0 18px;color:#26364a;font-size:16px;line-height:1.5;">
+            You can now explore themed rooms, manage upcoming stays, add premium services, and collect loyalty rewards.
+          </p>
+          <a href="${dashboardUrl}" style="display:block;margin:24px 0;padding:14px 18px;border-radius:999px;background:#111827;color:#fff;text-align:center;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Open dashboard</a>
+          <p style="margin:0;color:#6b7280;font-size:13px;line-height:1.5;">
+            If you did not create this account, please contact Cityscape Hotel support.
+          </p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const text = [
+    `Hello ${guestName}, your Cityscape Hotel account is ready.`,
+    "You can now manage bookings, services, and rewards from your dashboard.",
+    dashboardUrl
+  ].join("\n");
+
+  return sendMail({
+    to: client.Email,
+    subject: "Welcome to Cityscape Hotel",
+    html,
+    text
+  });
+};
+
+export const sendAccountDeletedEmail = async ({ client }) => {
+  if (!client?.Email) {
+    return { success: false, error: "Client email is missing." };
+  }
+
+  const guestName = fullName(client);
+
+  const html = `
+    <div style="margin:0;padding:32px;background:#f6f2ec;font-family:Georgia,serif;color:#122033;">
+      <div style="max-width:620px;margin:0 auto;background:#fffaf4;border:1px solid #e4d5c2;border-radius:18px;overflow:hidden;">
+        <div style="padding:30px 34px;border-bottom:1px solid #eadfce;">
+          <div style="font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#b8894a;font-weight:700;">Cityscape Hotel</div>
+          <h1 style="margin:12px 0 8px;font-size:32px;line-height:1.1;color:#111827;">Account deleted</h1>
+          <p style="margin:0;color:#5d6a7a;font-size:15px;">Hello ${guestName}, this confirms that your Cityscape Hotel account has been deleted.</p>
+        </div>
+        <div style="padding:28px 34px;">
+          <p style="margin:0;color:#26364a;font-size:16px;line-height:1.5;">
+            Your profile access has been removed. If this was not requested by you, please contact Cityscape Hotel support as soon as possible.
+          </p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const text = [
+    `Hello ${guestName}, this confirms that your Cityscape Hotel account has been deleted.`,
+    "If this was not requested by you, please contact Cityscape Hotel support."
+  ].join("\n");
+
+  return sendMail({
+    to: client.Email,
+    subject: "Cityscape Hotel account deleted",
+    html,
+    text
+  });
+};
+
 export const sendPasswordResetEmail = async ({ client, resetUrl, expiresInMinutes = 60 }) => {
   if (!client?.Email) {
     return { success: false, error: "Client email is missing." };
