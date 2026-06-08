@@ -15,7 +15,6 @@ router.get('/', async (req, res) => {
     const rewards = await Reward.findAll({
       where: { active: true }
     });
-    console.log('[GET REWARDS - USER]:', rewards.map(r => ({ RewardId: r.RewardId, title: r.title, rewardType: r.rewardType, active: r.active })));
     res.json(rewards);
   } catch (err) {
     console.error('[GET REWARDS - USER] Error:', err);
@@ -27,7 +26,6 @@ router.get('/', async (req, res) => {
 router.get('/admin/all', async (req, res) => {
   try {
     const rewards = await Reward.findAll();
-    console.log('[GET REWARDS - ADMIN]:', rewards.map(r => ({ RewardId: r.RewardId, title: r.title, active: r.active })));
     res.json(rewards);
   } catch (err) {
     console.error('[GET REWARDS - ADMIN] Error:', err);
@@ -53,7 +51,6 @@ router.post('/', async (req, res) => {
       rewardType: rewardType || 'per_booking'
     });
 
-    console.log('✅ Recompensă adăugată:', reward);
     res.json(reward);
   } catch (err) {
     console.error('❌ Eroare la adăugare recompensă:', err);
@@ -197,31 +194,6 @@ router.get('/reservation/:reservationId/applied', async (req, res) => {
   }
 });
 
-// POST - Add test points for user (dev only)
-router.post('/test-add-points', async (req, res) => {
-  try {
-    const { userId, amount } = req.body;
-
-    if (!userId || !amount) {
-      return res.status(400).json({ message: "Missing userId or amount" });
-    }
-
-    const points = await RewardPoint.create({
-      UserId: parseInt(userId),
-      amount: parseInt(amount),
-      description: 'Test points added',
-      status: 'active',
-      availableAt: new Date()
-    });
-
-    console.log(`✅ Test points added: ${amount}p for user ${userId}`);
-    res.json({ message: "Test points added", points });
-  } catch (err) {
-    console.error("Error adding test points:", err);
-    res.status(500).json({ message: "server error", error: err.message });
-  }
-});
-
 // PUT actualizează recompensă
 router.put('/:id', async (req, res) => {
   try {
@@ -245,7 +217,6 @@ router.put('/:id', async (req, res) => {
       active: active !== undefined ? active : reward.active
     });
 
-    console.log('✅ Recompensă actualizată:', reward);
     res.json(reward);
   } catch (err) {
     console.error('❌ Eroare la actualizare recompensă:', err);
@@ -263,7 +234,6 @@ router.delete('/:id', async (req, res) => {
     }
 
     await reward.destroy();
-    console.log('✅ Recompensă ștearsă:', reward.RewardId);
     res.json({ message: 'Recompensă ștearsă cu succes' });
   } catch (err) {
     console.error('❌ Eroare la ștergere recompensă:', err);

@@ -1,6 +1,7 @@
 import axios from "axios";
+import { API_BASE_URL } from "../config/runtimeUrls";
 
-const API = "http://localhost:9001/api/services";
+const API = `${API_BASE_URL}/api/services`;
 
 export async function getServices() {
   const res = await axios.get(API, { withCredentials: true });

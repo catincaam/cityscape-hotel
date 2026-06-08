@@ -695,10 +695,7 @@ dashboardRouter.get("/predictions", async (req, res) => {
   }
 });
 
-// KPI: Total Revenue, Average Occupancy, Satisfaction Score, Cash Received
-// GET /api/admin/dashboard/kpi?period=thisMonth
 dashboardRouter.get("/kpi", async (req, res) => {
-    console.log('[DASHBOARD KPI] endpoint hit');
   try {
     const period = req.query.period || 'thisMonth';
     const { start, end } = getDateRange(period);
@@ -739,8 +736,6 @@ dashboardRouter.get("/kpi", async (req, res) => {
         includedReservationIds.push(reservation.ReservationId);
       }
     }
-    console.log('[DASHBOARD KPI] cashReceived:', cashReceived, 'ReservationIds:', includedReservationIds);
-    
     // Grad ocupare: CAMERE OCUPATE ÎN PERIOADA / TOTAL CAMERE
     const totalRooms = await Room.count();
     const occupiedRooms = await Reservation.count({

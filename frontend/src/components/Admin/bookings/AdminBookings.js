@@ -97,7 +97,6 @@ export default function AdminBookings() {
             projectedRevenue: 0,
             cashReceived: data.totalCashReceived || 0
           });
-          console.log('[DEBUG] totalCashReceived from backend:', data.totalCashReceived);
         } else if (Array.isArray(data)) {
           setBookings(data);
           setActiveBookingsList([]);

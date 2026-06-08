@@ -114,9 +114,7 @@ export default function Rewards() {
           const detailsRes = await fetch(`${API_BASE_URL}/api/reservations/${stay.ReservationId}`);
           setUpcomingStay(detailsRes.ok ? await detailsRes.json() : stay);
         }
-      } catch (err) {
-        console.log("Could not fetch upcoming stay:", err.message);
-      }
+      } catch {}
     } catch (err) {
       console.error("Error fetching rewards data:", err);
     } finally {

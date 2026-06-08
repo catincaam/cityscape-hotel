@@ -105,17 +105,14 @@ export async function awardPointsForCompletedReservation(reservationId, clientId
 
     const description = `Puncte din rezervare #${reservationId}: ${breakdown.nights} nopti x ${breakdown.nrPeople} persoane + servicii`;
 
-    // Add as ACTIVE points immediately (reservation was completed and paid)
     const rewardPoint = await addPendingPoints({
       userId: clientId,
       reservationId: reservationId,
       amount: points,
-      status: "active", // Directly active since reservation is completed
+      status: "active",
       description,
-      availableAt: new Date() // Available immediately
+      availableAt: new Date()
     });
-
-    console.log(`✅ Awarded ${points} points to user ${clientId} for completed reservation #${reservationId}`);
 
     return {
       success: true,
@@ -143,20 +140,15 @@ export async function awardPointsForCompletedReservation(reservationId, clientId
  */
 export async function useRewardPoints(clientId, pointsToUse, reservationId) {
   try {
-    // This would be handled in RewardPointDA
-    // Create a "redeemed" entry for the points used
-    
     const description = `Puncte folosite pentru rezervare #${reservationId}`;
 
     const deduction = await addPendingPoints({
       userId: clientId,
       reservationId: reservationId,
-      amount: -pointsToUse, // Negative amount for deduction
+      amount: -pointsToUse,
       status: "redeemed",
       description
     });
-
-    console.log(`✅ Deducted ${pointsToUse} points from user ${clientId}`);
 
     return {
       success: true,

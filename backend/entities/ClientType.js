@@ -17,7 +17,7 @@ const ClientType = db.define(
     }
   },
   {
-    timestamps: false // 🔥 FIX IMPORTANT
+    timestamps: false
   }
 );
 

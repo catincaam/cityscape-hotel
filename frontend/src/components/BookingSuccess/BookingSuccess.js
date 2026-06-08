@@ -86,15 +86,12 @@ export default function BookingSuccess() {
     }
   }, [location.state, navigate]);
 
-  // Fetch showcase image based on room theme
   useEffect(() => {
     async function fetchRoomTheme() {
       try {
-        // Try to get the room ID from bookingData.room
         const roomId = bookingDetails?.room?.id || bookingDetails?.room?.roomId;
         
         if (roomId) {
-          console.log("🔍 Fetching room theme with ID:", roomId);
           const res = await fetch(`${API_BASE_URL}/api/room-themes/${roomId}`);
           const data = await res.json();
           setRoomTheme(data);
@@ -187,12 +184,8 @@ export default function BookingSuccess() {
     || bookingDetails?.id;
   const emailWasSent = bookingDetails?.email?.sent;
 
-  // Download invoice PDF
   const handleDownloadInvoice = async () => {
     try {
-      console.log("📋 Full bookingDetails:", bookingDetails);
-      console.log("📋 Reservation object:", bookingDetails?.reservation);
-      console.log("🔍 Extracted Reservation ID:", reservationId);
       
       if (!reservationId) {
         throw new Error("Reservation ID not found in booking details");
@@ -209,7 +202,7 @@ export default function BookingSuccess() {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("❌ Download failed:", response.status, errorText);
+        console.error("Download failed:", response.status, errorText);
         throw new Error(`Failed to download invoice: ${response.status}`);
       }
 
@@ -223,7 +216,6 @@ export default function BookingSuccess() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       
-      console.log("✅ Invoice downloaded successfully");
     } catch (err) {
       console.error("Error downloading invoice:", err);
       alert("Failed to download invoice. Please try again.");
@@ -349,13 +341,13 @@ export default function BookingSuccess() {
                 {roomCost > 0 && (
                   <div className="payment-line">
                     <span>{room?.name || bookingDetails?.room?.name || "Room"} ({nights} {nights === 1 ? 'night' : 'nights'})</span>
-                    <span className="amount">€{roomCost.toFixed(2)}</span>
+                    <span className="amount">â‚¬{roomCost.toFixed(2)}</span>
                   </div>
                 )}
                 {servicesCost > 0 && (
                   <div className="payment-line">
                     <span>Services due at hotel</span>
-                    <span className="amount">€{servicesCost.toFixed(2)}</span>
+                    <span className="amount">â‚¬{servicesCost.toFixed(2)}</span>
                   </div>
                 )}
                 {selectedServiceRows.length > 0 && (
@@ -388,16 +380,16 @@ export default function BookingSuccess() {
                 {taxFees > 0 && (
                   <div className="payment-line">
                     <span>Taxes & Fees</span>
-                    <span className="amount">€{taxFees.toFixed(2)}</span>
+                    <span className="amount">â‚¬{taxFees.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="payment-line total">
                   <span>Total Amount</span>
-                  <span className="amount">€{Number(invoice?.totalAmount).toFixed(2)}</span>
+                  <span className="amount">â‚¬{Number(invoice?.totalAmount).toFixed(2)}</span>
                 </div>
                 <div className="payment-line paid">
                   <span>Paid</span>
-                  <span className="amount paid-amount">€{Number(payment?.amount).toFixed(2)}</span>
+                  <span className="amount paid-amount">â‚¬{Number(payment?.amount).toFixed(2)}</span>
                 </div>
               </div>
               <button

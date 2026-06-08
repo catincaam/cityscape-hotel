@@ -5,11 +5,9 @@ import { fileURLToPath } from "url";
 
 const uploadRouter = express.Router();
 
-// Pentru a folosi __dirname în ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Configurare multer pentru upload
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, path.join(__dirname, "../uploads"));
@@ -22,7 +20,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
@@ -31,46 +29,42 @@ const upload = multer({
     if (extname && mimetype) {
       return cb(null, true);
     }
-    cb(new Error("Doar imagini sunt permise (jpeg, jpg, png, gif, webp)"));
+
+    cb(new Error("Only image files are allowed: jpeg, jpg, png, gif, webp"));
   }
 });
 
-// Endpoint pentru upload de imagine (single)
 uploadRouter.post("/", upload.single("image"), (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: "Nu a fost încărcată nicio imagine" });
+      return res.status(400).json({ message: "No image was uploaded" });
     }
 
-    // Returnăm URL-ul relativ al imaginii
     const imageUrl = `/uploads/${req.file.filename}`;
     res.status(200).json({
-      message: "Imagine încărcată cu succes",
+      message: "Image uploaded successfully",
       imageUrl
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Eroare la încărcarea imaginii" });
+    res.status(500).json({ message: "Image upload failed" });
   }
 });
 
-// Endpoint pentru upload de imagini multiple
 uploadRouter.post("/multiple", upload.array("images", 10), (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ message: "Nu au fost încărcate imagini" });
+      return res.status(400).json({ message: "No images were uploaded" });
     }
 
-    // Returnăm URL-urile relative ale imaginilor
     const imageUrls = req.files.map(file => `/uploads/${file.filename}`);
-    console.log('✅ Multiple images uploaded:', imageUrls);
     res.status(200).json({
-      message: `${imageUrls.length} imagini încărcate cu succes`,
+      message: `${imageUrls.length} images uploaded successfully`,
       imageUrls
     });
   } catch (err) {
-    console.error('❌ Error uploading multiple images:', err);
-    res.status(500).json({ message: err.message || "Eroare la încărcarea imaginilor" });
+    console.error("Error uploading multiple images:", err);
+    res.status(500).json({ message: err.message || "Image upload failed" });
   }
 });
 

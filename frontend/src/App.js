@@ -11,7 +11,6 @@ import RoomDetails from "./components/RoomDetails/RoomDetails";
 import Services from "./components/Services/Services";
 import ProfilePage from "./components/Profile/ProfilePage";
 import ReservationDetail from "./components/ReservationDetail/ReservationDetail";
-import EmailTest from "./components/EmailTest/EmailTest";
 import DayPasses from "./components/DayPasses/DayPasses";
 import Rewards from "./components/Rewards/Rewards";
 import RewardsDetails from "./components/RewardsDetails/RewardsDetails";
@@ -147,16 +146,6 @@ export default function App() {
           element={
             <ProtectedRoute>
               <ReservationDetail />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* EMAIL TEST (dev only) */}
-        <Route
-          path="/email-test"
-          element={
-            <ProtectedRoute>
-              <EmailTest />
             </ProtectedRoute>
           }
         />

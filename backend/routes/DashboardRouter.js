@@ -1,7 +1,6 @@
 import express from "express";
 import authClient from "../middleware/authMiddleware.js";
 import { getClientById } from "../dataAccess/ClientDA.js";
-import { getReservations } from "../dataAccess/ReservationDA.js";
 import { getInvoiceByReservationId } from "../dataAccess/InvoiceDA.js";
 import Room from "../entities/Room.js";
 import RoomTheme from "../entities/RoomTheme.js";
@@ -121,7 +120,6 @@ router.get("/dashboard", authClient, async (req, res) => {
         } else if (checkOutDate >= today) {
           bookingStatus = 'active';
         }
-        console.log(`Reservation #${reservation.ReservationId}: CheckIn=${checkInDate.toISOString()}, CheckOut=${checkOutDate.toISOString()}, Today=${today.toISOString()}, Status=${bookingStatus}`);
         return {
           reservationId: reservation.ReservationId,
           room: roomTheme?.name || "Unknown",

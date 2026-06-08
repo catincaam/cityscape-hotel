@@ -1,4 +1,3 @@
-// backend/routes/feedbackRouter.js
 import express from "express";
 import {
   createFeedback,
@@ -10,7 +9,6 @@ import {
 
 const feedbackRouter = express.Router();
 
-/* CREATE */
 import { addPendingPoints } from '../dataAccess/RewardPointDA.js';
 import Reservation from '../entities/Reservation.js';
 import RewardPoint from "../entities/RewardPoint.js";
@@ -27,29 +25,23 @@ function canLeaveFeedback(reservation) {
 feedbackRouter.post("/", async (req, res) => {
   try {
     const { ReservationId, ClientId, overall, cleanliness, service, theme, comment } = req.body;
-    console.log("[FEEDBACK] POST request:", { ReservationId, ClientId, body: req.body });
-    
     if (!ReservationId || !ClientId) {
-      console.log("[FEEDBACK] Missing required fields");
       return res.status(400).json({ message: "ReservationId and ClientId are required for feedback." });
     }
     
     // Verifică dacă rezervarea există și aparține clientului
     const reservation = await Reservation.findByPk(ReservationId);
     if (!reservation) {
-      console.log("[FEEDBACK] Reservation not found:", ReservationId);
       return res.status(404).json({ message: "Reservation not found." });
     }
     await syncReservationStatus(reservation);
     
     if (String(reservation.ClientId) !== String(ClientId)) {
-      console.log("[FEEDBACK] ClientId mismatch:", { reservationClientId: reservation.ClientId, providedClientId: ClientId });
       return res.status(403).json({ message: "You can only leave feedback for your own reservation." });
     }
     
     // Permite feedback doar dacă statusul e 'completed' sau 'paid'
     if (!canLeaveFeedback(reservation)) {
-      console.log("[FEEDBACK] Invalid reservation status:", reservation.status);
       return res.status(400).json({ message: "Feedback is allowed only after the stay is completed." });
     }
 
@@ -70,7 +62,6 @@ feedbackRouter.post("/", async (req, res) => {
     };
     
     const feedback = await createFeedback(feedbackData);
-    console.log("[FEEDBACK] Feedback created:", feedback);
     
     // Award points only if not already awarded for this reservation
     const existing = await RewardPoint.findOne({
@@ -84,7 +75,6 @@ feedbackRouter.post("/", async (req, res) => {
         description: 'Feedback review reward',
         availableAt: new Date()
       });
-      console.log("[FEEDBACK] Points awarded");
     }
     res.status(201).json(feedback);
   } catch (err) {
@@ -93,7 +83,6 @@ feedbackRouter.post("/", async (req, res) => {
   }
 });
 
-/* READ all */
 feedbackRouter.get("/", async (req, res) => {
   try {
     const list = await getFeedbacks();
@@ -104,7 +93,6 @@ feedbackRouter.get("/", async (req, res) => {
   }
 });
 
-/* READ by ID */
 feedbackRouter.get("/:id", async (req, res) => {
   try {
     const feedback = await getFeedbackById(req.params.id);
@@ -116,7 +104,6 @@ feedbackRouter.get("/:id", async (req, res) => {
   }
 });
 
-/* UPDATE */
 feedbackRouter.put("/:id", async (req, res) => {
   try {
     const updated = await updateFeedback(req.params.id, req.body);
@@ -128,7 +115,6 @@ feedbackRouter.put("/:id", async (req, res) => {
   }
 });
 
-/* DELETE */
 feedbackRouter.delete("/:id", async (req, res) => {
   try {
     const deleted = await deleteFeedback(req.params.id);

@@ -148,12 +148,10 @@ paymentRouter.post("/pay-final", async (req, res) => {
       const nextStatus = checkoutDate < new Date() ? "completed" : "paid";
       await reservation.update({ status: nextStatus });
       
-      // Award reward points for completed reservation
       if (nextStatus === "completed") {
         rewardResult = await awardPointsForCompletedReservation(ReservationId, reservation.ClientId);
         clientTier = await syncClientTier(reservation.ClientId);
       }
-      console.log(`Reservation #${ReservationId} payment completed. Status: ${reservation.status}. Points awarded:`, rewardResult);
     }
 
     res.status(201).json({

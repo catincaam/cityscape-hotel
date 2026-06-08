@@ -133,8 +133,6 @@ async function getAvailableRoomsLegacy({ checkIn, checkOut, guests }) {
     }]
   });
 
-  console.log("DEBUG Available Rooms:", JSON.stringify(rooms, null, 2).substring(0, 500));
-
   // 4. Filtrare după capacitate maximă
   const filtered = rooms.filter(room => {
     const maxGuests = room.RoomTheme?.maxGuests || 2;

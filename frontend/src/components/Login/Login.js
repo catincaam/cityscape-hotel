@@ -50,8 +50,6 @@ export default function Login() {
           await login(form.email, form.parola);
         }
 
-        // 🔥 MAGIC HAPPENS HERE:
-        // if login succeeded, redirect to the appropriate page
         if (isAdminMode) {
           sessionStorage.removeItem("postLoginRedirect");
           navigate("/admin");

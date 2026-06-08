@@ -60,7 +60,6 @@ reservationRouter.post("/", async (req, res) => {
           description: `Reservation reward - ${nights} night(s)`,
           availableAt: reservation.requestedCheckout // Points become available at checkout
         });
-        console.log(`Pending points created: ${points}p for reservation #${reservation.ReservationId}`);
       } catch (pointsErr) {
         console.error("Error creating pending points:", pointsErr);
         // Don't fail the reservation if points fail, just log it
@@ -92,7 +91,7 @@ reservationRouter.get("/", async (req, res) => {
   }
 });
 
-/* CANCEL endpoint (manual, de către client) - cu penalități */
+/* CANCEL endpoint (manual, de cÄƒtre client) - cu penalitÄƒÈ›i */
 reservationRouter.put("/:id/cancel", async (req, res) => {
   try {
     const reservation = await getReservationById(req.params.id);
@@ -103,7 +102,7 @@ reservationRouter.put("/:id/cancel", async (req, res) => {
       return res.status(400).json({ message: "Cannot cancel a completed or already cancelled reservation." });
     }
 
-    // Calculează penalitate pe baza timpului
+    // CalculeazÄƒ penalitate pe baza timpului
     const now = new Date();
     const checkin = new Date(reservation.requestedCheckin);
     const hoursUntilCheckin = (checkin - now) / (1000 * 60 * 60);
@@ -118,21 +117,20 @@ reservationRouter.put("/:id/cancel", async (req, res) => {
     if (hoursUntilCheckin > 24) {
       // Anulare cu >24h: refund 80%, pierde 20%
       refundAmount = invoice.totalAmount * 0.8;
-      penaltyMessage = `Cancellation accepted. You forfeit 20% deposit (€${(invoice.totalAmount * 0.2).toFixed(2)}). Refund: €${refundAmount.toFixed(2)}`;
+      penaltyMessage = `Cancellation accepted. You forfeit 20% deposit (â‚¬${(invoice.totalAmount * 0.2).toFixed(2)}). Refund: â‚¬${refundAmount.toFixed(2)}`;
     } else if (hoursUntilCheckin > 0) {
       // Anulare cu <24h: no refund, pierde tot
       refundAmount = 0;
       penaltyMessage = `Cancellation within 24 hours of check-in. Full payment amount forfeited.`;
     } else {
-      // Deja a început sejur
+      // Deja a Ã®nceput sejur
       return res.status(400).json({ message: "Cannot cancel: check-in date has already passed." });
     }
     
-    // Setează status la cancelled
+    // SeteazÄƒ status la cancelled
     reservation.status = 'cancelled';
     await reservation.save();
     
-    console.log(`[CANCEL] Reservation #${reservation.ReservationId} cancelled. ${penaltyMessage}`);
     
     res.status(200).json({
       reservation,
@@ -182,7 +180,6 @@ reservationRouter.get("/user/:userId", async (req, res) => {
 
     await syncReservationStatuses(reservations);
 
-    console.log(`[RESERVATION] Found ${reservations.length} reservations for user ${userId}`);
     res.status(200).json(reservations);
   } catch (err) {
     console.error("[RESERVATION] Error getting user reservations:", err);
@@ -192,7 +189,6 @@ reservationRouter.get("/user/:userId", async (req, res) => {
 
 /* GET /upcoming/:userId - Get next upcoming reservation for a user */
 reservationRouter.get("/upcoming/:userId", async (req, res) => {
-  console.log("[RESERVATION] GET /upcoming/:userId called with userId:", req.params.userId);
   try {
     const { userId } = req.params;
     const now = new Date();
@@ -206,26 +202,16 @@ reservationRouter.get("/upcoming/:userId", async (req, res) => {
       where: {
         ClientId: userId,
         status: "upcoming",
-        requestedCheckin: { [Op.gt]: now }  // Only get reservations with future check-in
+        requestedCheckin: { [Op.gt]: now }
       },
       order: [["requestedCheckin", "ASC"]],
       raw: false
     });
     
-    console.log("[RESERVATION] Found future reservation:", nextReservation?.ReservationId, "Check-in:", nextReservation?.requestedCheckin);
-    
     if (!nextReservation) {
-      console.log("[RESERVATION] No confirmed upcoming reservations found for user", userId);
       return res.status(404).json({ message: "No upcoming reservations" });
     }
-    
-    // Get room data for this reservation
-    const roomRes = await RoomReservation.findOne({
-      where: { ReservationId: nextReservation.ReservationId }
-    });
-    
-    console.log("[RESERVATION] RoomReservation lookup for reservation", nextReservation.ReservationId, "result:", roomRes?.dataValues || "null");
-    
+
     res.status(200).json(nextReservation);
   } catch (err) {
     console.error("[RESERVATION] Error in /upcoming/:userId:", err);
@@ -235,9 +221,8 @@ reservationRouter.get("/upcoming/:userId", async (req, res) => {
 
 reservationRouter.get("/:id", async (req, res) => {
   try {
-    console.log(`[RESERVATION] GET /api/reservations/${req.params.id}`);
     
-    // Fetch cu toate relațiile necesare
+    // Fetch cu toate relaÈ›iile necesare
     const Reservation = (await import("../entities/Reservation.js")).default;
     const Invoice = (await import("../entities/Invoice.js")).default;
     
@@ -272,37 +257,27 @@ reservationRouter.get("/:id", async (req, res) => {
       ]
     });
     
-    // Log what we got back
     if (reservation && reservation.RoomReservations && reservation.RoomReservations[0]) {
       const room = reservation.RoomReservations[0].Room;
       const theme = room?.RoomTheme;
-      console.log('[DEBUG] Theme images:', theme?.images);
       if (!theme?.images) {
-        console.warn('[DEBUG] No images found in theme! Fetching manually...');
         // If images aren't included, fetch them separately
         if (theme) {
           const RoomImage = (await import("../entities/RoomImage.js")).default;
           const images = await RoomImage.findAll({ where: { RoomThemeId: theme.RoomThemeId } });
           theme.images = images;
-          console.log('[DEBUG] Manually fetched images:', images.length);
         }
       }
     }
     
     if (!reservation) {
-      console.warn(`[RESERVATION] Rezervare ${req.params.id} nu a fost găsită!`);
+      console.warn(`[RESERVATION] Rezervare ${req.params.id} nu a fost gÄƒsitÄƒ!`);
       return res.status(404).json({ message: "not found" });
     }
     
-    console.log(`[RESERVATION] Found reservation:`, reservation.ReservationId);
-    console.log(`[RESERVATION] Has RoomReservations:`, reservation.RoomReservations?.length || 0);
-    console.log(`[RESERVATION] Has Invoice:`, !!reservation.Invoice);
-    console.log(`[RESERVATION] Invoice Payments:`, reservation.Invoice?.payments?.length || 0);
     
     await syncReservationStatus(reservation);
 
-    // Log suplimentar pentru debugging
-    console.log(`[RESERVATION] Returning reservation with data`);
     res.status(200).json(reservation);
   } catch (err) {
     console.error(`[RESERVATION] Eroare la GET /api/reservations/:id`, err);

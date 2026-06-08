@@ -94,8 +94,6 @@ bookingRouter.get("/admin/bookings", async (req, res) => {
       order: [['ReservationId', 'DESC']]
     });
 
-    console.log("[ADMIN BOOKINGS] Total reservations found:", reservations.length);
-    
     // Map all bookings except ghost (for total)
     const reservationIds = reservations.map((reservation) => reservation.ReservationId);
     const reservationServices = reservationIds.length
@@ -290,7 +288,6 @@ bookingRouter.get("/admin/bookings", async (req, res) => {
       return sum + paid;
     }, 0);
 
-    console.log("[ADMIN BOOKINGS] Returning allBookings:", allBookings.length, "activeBookings:", activeBookings.length, "projectedRevenue:", projectedRevenue, "totalCashReceived:", totalCashReceived);
     res.json({
       allBookings: JSON.parse(JSON.stringify(allBookings)),
       activeBookings: JSON.parse(JSON.stringify(activeBookings)),
@@ -389,8 +386,6 @@ bookingRouter.post("/complete", async (req, res) => {
     }
 
     // ===== STEP 1: VALIDATE PAYMENT FIRST (Mock validation) =====
-    console.log("[BOOKING] Processing payment for amount:", paymentAmount);
-    
     // Mock card validation
     if (!cardNumber || !cardExpiry || !cardCVC) {
       return res.status(400).json({ message: "Card details are required" });
@@ -408,8 +403,6 @@ bookingRouter.post("/complete", async (req, res) => {
       return res.status(400).json({ message: "Invalid CVC format" });
     }
 
-    console.log("[BOOKING] Card validation passed");
-    
     // ===== STEP 2: IF PAYMENT VALID - CREATE RESERVATION =====
     
     // VALIDARE: Minim 20% deposit OBLIGATORIU
@@ -489,8 +482,6 @@ bookingRouter.post("/complete", async (req, res) => {
     // Actualizează statusul rezervării după payment
     const newStatus = paymentAmount >= totalAmount ? "paid" : "partial";
     await reservation.update({ status: newStatus });
-
-    console.log("[BOOKING] Payment processed + Reservation #" + reservation.ReservationId + " created");
 
     let emailResult = { success: false, error: "Email was not attempted." };
     try {

@@ -1,4 +1,3 @@
-// rewardService.js - API pentru puncte
 import { API_BASE_URL } from "../config/runtimeUrls";
 
 const API = `${API_BASE_URL}/api`;
@@ -76,7 +75,6 @@ export async function createReward({ title, desc, points, image, category, rewar
 
 export async function updateReward(id, { title, desc, points, image, category, rewardType, active }) {
   const payload = { title, desc, points: points ? parseInt(points) : undefined, image, category, rewardType, active };
-  console.log('📤 updateReward payload:', payload);
   
   const res = await fetch(`${API}/rewards/${id}`, {
     method: "PUT",
@@ -89,9 +87,7 @@ export async function updateReward(id, { title, desc, points, image, category, r
     throw new Error(error.error || `Server error: ${res.status}`);
   }
 
-  const result = await res.json();
-  console.log('📥 updateReward response:', result);
-  return result;
+  return await res.json();
 }
 
 export async function deleteReward(id) {

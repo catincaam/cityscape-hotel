@@ -46,12 +46,6 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-/** 1) Logging request */
-app.use((req, res, next) => {
-  console.log("REQ", req.method, req.url, "Origin:", req.headers.origin);
-  next();
-});
-
 /** 2) CORS config */
 const allowedOrigins = [
   "http://localhost:3007",
@@ -135,7 +129,7 @@ app.get("/", (req, res) => {
 
 /** 6) Error handling */
 app.use((err, req, res, next) => {
-  console.error("🔥 ERROR:", err);
+  console.error("ERROR:", err);
   res.status(500).json({
     message: "Internal server error",
     detail: err?.message,
