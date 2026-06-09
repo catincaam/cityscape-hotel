@@ -10,7 +10,21 @@ const fallbackAppUrl = (process.env.APP_URL || process.env.FRONTEND_URL || "http
 const formatMoney = (value) => `${Number(value || 0).toFixed(2)} EUR`;
 
 function getGeminiApiKey() {
-  return process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+  return process.env.GEMINI_API_KEY
+    || process.env.GEMINI_KEY
+    || process.env.GOOGLE_GEMINI_API_KEY
+    || process.env.GOOGLE_API_KEY
+    || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+}
+
+function getGeminiApiKeySource() {
+  return [
+    "GEMINI_API_KEY",
+    "GEMINI_KEY",
+    "GOOGLE_GEMINI_API_KEY",
+    "GOOGLE_API_KEY",
+    "GOOGLE_GENERATIVE_AI_API_KEY"
+  ].find((key) => Boolean(process.env[key]));
 }
 
 function getGeminiModels() {
@@ -76,9 +90,31 @@ function detectIntent(message = "") {
   return "general";
 }
 
+function getRequestedCity(message = "") {
+  const text = normalizeMessage(message);
+  const cityMatchers = [
+    ["Tokyo", /\btok+\w*o\b|\btok\b|\btokyo\b|\btokkyo\b/i],
+    ["Seoul", /\bseou?l\b/i],
+    ["Shanghai", /\bshang?hai\b/i],
+    ["Lisbon", /\blisbon\b|\blisabona\b/i],
+    ["Prague", /\bprague\b|\bpraga\b/i],
+    ["Cancun", /\bcancun\b/i],
+    ["Kyoto", /\bkyoto\b/i],
+    ["Rome", /\brome\b|\broma\b/i]
+  ];
+  return cityMatchers.find(([, matcher]) => matcher.test(text))?.[0] || null;
+}
+
 function pickRooms(rooms, message) {
   const text = normalizeMessage(message);
   const normalizedRooms = rooms.map(normalizeRoom);
+  const requestedCity = getRequestedCity(message);
+
+  if (requestedCity) {
+    const byCity = normalizedRooms.filter((room) => normalizeMessage(room.city).includes(normalizeMessage(requestedCity)));
+    if (byCity.length) return byCity.slice(0, 3);
+  }
+
   const matching = normalizedRooms.filter((room) => {
     const haystack = normalizeMessage([room.name, room.city, room.amenities].filter(Boolean).join(" "));
     return haystack && haystack.split(/\s+/).some((word) => word.length > 2 && text.includes(word.slice(0, Math.min(word.length, 5))));
@@ -261,7 +297,7 @@ chatbotRouter.post("/chat", async (req, res) => {
     const services = await getServices();
 
     if (!getGeminiApiKey()) {
-      console.warn("[CHATBOT] Gemini key missing. Using local fallback reply.");
+      console.warn("[CHATBOT] Gemini key missing. Expected one of: GEMINI_API_KEY, GEMINI_KEY, GOOGLE_GEMINI_API_KEY, GOOGLE_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY. Using local fallback reply.");
       return res.json({
         reply: buildFallbackReply(message, rooms, services),
         source: "fallback",
@@ -270,6 +306,7 @@ chatbotRouter.post("/chat", async (req, res) => {
     }
 
     try {
+      console.log(`[CHATBOT] Using Gemini key from ${getGeminiApiKeySource()}.`);
       const aiReply = await generateGeminiReply(message, rooms, services);
 
       return res.json({
