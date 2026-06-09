@@ -3,7 +3,7 @@
   background: #f7f4ef;
   color: #111827;
   font-family: Georgia, "Times New Roman", serif;
-  padding: 42px clamp(18px, 4vw, 72px) 110px;
+  padding: 42px var(--app-page-gutter) 110px;
 }
 
 .presentation-loading,
@@ -19,7 +19,7 @@
   align-items: center;
   justify-content: center;
   min-height: 430px;
-  max-width: 1460px;
+  max-width: none;
   margin: 0 auto 58px;
   overflow: hidden;
   border-radius: 10px;
@@ -130,7 +130,7 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: clamp(30px, 4vw, 52px);
   margin: 0 auto;
-  max-width: 1460px;
+  max-width: none;
   align-items: start;
 }
 

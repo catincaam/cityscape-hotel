@@ -3,7 +3,7 @@
   background: #f7f4ef;
   color: #111827;
   font-family: Georgia, "Times New Roman", serif;
-  padding: 44px 56px 96px;
+  padding: 44px var(--app-page-gutter) 96px;
 }
 
 .rewards-intro {
@@ -36,7 +36,7 @@
 }
 
 .rewards-showcase {
-  max-width: 1180px;
+  max-width: none;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(320px, 460px);
   gap: 56px;
@@ -165,7 +165,7 @@
 }
 
 .rewards-upcoming-strip {
-  max-width: 1180px;
+  max-width: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -197,7 +197,7 @@
 
 .rewards-boutique-selection,
 .rewards-history-section {
-  max-width: 1180px;
+  max-width: none;
   margin: 0 auto;
 }
 

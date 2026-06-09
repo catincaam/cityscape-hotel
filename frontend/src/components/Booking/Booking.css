@@ -4,9 +4,9 @@
 
 .booking-hero-premium {
   position: relative;
-  width: min(1768px, calc(100vw - 32px));
+  width: var(--app-page-wide);
   min-height: 300px;
-  margin: 46px auto 42px;
+  margin: 46px var(--app-page-gutter) 42px;
   background:
     radial-gradient(circle at 55% 25%, rgba(215, 191, 150, 0.15), transparent 30%),
     rgba(255, 255, 255, 0.76);
@@ -74,18 +74,18 @@
 ========================= */
 
 .booking-shell {
-  width: min(1768px, calc(100vw - 32px));
+  width: var(--app-page-wide);
   max-width: none;
-  margin: 0 auto;
+  margin: 0 var(--app-page-gutter);
   padding: 0 0 140px;
   background: #f7f4ef;
 }
 
 @media (max-width: 760px) {
   .booking-hero-premium {
-    width: calc(100vw - 28px);
+    width: var(--app-page-wide);
     min-height: 220px;
-    margin: 20px auto 24px;
+    margin: 20px var(--app-page-gutter) 24px;
     border-radius: 24px;
   }
 
@@ -104,7 +104,7 @@
   }
 
   .booking-shell {
-    width: calc(100vw - 28px);
+    width: var(--app-page-wide);
     padding-bottom: 90px;
   }
 

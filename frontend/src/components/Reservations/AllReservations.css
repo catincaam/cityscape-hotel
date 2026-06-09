@@ -1,6 +1,6 @@
 .all-reservations-page {
   min-height: 100vh;
-  padding: 72px 24px 80px;
+  padding: 72px var(--app-page-gutter) 80px;
   background: #f7f5f1;
   color: #17130f;
 }
@@ -8,7 +8,7 @@
 .reservations-header,
 .reservations-controls,
 .reservations-grid-section {
-  width: min(100%, 1560px);
+  width: 100%;
   margin-left: auto;
   margin-right: auto;
 }

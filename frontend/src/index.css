@@ -1,6 +1,11 @@
 /* Georgia serif font - premium hotel aesthetic */
 
 /* RESET + GLOBAL */
+:root {
+  --app-page-gutter: 48px;
+  --app-page-wide: calc(100vw - 96px);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -34,7 +39,19 @@ textarea {
   font: inherit;
 }
 
+@media (max-width: 980px) {
+  :root {
+    --app-page-gutter: 28px;
+    --app-page-wide: calc(100vw - 56px);
+  }
+}
+
 @media (max-width: 640px) {
+  :root {
+    --app-page-gutter: 14px;
+    --app-page-wide: calc(100vw - 28px);
+  }
+
   body {
     background: #f8f4ee;
   }
