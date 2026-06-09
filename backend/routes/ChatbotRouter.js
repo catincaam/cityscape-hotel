@@ -5,10 +5,23 @@ import { getServices } from "../dataAccess/ServiceDA.js";
 
 const chatbotRouter = express.Router();
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const fallbackAppUrl = (process.env.APP_URL || process.env.FRONTEND_URL || "http://localhost:3000").replace(/\/$/, "");
 
 const formatMoney = (value) => `${Number(value || 0).toFixed(2)} EUR`;
+
+function getGeminiApiKey() {
+  return process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+}
+
+function getGeminiModels() {
+  const configuredModel = process.env.GEMINI_MODEL;
+  return [
+    configuredModel,
+    "gemini-2.5-flash",
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-8b"
+  ].filter((model, index, list) => model && list.indexOf(model) === index);
+}
 
 function normalizeRoom(room) {
   const theme = room.RoomTheme || {};
@@ -176,6 +189,43 @@ Your job:
 5. Always respond in the same language the guest used.`;
 }
 
+async function generateGeminiReply(message, rooms, services) {
+  const apiKey = getGeminiApiKey();
+
+  if (!apiKey) {
+    throw new Error("Missing GEMINI_API_KEY");
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const systemInstruction = buildSystemPrompt(message, rooms, services);
+  let lastError = null;
+
+  for (const modelName of getGeminiModels()) {
+    try {
+      const model = genAI.getGenerativeModel({
+        model: modelName,
+        systemInstruction
+      });
+      const result = await model.generateContent(message);
+      const reply = result.response.text();
+
+      if (reply?.trim()) {
+        return {
+          reply: reply.trim(),
+          model: modelName
+        };
+      }
+
+      lastError = new Error(`${modelName} returned an empty reply`);
+    } catch (error) {
+      lastError = error;
+      console.warn(`[CHATBOT] Gemini model ${modelName} failed:`, error.message);
+    }
+  }
+
+  throw lastError || new Error("Gemini did not return a reply");
+}
+
 chatbotRouter.post("/chat", async (req, res) => {
   try {
     const { message } = req.body;
@@ -187,33 +237,30 @@ chatbotRouter.post("/chat", async (req, res) => {
     const rooms = await getRooms();
     const services = await getServices();
 
-    if (!process.env.GEMINI_API_KEY) {
+    if (!getGeminiApiKey()) {
+      console.warn("[CHATBOT] Gemini key missing. Using local fallback reply.");
       return res.json({
         reply: buildFallbackReply(message, rooms, services),
+        source: "fallback",
         timestamp: new Date()
       });
     }
 
     try {
-      const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-2.5-flash" });
-      const result = await model.generateContent({
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: message }]
-          }
-        ],
-        systemInstruction: buildSystemPrompt(message, rooms, services)
-      });
+      const aiReply = await generateGeminiReply(message, rooms, services);
 
       return res.json({
-        reply: result.response.text(),
+        reply: aiReply.reply,
+        source: "gemini",
+        model: aiReply.model,
         timestamp: new Date()
       });
     } catch (aiError) {
-      console.error("Chatbot AI fallback:", aiError.message);
+      console.error("[CHATBOT] Gemini unavailable. Using fallback reply:", aiError.message);
       return res.json({
         reply: buildFallbackReply(message, rooms, services),
+        source: "fallback",
+        error: process.env.NODE_ENV === "production" ? undefined : aiError.message,
         timestamp: new Date()
       });
     }
