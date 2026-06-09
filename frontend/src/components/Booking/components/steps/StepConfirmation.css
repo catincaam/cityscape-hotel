@@ -847,3 +847,235 @@
     width: min(780px, calc(100vw - 36px));
   }
 }
+
+/* ==================== BOOKING SUMMARY REFINEMENT ==================== */
+.booking-summary-card .sidebar-body {
+  gap: 0;
+  padding: 0;
+}
+
+.booking-summary-card .booking-info,
+.booking-summary-card .guest-summary,
+.booking-summary-card .cost-breakdown,
+.booking-summary-card .amount-to-pay {
+  margin: 0 22px;
+}
+
+.booking-summary-card .booking-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 24px;
+  order: 1;
+  padding: 20px 0 8px;
+}
+
+.booking-summary-card .booking-info .info-row {
+  align-items: flex-start;
+  border-bottom: 1px solid #f0e6d8;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-height: 52px;
+  padding: 0 0 12px;
+}
+
+.booking-summary-card .booking-info .info-row:nth-child(3) {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.booking-summary-card .info-label,
+.booking-summary-card .pay-label {
+  color: #7a8494;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.booking-summary-card .info-value {
+  color: #111827;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.booking-summary-card .guest-summary {
+  border-bottom: 1px solid #f0e6d8;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  order: 2;
+  padding: 12px 0;
+  text-align: left;
+}
+
+.booking-summary-card .guest-count {
+  color: #7a8494;
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.booking-summary-card .guest-breakdown {
+  color: #111827;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.booking-summary-card .divider {
+  display: none;
+}
+
+.booking-summary-card .cost-breakdown {
+  order: 3;
+  padding: 22px 0 0;
+}
+
+.booking-summary-card .breakdown-row {
+  align-items: flex-end;
+  border-bottom: 1px solid #f0e6d8;
+  color: #111827;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  padding: 0 0 14px;
+}
+
+.booking-summary-card .breakdown-row span:first-child {
+  font-family: Georgia, serif;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.booking-summary-card .breakdown-row span:last-child {
+  color: #111827;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.booking-summary-card .breakdown-row:first-child::before {
+  color: #7a8494;
+  content: "Room";
+  display: block;
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  grid-column: 1 / -1;
+  letter-spacing: 0.14em;
+  margin-bottom: -8px;
+  text-transform: uppercase;
+}
+
+.booking-summary-card .breakdown-row span:first-child small {
+  color: #526070;
+  display: block;
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  margin-top: 7px;
+}
+
+.booking-summary-card .breakdown-row:nth-child(2)::before {
+  color: #7a8494;
+  content: "Selected services";
+  display: block;
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  grid-column: 1 / -1;
+  letter-spacing: 0.14em;
+  margin-bottom: -8px;
+  text-transform: uppercase;
+}
+
+.booking-summary-card .breakdown-total {
+  display: none;
+}
+
+.booking-summary-card .amount-to-pay {
+  align-items: baseline;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  display: flex;
+  justify-content: space-between;
+  order: 4;
+  padding: 42px 0 18px;
+  text-align: left;
+}
+
+.booking-summary-card .amount-to-pay .pay-label {
+  margin: 0;
+}
+
+.booking-summary-card .total-amount {
+  color: #c9a86a;
+  font-family: Georgia, serif;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.booking-summary-card .total-amount::after {
+  content: " EUR";
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+}
+
+.booking-summary-card .policy-box {
+  display: none;
+}
+
+.checkout-summary-actions {
+  background: #fffaf3;
+  border-top: 1px solid #eadfce;
+  display: flex;
+  gap: 10px;
+  order: 5;
+  padding: 14px 18px;
+}
+
+.checkout-back-btn,
+.booking-summary-card .btn-pay-sidebar {
+  border-radius: 999px;
+  cursor: pointer;
+  flex: 1;
+  font-family: Arial, sans-serif;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  min-height: 34px;
+  padding: 8px 10px;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+}
+
+.checkout-back-btn {
+  background: white;
+  border: 1px solid #d9c5aa;
+  color: #7a5d37;
+}
+
+.checkout-back-btn:hover {
+  background: #fbf4ea;
+  border-color: #c9a86a;
+}
+
+.booking-summary-card .btn-pay-sidebar {
+  background: #111827;
+  border: 1px solid #111827;
+  box-shadow: none;
+  color: white;
+}
+
+.booking-summary-card .btn-pay-sidebar:hover:not(:disabled) {
+  background: #0f1419;
+  border-color: #0f1419;
+  box-shadow: 0 10px 22px rgba(15, 20, 25, 0.18);
+  transform: translateY(-1px);
+}

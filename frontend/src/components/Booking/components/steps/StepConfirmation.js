@@ -169,6 +169,8 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
 
   const partialAmount = (totalAmount * 0.2).toFixed(2);
   const amountToPay = paymentType === "partial" ? partialAmount : totalAmount.toFixed(2);
+  const guestCount = (bookingData.adults || 0) + (bookingData.children || 0);
+  const roomNightlyRate = Number(bookingData.room?.basePrice || 0);
 
   // Disable partial payment if check-in is today or tomorrow
   let partialDisabled = false;
@@ -405,11 +407,11 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
         </div>
 
         {/* RIGHT SIDEBAR */}
-        <aside className="sidebar">
+        <aside className="sidebar booking-summary-card">
           <div className="sidebar-header">Booking Summary</div>
           <div className="sidebar-body">
             <div className="guest-summary">
-              <div className="guest-count">{bookingData.adults + bookingData.children} {bookingData.adults + bookingData.children === 1 ? 'Guest' : 'Guests'}</div>
+              <div className="guest-count">{guestCount} {guestCount === 1 ? 'Guest' : 'Guests'}</div>
               <div className="guest-breakdown">{bookingData.adults} Adult{bookingData.adults !== 1 ? 's' : ''}{bookingData.children > 0 && `, ${bookingData.children} Child${bookingData.children !== 1 ? 'ren' : ''}`}</div>
             </div>
 
@@ -434,15 +436,21 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
 
             <div className="cost-breakdown">
               <div className="breakdown-row">
-                <span>{bookingData.room?.name || 'Room'}</span>
-                <span>€{roomTotal.toFixed(2)}</span>
+                <span>
+                  {bookingData.room?.name || 'Room'}
+                  <small>{roomNightlyRate.toFixed(2)} x {nights} {nights === 1 ? "night" : "nights"}</small>
+                </span>
+                <span>€{roomTotal.toFixed(2)} EUR</span>
               </div>
-              {servicesTotal > 0 && (
-                <div className="breakdown-row">
-                  <span>Services due at hotel</span>
-                  <span>€{servicesTotal.toFixed(2)}</span>
+              {selectedServiceDetails.map((service) => (
+                <div className="breakdown-row" key={service.ServiceId}>
+                  <span>
+                    {service.name}
+                    <small>{service.quantity} {service.quantity === 1 ? "item" : "items"}</small>
+                  </span>
+                  <span>€{service.total.toFixed(2)} EUR</span>
                 </div>
-              )}
+              ))}
               <div className="divider"></div>
               <div className="breakdown-total">
                 <span>TOTAL DUE NOW</span>
@@ -451,13 +459,18 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
             </div>
 
             <div className="amount-to-pay">
-              <p className="pay-label">Amount to Pay Now</p>
+              <p className="pay-label">Due now</p>
               <div className="total-amount">€{amountToPay}</div>
             </div>
 
-            <button onClick={handleSubmit} disabled={isProcessing} className="btn-pay-sidebar">
-              PAY NOW
-            </button>
+            <div className="checkout-summary-actions">
+              <button type="button" className="checkout-back-btn" onClick={onBack}>
+                Back
+              </button>
+              <button type="button" onClick={handleSubmit} disabled={isProcessing} className="btn-pay-sidebar">
+                {isProcessing ? "Processing" : "Continue"}
+              </button>
+            </div>
 
             <div className="policy-box">
               <div>
