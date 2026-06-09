@@ -43,32 +43,45 @@ function normalizeService(service) {
   };
 }
 
+function normalizeMessage(message = "") {
+  return String(message || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\w\s-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function detectLanguage(message = "") {
-  return /\b(buna|salut|camera|camere|rezervare|serviciu|servicii|pret|vreau|putea|poti|anulare|anulez|cont|parola|multumesc)\b/i.test(message)
+  const text = normalizeMessage(message);
+  return /\b(buna|bn|bnaa|salut|dc|de ce|cn|camera|camere|rezervare|serviciu|servicii|pret|vreau|putea|poti|anulare|anulez|cont|parola|multumesc|mersi|zilele|iulie)\b/i.test(text)
     ? "ro"
     : "en";
 }
 
 function detectIntent(message = "") {
-  const text = String(message || "").toLowerCase();
+  const text = normalizeMessage(message);
+  const mentionsRoomOrCity = /room|rooms|camera|camere|suite|tok+y?o|tok|seoul|shanghai|lisbon|lisabona|prague|praga|cancun|kyoto|rome|roma/i.test(text);
 
-  if (/\b(hi|hello|hey|buna|salut|hei)\b/i.test(text)) return "greeting";
+  if (/\b(hi|hello|hey|buna|bn|bnaa|salut|hei)\b/i.test(text)) return "greeting";
   if (/\b(thanks|thank you|multumesc|mersi)\b/i.test(text)) return "thanks";
   if (/cancel|cancell?ation|anul|renunt/i.test(text)) return "cancel";
   if (/service|servici|spa|cooking|yoga|tour|tur|masaj|massage|restaurant|dining|mic dejun|breakfast/i.test(text)) return "services";
+  if ((/nu apare|not show|not available|available|disponibil|liber|free|zile|date|iulie|july/i.test(text) && mentionsRoomOrCity)) return "availability";
   if (/book|booking|reserve|reservation|rezerv|plata|payment|pay|check-?in|check-?out/i.test(text)) return "booking";
-  if (/room|rooms|camera|camere|suite|tokyo|seoul|shanghai|lisbon|lisabona|prague|praga|cancun|kyoto|rome|roma|price|pret|cost|capacity|capacitate|guest|oaspet/i.test(text)) return "rooms";
+  if (mentionsRoomOrCity || /price|pret|cost|capacity|capacitate|guest|oaspet/i.test(text)) return "rooms";
   if (/login|sign ?in|sign ?up|register|account|cont|parola|password|email/i.test(text)) return "account";
 
   return "general";
 }
 
 function pickRooms(rooms, message) {
-  const text = String(message || "").toLowerCase();
+  const text = normalizeMessage(message);
   const normalizedRooms = rooms.map(normalizeRoom);
   const matching = normalizedRooms.filter((room) => {
-    const haystack = [room.name, room.city, room.amenities].filter(Boolean).join(" ").toLowerCase();
-    return haystack && haystack.split(/\s+/).some((word) => word.length > 3 && text.includes(word));
+    const haystack = normalizeMessage([room.name, room.city, room.amenities].filter(Boolean).join(" "));
+    return haystack && haystack.split(/\s+/).some((word) => word.length > 2 && text.includes(word.slice(0, Math.min(word.length, 5))));
   });
 
   return (matching.length ? matching : normalizedRooms).slice(0, 3);
@@ -91,6 +104,11 @@ function buildFallbackReply(message, rooms, services) {
 
     if (intent === "cancel") {
       return "Pentru anulare, deschide detaliile rezervarii si apasa Cancel Reservation, daca sejurul este viitor. Aplicatia iti cere confirmarea inainte sa schimbe statusul in cancelled.";
+    }
+
+    if (intent === "availability") {
+      const roomName = roomSummaries[0]?.city || roomSummaries[0]?.name || "camera aleasa";
+      return `Daca ${roomName} nu apare pentru zilele selectate, cel mai probabil nu exista camere libere in acea perioada sau filtrul de pret/numar de persoane o ascunde. Incearca alte date, apasa Reset la filtre sau verifica o perioada cu o noapte in plus.`;
     }
 
     if (intent === "booking") {
@@ -126,6 +144,11 @@ function buildFallbackReply(message, rooms, services) {
 
   if (intent === "cancel") {
     return "To cancel, open the reservation details and choose Cancel Reservation if the stay is still upcoming. The app asks for confirmation before changing the status to cancelled.";
+  }
+
+  if (intent === "availability") {
+    const roomName = roomSummaries[0]?.city || roomSummaries[0]?.name || "that room";
+    return `If ${roomName} does not appear for the selected dates, it is probably unavailable for that period or hidden by the price/guest filters. Try different dates, reset filters, or search with one extra night.`;
   }
 
   if (intent === "booking") {
