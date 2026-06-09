@@ -189,6 +189,7 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack, onNext })
 
   const nights = calculateNights();
   const totalPrice = bookingData.room ? (bookingData.room.basePrice * nights).toFixed(2) : 0;
+  const getThemeLabel = (room) => room.city ? `Theme: ${room.city}` : room.theme || "Signature room";
 
   return (
     <div className="booking-page">
@@ -309,11 +310,9 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack, onNext })
                 <div className="room-header">
                   <div>
                     <h3 className="room-title">{room.name}</h3>
-                    <div className="room-badges">
-                      <span className="available-badge">
-                        {room.availableCount} available
-                      </span>
-                    </div>
+                    <span className="available-note">
+                      {room.availableCount} {room.availableCount === 1 ? "room" : "rooms"} available
+                    </span>
                   </div>
                   <div className="room-price">
                     <span className="price-amount">€{room.basePrice}</span>
@@ -322,14 +321,13 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack, onNext })
                 </div>
 
                 <div className="room-meta">
-                  <span className="room-theme">{room.theme}</span>
-                  <span className="room-city">{room.city}</span>
+                  <span>{getThemeLabel(room)}</span>
                 </div>
 
                 <p className="room-description">{room.description}</p>
 
                 <div className="room-amenities">
-                  {room.amenities.slice(0, 6).map((a) => (
+                  {room.amenities.slice(0, 3).map((a) => (
                     <span key={a} className="amenity-tag">
                       {a}
                     </span>
