@@ -55,7 +55,7 @@ function normalizeMessage(message = "") {
 
 function detectLanguage(message = "") {
   const text = normalizeMessage(message);
-  return /\b(buna|bn|bnaa|salut|dc|de ce|cn|camera|camere|rezervare|serviciu|servicii|pret|vreau|putea|poti|anulare|anulez|cont|parola|multumesc|mersi|zilele|iulie)\b/i.test(text)
+  return /\b(bu+n+a+|bn|salut|dc|de ce|cn|camera|camere|rezervare|serviciu|servicii|pret|vreau|putea|poti|anulare|anulez|cont|parola|multumesc|mersi|zilele|iulie)\b/i.test(text)
     ? "ro"
     : "en";
 }
@@ -64,7 +64,7 @@ function detectIntent(message = "") {
   const text = normalizeMessage(message);
   const mentionsRoomOrCity = /room|rooms|camera|camere|suite|tok+y?o|tok|seoul|shanghai|lisbon|lisabona|prague|praga|cancun|kyoto|rome|roma/i.test(text);
 
-  if (/\b(hi|hello|hey|buna|bn|bnaa|salut|hei)\b/i.test(text)) return "greeting";
+  if (/\b(hi|hello|hey|bu+n+a+|bn|salut|hei)\b/i.test(text)) return "greeting";
   if (/\b(thanks|thank you|multumesc|mersi)\b/i.test(text)) return "thanks";
   if (/cancel|cancell?ation|anul|renunt/i.test(text)) return "cancel";
   if (/service|servici|spa|cooking|yoga|tour|tur|masaj|massage|restaurant|dining|mic dejun|breakfast/i.test(text)) return "services";
