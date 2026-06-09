@@ -746,6 +746,10 @@
   box-shadow: 0 10px 22px rgba(15, 20, 25, 0.18);
 }
 
+.rooms-mobile-actions {
+  display: none;
+}
+
 /* =========================
    RESPONSIVE
 ========================= */
@@ -758,6 +762,21 @@
 
   .rooms-summary {
     display: none;
+  }
+
+  .rooms-mobile-actions.visible {
+    position: sticky;
+    bottom: 0;
+    z-index: 30;
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 12px;
+    padding: 14px clamp(16px, 3vw, 28px);
+    margin: 0 -8px;
+    background: rgba(255, 250, 243, 0.96);
+    border-top: 1px solid #eadfce;
+    box-shadow: 0 -12px 30px rgba(17, 24, 39, 0.1);
+    backdrop-filter: blur(12px);
   }
 
   .filters-card {

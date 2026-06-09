@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../../../../config/runtimeUrls";
+import tokyoImage from "../../../../assets/cities/tokyo.jpg";
+import shanghaiImage from "../../../../assets/cities/shanghai.jpg";
+import marrakechImage from "../../../../assets/cities/marrakech.jpg";
+import kyotoImage from "../../../../assets/cities/kyoto.jpg";
+import seoulImage from "../../../../assets/cities/seoul.jpg";
+import romeImage from "../../../../assets/cities/rome.jpg";
 import "./StepRooms.css";
 
 function cleanDisplayText(value) {
@@ -14,10 +21,38 @@ function cleanDisplayText(value) {
     .replace(/Äƒ/g, "a");
 }
 
+const cityFallbackImages = {
+  kyoto: kyotoImage,
+  marrakech: marrakechImage,
+  rome: romeImage,
+  seoul: seoulImage,
+  shanghai: shanghaiImage,
+  tokyo: tokyoImage
+};
+
+function resolveAssetUrl(value) {
+  if (!value) return "";
+  if (/^(https?:)?\/\//i.test(value) || value.startsWith("data:")) return value;
+  if (value.startsWith("/static") || value.startsWith("/assets")) return value;
+  return `${API_BASE_URL}${value.startsWith("/") ? "" : "/"}${value}`;
+}
+
+function getRoomImage(roomTheme) {
+  const images = Array.isArray(roomTheme?.images) ? roomTheme.images : [];
+  const primaryImage = images.find((img) => img?.isPrimary) || images[0];
+  const imageUrl = roomTheme?.showcaseImage || roomTheme?.image || primaryImage?.imageUrl;
+  return resolveAssetUrl(imageUrl) || getCityFallbackImage(roomTheme?.city);
+}
+
+function getCityFallbackImage(city) {
+  return cityFallbackImages[String(city || "").trim().toLowerCase()] || "https://via.placeholder.com/520x320?text=No+Image";
+}
+
 export default function StepRooms({ bookingData, onSelectRoom, onBack, onNext }) {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedRoomId, setSelectedRoomId] = useState(bookingData.room?.id || null);
+  const [priceBounds, setPriceBounds] = useState({ min: 50, max: 300 });
   const navigate = useNavigate();
 
   const [filters, setFilters] = useState({
@@ -46,17 +81,13 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack, onNext })
         const data = await res.json();
 
         const mapped = data.map((r) => {
-          const primaryImage = r.RoomTheme?.images?.find((img) => img.isPrimary) || r.RoomTheme?.images?.[0];
-          const imageUrl = r.RoomTheme?.showcaseImage || r.RoomTheme?.image || primaryImage?.imageUrl;
-
           return {
             id: r.RoomTheme?.RoomThemeId || r.RoomThemeId,
             roomId: r.RoomId,
             name: cleanDisplayText(r.RoomTheme?.name || 'Unknown Room'),
             description: cleanDisplayText(r.RoomTheme?.description || ''),
-            image: imageUrl 
-              ? `http://localhost:9001${imageUrl}` 
-              : 'https://via.placeholder.com/220?text=No+Image',
+            image: getRoomImage(r.RoomTheme),
+            imageFallback: getCityFallbackImage(r.RoomTheme?.city),
             amenities: r.RoomTheme?.amenities ? (Array.isArray(r.RoomTheme.amenities) ? r.RoomTheme.amenities : JSON.parse(r.RoomTheme.amenities)) : [],
             basePrice: r.RoomTheme?.basePrice || 0,
             city: cleanDisplayText(r.RoomTheme?.city || ''),
@@ -68,6 +99,18 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack, onNext })
         });
 
         setRooms(mapped);
+
+        if (mapped.length) {
+          const prices = mapped.map((room) => Number(room.basePrice || 0)).filter((price) => Number.isFinite(price));
+          const min = Math.max(0, Math.floor(Math.min(...prices) / 10) * 10);
+          const max = Math.max(300, Math.ceil(Math.max(...prices) / 10) * 10);
+          setPriceBounds({ min, max });
+          setFilters((current) => ({
+            ...current,
+            minPrice: Math.min(current.minPrice, min),
+            maxPrice: Math.max(current.maxPrice, max)
+          }));
+        }
 
         // Extract unique amenities from all rooms
         const allAmenities = new Set();
@@ -155,7 +198,7 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack, onNext })
         <div className="filters-card">
           <div className="filters-header">
             <h3 className="filters-title">Refine your stay</h3>
-            <button className="reset-btn" onClick={() => setFilters({ amenities: [], theme: "All", minPrice: 50, maxPrice: 300 })}>
+            <button className="reset-btn" onClick={() => setFilters({ amenities: [], theme: "All", minPrice: priceBounds.min, maxPrice: priceBounds.max })}>
               Reset
             </button>
           </div>
@@ -169,16 +212,16 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack, onNext })
             <div className="slider-container">
               <input
                 type="range"
-                min="50"
-                max="300"
+                min={priceBounds.min}
+                max={priceBounds.max}
                 value={filters.minPrice}
                 onChange={(e) => setFilters({ ...filters, minPrice: Math.min(+e.target.value, filters.maxPrice) })}
                 className="slider slider-min"
               />
               <input
                 type="range"
-                min="50"
-                max="300"
+                min={priceBounds.min}
+                max={priceBounds.max}
                 value={filters.maxPrice}
                 onChange={(e) => setFilters({ ...filters, maxPrice: Math.max(+e.target.value, filters.minPrice) })}
                 className="slider slider-max"
@@ -250,7 +293,16 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack, onNext })
               )}
               
               <div className="room-image">
-                <img src={room.image} alt={room.name} />
+                <img
+                  src={room.image}
+                  alt={room.name}
+                  onError={(event) => {
+                    if (!event.currentTarget.dataset.fallbackApplied) {
+                      event.currentTarget.dataset.fallbackApplied = "true";
+                      event.currentTarget.src = room.imageFallback;
+                    }
+                  }}
+                />
               </div>
 
               <div className="room-card-details">
@@ -364,6 +416,11 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack, onNext })
           </div>
         )}
       </aside>
+
+      <div className={`rooms-mobile-actions ${bookingData.room ? "visible" : ""}`}>
+        <button className="summary-btn summary-back" onClick={onBack}>Back</button>
+        <button className="summary-btn summary-continue" onClick={onNext}>Continue</button>
+      </div>
       </div>
     </div>
   );
