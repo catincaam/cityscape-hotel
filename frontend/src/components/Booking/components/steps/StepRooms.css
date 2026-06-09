@@ -747,14 +747,15 @@
   }
 
   .rooms-mobile-actions.visible {
-    position: sticky;
+    position: fixed;
     bottom: 0;
+    left: 0;
+    right: 0;
     z-index: 30;
-    grid-column: 1 / -1;
     display: flex;
     gap: 12px;
     padding: 14px clamp(16px, 3vw, 28px);
-    margin: 0 -8px;
+    margin: 0;
     background: rgba(255, 250, 243, 0.96);
     border-top: 1px solid #eadfce;
     box-shadow: 0 -12px 30px rgba(17, 24, 39, 0.1);

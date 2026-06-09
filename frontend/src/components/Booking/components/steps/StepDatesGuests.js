@@ -5,6 +5,12 @@ export default function StepDatesGuests({ data, setData, onContinue, error }) {
     setData({ ...data, [field]: value });
   };
 
+  const nights = calculateNights(data.checkIn, data.checkOut);
+  const guestLabel = [
+    `${data.adults} ${data.adults === 1 ? "Adult" : "Adults"}`,
+    data.children > 0 ? `${data.children} ${data.children === 1 ? "Child" : "Children"}` : null
+  ].filter(Boolean).join(", ");
+
   return (
     <div className="step-wrapper">
       {/* HEADER */}
@@ -83,17 +89,21 @@ export default function StepDatesGuests({ data, setData, onContinue, error }) {
           <div className="summary-body">
             <Row label="Check-in" value={data.checkIn || "—"} />
             <Row label="Check-out" value={data.checkOut || "—"} />
-
-            <div className="summary-guest">
-              {data.adults} {data.adults === 1 ? 'Adult' : 'Adults'}
-            </div>
-
-            <div className="summary-divider" />
+            <Row label="Guests" value={guestLabel || "—"} />
+            <Row label="Nights" value={nights ? `${nights} ${nights === 1 ? "night" : "nights"}` : "—"} />
+            <Row label="Selected room" value="—" />
+            <Row label="Price/night" value="—" />
 
             <div className="summary-total">
               <span>Estimated total</span>
               <strong>– €</strong>
             </div>
+          </div>
+
+          <div className="summary-actions">
+            <button className="summary-btn summary-continue" onClick={onContinue}>
+              Continue
+            </button>
           </div>
         </aside>
       </div>
@@ -102,6 +112,16 @@ export default function StepDatesGuests({ data, setData, onContinue, error }) {
 }
 
 /* SUBCOMPONENTE */
+
+function calculateNights(checkIn, checkOut) {
+  if (!checkIn || !checkOut) return 0;
+  const start = new Date(checkIn);
+  const end = new Date(checkOut);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start >= end) {
+    return 0;
+  }
+  return Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+}
 
 function DateField({ label, value, onChange, min }) {
   return (

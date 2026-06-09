@@ -277,7 +277,8 @@
 }
 
 .summary-body {
-  padding: 22px;
+  padding: 22px 22px 24px;
+  color: #1f2937;
 }
 
 .summary-row {
@@ -300,15 +301,6 @@
   text-align: right;
 }
 
-.summary-guest {
-  display: inline-block;
-  margin: 16px 0;
-  padding: 6px 12px;
-  border-radius: 8px;
-  background: #f1f5f9;
-  font-weight: 600;
-}
-
 .summary-divider {
   height: 1px;
   background: transparent;
@@ -318,10 +310,10 @@
 .summary-total {
   display: flex;
   justify-content: space-between;
-  padding-top: 14px;
+  padding-top: 48px;
   color: #1f2937;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -332,6 +324,40 @@
   letter-spacing: 0;
   text-transform: none;
   font-family: Georgia, serif;
+}
+
+.summary-actions {
+  padding: 14px 18px;
+  border-top: 1px solid #eadfce;
+  display: flex;
+  gap: 10px;
+  background: #fffaf3;
+}
+
+.summary-actions .summary-btn {
+  flex: 1;
+  min-height: 34px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.summary-actions .summary-continue {
+  background: #111827;
+  color: white;
+  border: 1px solid #111827;
+}
+
+.summary-actions .summary-continue:hover {
+  background: #0f1419;
+  border-color: #0f1419;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(15, 20, 25, 0.18);
 }
 
 .booking-step-error {
