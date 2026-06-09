@@ -1,5 +1,13 @@
 import axios from "axios";
-const API = "http://localhost:9001/api/room-themes";
+import { API_BASE_URL } from "../config/runtimeUrls";
+
+const API = `${API_BASE_URL}/api/room-themes`;
+const UPLOAD_API = `${API_BASE_URL}/api/upload`;
+
+function throwApiError(err, fallbackMessage) {
+  const message = err.response?.data?.message || err.message || fallbackMessage;
+  throw new Error(message);
+}
 
 export async function updateRoomTheme(id, themeData) {
   const res = await axios.put(`${API}/${id}`, themeData, { withCredentials: true });
@@ -32,11 +40,15 @@ export async function createRoomTheme(themeData) {
 export async function uploadImage(file) {
   const formData = new FormData();
   formData.append("image", file);
-  const res = await axios.post("http://localhost:9001/api/upload", formData, {
-    withCredentials: true,
-    headers: { "Content-Type": "multipart/form-data" }
-  });
-  return res.data;
+  try {
+    const res = await axios.post(UPLOAD_API, formData, {
+      withCredentials: true,
+      headers: { "Content-Type": "multipart/form-data" }
+    });
+    return res.data;
+  } catch (err) {
+    throwApiError(err, "Image upload failed");
+  }
 }
 
 export async function uploadMultipleImages(files) {
@@ -44,9 +56,13 @@ export async function uploadMultipleImages(files) {
   files.forEach(file => {
     formData.append("images", file);
   });
-  const res = await axios.post("http://localhost:9001/api/upload/multiple", formData, {
-    withCredentials: true,
-    headers: { "Content-Type": "multipart/form-data" }
-  });
-  return res.data;
+  try {
+    const res = await axios.post(`${UPLOAD_API}/multiple`, formData, {
+      withCredentials: true,
+      headers: { "Content-Type": "multipart/form-data" }
+    });
+    return res.data;
+  } catch (err) {
+    throwApiError(err, "Image upload failed");
+  }
 }
