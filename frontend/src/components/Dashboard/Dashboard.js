@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BedDouble, ChevronRight, Sparkles, UtensilsCrossed, Waves } from "lucide-react";
+import { BedDouble, ChevronRight, Sparkles, Waves } from "lucide-react";
 import { getDashboardData } from "../../services/dashboardService";
 import Navbar from "./Navbar";
 import "./Dashboard.css";
@@ -142,12 +142,7 @@ export default function Dashboard() {
               </button>
               <button type="button" onClick={() => navigate("/services")}>
                 <Waves size={18} />
-                <span>Wellness & Spa</span>
-                <ChevronRight size={16} />
-              </button>
-              <button type="button" onClick={() => navigate("/services")}>
-                <UtensilsCrossed size={18} />
-                <span>Private Dining</span>
+                <span>Wellness & Dining</span>
                 <ChevronRight size={16} />
               </button>
             </div>
