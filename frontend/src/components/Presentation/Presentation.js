@@ -23,6 +23,12 @@ function formatPrice(value) {
   });
 }
 
+function resolveAssetUrl(path) {
+  if (!path) return "";
+  if (/^(https?:)?\/\//i.test(path) || path.startsWith("data:")) return path;
+  return `${API_BASE_URL}${path.startsWith("/") ? "" : "/"}${path}`;
+}
+
 export default function Presentation() {
   const navigate = useNavigate();
   const [filter, setFilter] = useState("All");
@@ -40,7 +46,7 @@ export default function Presentation() {
           .map((theme) => ({
             id: theme.RoomThemeId,
             title: formatDisplay(theme.city),
-            img: `${API_BASE_URL}${theme.showcaseImage}`,
+            img: resolveAssetUrl(theme.showcaseImage),
             continent: formatDisplay(theme.continent || "Other"),
             price: theme.basePrice
           }))

@@ -133,9 +133,9 @@ export default function Rewards() {
   useEffect(() => {
     const room = getStayRoom(upcomingStay);
     const theme = getStayTheme(upcomingStay);
-    const firstThemeImage = theme?.images?.[0]?.imageUrl;
+    const firstThemeImage = theme?.images?.[0]?.imageUrl || theme?.images?.[0];
     setUpcomingStayImage(
-      toImageUrl(theme?.showcaseImage || room?.showcaseImage || room?.image || theme?.image || firstThemeImage)
+      toImageUrl(firstThemeImage || room?.image || theme?.image || theme?.showcaseImage || room?.showcaseImage)
     );
   }, [upcomingStay]);
 

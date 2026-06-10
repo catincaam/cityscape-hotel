@@ -40,7 +40,7 @@ function resolveAssetUrl(value) {
 function getRoomImage(roomTheme) {
   const images = Array.isArray(roomTheme?.images) ? roomTheme.images : [];
   const primaryImage = images.find((img) => img?.isPrimary) || images[0];
-  const imageUrl = roomTheme?.showcaseImage || roomTheme?.image || primaryImage?.imageUrl;
+  const imageUrl = primaryImage?.imageUrl || primaryImage || roomTheme?.image || roomTheme?.showcaseImage;
   return resolveAssetUrl(imageUrl) || getCityFallbackImage(roomTheme?.city);
 }
 

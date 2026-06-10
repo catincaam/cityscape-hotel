@@ -18,15 +18,12 @@ const toMoney = (value) => Math.round(Number(value || 0) * 100) / 100;
 const getThemeImage = async (roomTheme) => {
   if (!roomTheme) return null;
 
-  const directImage = roomTheme.showcaseImage || roomTheme.image;
-  if (directImage) return directImage;
-
   const galleryImage = await RoomImage.findOne({
     where: { RoomThemeId: roomTheme.RoomThemeId },
     order: [["isPrimary", "DESC"], ["orderIndex", "ASC"], ["RoomImageId", "ASC"]]
   });
 
-  return galleryImage?.imageUrl || null;
+  return galleryImage?.imageUrl || roomTheme.image || roomTheme.showcaseImage || null;
 };
 
 const getReservationNights = (reservation) => {
@@ -101,7 +98,7 @@ router.get("/dashboard", authClient, async (req, res) => {
     if (nextReservation && nextReservation.RoomReservations && nextReservation.RoomReservations.length > 0) {
       const room = nextReservation.RoomReservations[0]?.Room;
       const roomTheme = room?.RoomTheme;
-      const destinationImage = roomTheme?.showcaseImage || roomTheme?.image || null;
+      const destinationImage = await getThemeImage(roomTheme);
       nextDestination = {
         reservationId: nextReservation.ReservationId,
         city: roomTheme?.city || "City",
@@ -144,7 +141,7 @@ router.get("/dashboard", authClient, async (req, res) => {
           status: bookingStatus,
           totalAmount: getReservationTotal(reservation, roomTheme, invoice),
           pricePerNight: Number(roomTheme?.basePrice || 0),
-          image: publicAssetUrl(roomTheme?.showcaseImage || roomTheme?.image)
+          image: publicAssetUrl(await getThemeImage(roomTheme))
         };
       })
     );
@@ -182,7 +179,7 @@ router.get("/dashboard", authClient, async (req, res) => {
           status: reservation.status || "pending",
           totalAmount: getReservationTotal(reservation, roomTheme, invoice),
           pricePerNight: Number(roomTheme?.basePrice || 0),
-          image: publicAssetUrl(roomTheme?.showcaseImage || roomTheme?.image)
+          image: publicAssetUrl(await getThemeImage(roomTheme))
         };
       })
     );

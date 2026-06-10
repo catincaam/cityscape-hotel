@@ -2,6 +2,7 @@
 // Endpoint pentru admin: toate rezervările cu user, temă, date, preț, status, avatar
 import Client from "../entities/Client.js";
 import RoomTheme from "../entities/RoomTheme.js";
+import RoomImage from "../entities/RoomImage.js";
 import Room from "../entities/Room.js";
 import Reservation from "../entities/Reservation.js";
 import RoomReservation from "../entities/RoomReservation.js";
@@ -71,7 +72,7 @@ bookingRouter.get("/admin/bookings", async (req, res) => {
                 {
                   model: RoomTheme,
                   required: false,
-                  attributes: ["name", "city", "theme", "showcaseImage"]
+                  attributes: ["RoomThemeId", "name", "city", "theme", "showcaseImage"]
                 }
               ]
             }
@@ -130,6 +131,25 @@ bookingRouter.get("/admin/bookings", async (req, res) => {
       ? await Reward.findAll({ where: { title: { [Op.in]: redeemedTitles } } })
       : [];
     const rewardsByTitle = new Map(rewardRows.map((reward) => [reward.title, reward]));
+    const themeIds = [
+      ...new Set(
+        reservations
+          .map((reservation) => reservation.RoomReservations?.[0]?.Room?.RoomTheme?.RoomThemeId)
+          .filter(Boolean)
+      )
+    ];
+    const roomImages = themeIds.length
+      ? await RoomImage.findAll({
+          where: { RoomThemeId: { [Op.in]: themeIds } },
+          order: [["isPrimary", "DESC"], ["orderIndex", "ASC"], ["RoomImageId", "ASC"]]
+        })
+      : [];
+    const imageByTheme = new Map();
+    roomImages.forEach((image) => {
+      if (!imageByTheme.has(image.RoomThemeId)) {
+        imageByTheme.set(image.RoomThemeId, image.imageUrl);
+      }
+    });
     const rewardsByReservation = rewardRedemptions.reduce((map, point) => {
       const key = String(point.ReservationId);
       const title = String(point.description || "").replace(/^Reward redeemed:\s*/i, "").trim() || "Reward";
@@ -154,7 +174,8 @@ bookingRouter.get("/admin/bookings", async (req, res) => {
       const theme = room && room.RoomTheme;
       const invoice = r.Invoice || {};
       const themeName = theme ? (theme.dataValues?.name || theme.name) : "-";
-      const showcaseImg = theme ? (theme.dataValues?.showcaseImage || theme.showcaseImage) : null;
+      const themeId = theme?.RoomThemeId || theme?.dataValues?.RoomThemeId;
+      const showcaseImg = theme ? (imageByTheme.get(themeId) || theme.dataValues?.showcaseImage || theme.showcaseImage) : null;
       let totalPrice = "-";
       if (invoice.totalAmount) {
         totalPrice = invoice.totalAmount;

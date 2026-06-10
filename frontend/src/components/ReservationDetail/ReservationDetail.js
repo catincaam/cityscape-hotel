@@ -262,8 +262,9 @@ const ReservationDetail = () => {
   const galleryImages = useMemo(() => {
     const theme = roomDetails?.RoomTheme;
     const rawImages = [
-      theme?.showcaseImage,
-      ...(theme?.images || []).map(image => image?.imageUrl || image)
+      ...(theme?.images || []).map(image => image?.imageUrl || image),
+      theme?.image,
+      theme?.showcaseImage
     ].filter(Boolean);
 
     const normalizeImage = (image) => {

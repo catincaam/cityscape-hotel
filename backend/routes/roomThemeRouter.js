@@ -71,12 +71,15 @@ roomThemeRouter.get("/", async (req, res) => {
         
         const floors = [...new Set(rooms.map(r => r.floor))].sort((a, b) => a - b);
         const availableCount = rooms.length;
+        const imageUrls = images.map(img => img.imageUrl);
+        const displayImage = imageUrls[0] || theme.image || theme.showcaseImage;
         
         return {
           ...theme.toJSON(),
+          showcaseImage: displayImage,
           availableCount,
           floors,
-          images: images.map(img => img.imageUrl)
+          images: imageUrls
         };
       })
     );
@@ -100,9 +103,13 @@ roomThemeRouter.get("/:id", async (req, res) => {
       order: [["orderIndex", "ASC"]]
     });
     
+    const imageUrls = images.map(img => img.imageUrl);
+    const displayImage = imageUrls[0] || theme.image || theme.showcaseImage;
+
     res.status(200).json({
       ...theme.toJSON(),
-      images: images.map(img => img.imageUrl)
+      showcaseImage: displayImage,
+      images: imageUrls
     });
   } catch (err) {
     console.error(err);
