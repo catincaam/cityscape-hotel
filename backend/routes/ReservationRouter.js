@@ -13,6 +13,7 @@ import Reservation from "../entities/Reservation.js";
 import RoomReservation from "../entities/RoomReservation.js";
 import Room from "../entities/Room.js";
 import RoomTheme from "../entities/RoomTheme.js";
+import { getRoomDisplayImage, normalizeThemeImages } from "../utils/themeImage.js";
 import { syncReservationStatus, syncReservationStatuses } from "../services/reservationStatusService.js";
 
 const reservationRouter = express.Router();
@@ -267,6 +268,12 @@ reservationRouter.get("/:id", async (req, res) => {
           const images = await RoomImage.findAll({ where: { RoomThemeId: theme.RoomThemeId } });
           theme.images = images;
         }
+      }
+
+      if (theme) {
+        const normalizedImages = normalizeThemeImages(theme, theme.images || []);
+        theme.images = normalizedImages;
+        theme.showcaseImage = getRoomDisplayImage(theme, normalizedImages);
       }
     }
     

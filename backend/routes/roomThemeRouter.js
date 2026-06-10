@@ -9,6 +9,7 @@ import {
 import Room from "../entities/Room.js";
 import RoomImage from "../entities/RoomImage.js";
 import { normalizeTextValues } from "../utils/normalizeText.js";
+import { getRoomDisplayImage, normalizeThemeImages } from "../utils/themeImage.js";
 
 const roomThemeRouter = express.Router();
 
@@ -71,11 +72,12 @@ roomThemeRouter.get("/", async (req, res) => {
         
         const floors = [...new Set(rooms.map(r => r.floor))].sort((a, b) => a - b);
         const availableCount = rooms.length;
-        const imageUrls = images.map(img => img.imageUrl);
-        const displayImage = imageUrls[0] || theme.image || theme.showcaseImage;
+        const themeJson = theme.toJSON();
+        const imageUrls = normalizeThemeImages(themeJson, images).map(img => img.imageUrl || img);
+        const displayImage = getRoomDisplayImage(themeJson, imageUrls);
         
         return {
-          ...theme.toJSON(),
+          ...themeJson,
           showcaseImage: displayImage,
           availableCount,
           floors,
@@ -103,11 +105,12 @@ roomThemeRouter.get("/:id", async (req, res) => {
       order: [["orderIndex", "ASC"]]
     });
     
-    const imageUrls = images.map(img => img.imageUrl);
-    const displayImage = imageUrls[0] || theme.image || theme.showcaseImage;
+    const themeJson = theme.toJSON();
+    const imageUrls = normalizeThemeImages(themeJson, images).map(img => img.imageUrl || img);
+    const displayImage = getRoomDisplayImage(themeJson, imageUrls);
 
     res.status(200).json({
-      ...theme.toJSON(),
+      ...themeJson,
       showcaseImage: displayImage,
       images: imageUrls
     });

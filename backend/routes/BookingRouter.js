@@ -20,6 +20,7 @@ import { getServiceById } from "../dataAccess/ServiceDA.js";
 import { createRoomReservation } from "../dataAccess/RoomReservationDA.js";
 import { sendReservationConfirmation } from "../services/emailService.js";
 import { publicAssetUrl } from "../utils/publicUrl.js";
+import { getRoomDisplayImage } from "../utils/themeImage.js";
 import {
   isFutureExpiry,
   isPositiveInteger,
@@ -175,7 +176,7 @@ bookingRouter.get("/admin/bookings", async (req, res) => {
       const invoice = r.Invoice || {};
       const themeName = theme ? (theme.dataValues?.name || theme.name) : "-";
       const themeId = theme?.RoomThemeId || theme?.dataValues?.RoomThemeId;
-      const showcaseImg = theme ? (imageByTheme.get(themeId) || theme.dataValues?.showcaseImage || theme.showcaseImage) : null;
+      const showcaseImg = theme ? getRoomDisplayImage(theme, [imageByTheme.get(themeId)].filter(Boolean)) : null;
       let totalPrice = "-";
       if (invoice.totalAmount) {
         totalPrice = invoice.totalAmount;

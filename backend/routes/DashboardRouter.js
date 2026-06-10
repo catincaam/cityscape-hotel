@@ -10,6 +10,7 @@ import Reservation from "../entities/Reservation.js";
 import { syncClientTier } from "../services/clientTierService.js";
 import { syncReservationStatuses } from "../services/reservationStatusService.js";
 import { publicAssetUrl } from "../utils/publicUrl.js";
+import { getRoomDisplayImage } from "../utils/themeImage.js";
 
 const router = express.Router();
 
@@ -20,7 +21,7 @@ const getThemeImage = async (roomTheme) => {
   const roomThemeId = roomTheme.RoomThemeId || roomTheme.dataValues?.RoomThemeId;
 
   if (!roomThemeId) {
-    return roomTheme.image || roomTheme.showcaseImage || null;
+    return getRoomDisplayImage(roomTheme);
   }
 
   const galleryImage = await RoomImage.findOne({
@@ -28,7 +29,7 @@ const getThemeImage = async (roomTheme) => {
     order: [["isPrimary", "DESC"], ["orderIndex", "ASC"], ["RoomImageId", "ASC"]]
   });
 
-  return galleryImage?.imageUrl || roomTheme.image || roomTheme.showcaseImage || null;
+  return getRoomDisplayImage(roomTheme, galleryImage ? [galleryImage] : []);
 };
 
 const getReservationNights = (reservation) => {

@@ -2,6 +2,7 @@ import { Op } from "sequelize";
 import Room from "../entities/Room.js";
 import RoomTheme from "../entities/RoomTheme.js";
 import RoomImage from "../entities/RoomImage.js";
+import { getRoomDisplayImage, normalizeThemeImages } from "../utils/themeImage.js";
 import Reservation from "../entities/Reservation.js";
 import RoomReservation from "../entities/RoomReservation.js";
 
@@ -211,8 +212,15 @@ async function getAvailableRooms({ checkIn, checkOut, guests }) {
     if (!themeId) return;
 
     if (!grouped[themeId]) {
+      const roomJson = room.toJSON();
+      if (roomJson.RoomTheme) {
+        const normalizedImages = normalizeThemeImages(roomJson.RoomTheme, roomJson.RoomTheme.images || []);
+        roomJson.RoomTheme.images = normalizedImages;
+        roomJson.RoomTheme.showcaseImage = getRoomDisplayImage(roomJson.RoomTheme, normalizedImages);
+      }
+
       grouped[themeId] = {
-        ...room.toJSON(),
+        ...roomJson,
         availableCount: 0
       };
     }
