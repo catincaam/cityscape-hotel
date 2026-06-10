@@ -4,7 +4,33 @@ import { Search, Sparkles } from "lucide-react";
 import Navbar from "../Dashboard/Navbar";
 import { getDashboardData } from "../../services/dashboardService";
 import { API_BASE_URL } from "../../config/runtimeUrls";
+import kyotoImage from "../../assets/cities/kyoto.jpg";
+import marrakechImage from "../../assets/cities/marrakech.jpg";
+import romeImage from "../../assets/cities/rome.jpg";
+import seoulImage from "../../assets/cities/seoul.jpg";
+import shanghaiImage from "../../assets/cities/shanghai.jpg";
+import tokyoImage from "../../assets/cities/tokyo.jpg";
 import "./AllReservations.css";
+
+const cityFallbackImages = {
+  kyoto: kyotoImage,
+  marrakech: marrakechImage,
+  rome: romeImage,
+  seoul: seoulImage,
+  shanghai: shanghaiImage,
+  tokyo: tokyoImage
+};
+
+function resolveAssetUrl(path) {
+  if (!path || typeof path !== "string") return "";
+  if (/^(https?:)?\/\//i.test(path) || path.startsWith("data:")) return path;
+  return `${API_BASE_URL}${path.startsWith("/") ? "" : "/"}${path}`;
+}
+
+function getCityFallbackImage(value) {
+  const key = String(value || "").trim().toLowerCase();
+  return Object.entries(cityFallbackImages).find(([city]) => key.includes(city))?.[1] || shanghaiImage;
+}
 
 export default function AllReservations() {
   const navigate = useNavigate();
@@ -214,29 +240,26 @@ export default function AllReservations() {
   };
 
   const getReservationImage = (reservation) => {
-    if (reservation.image) return reservation.image;
+    if (reservation.image) return resolveAssetUrl(reservation.image);
 
     const roomRes = reservation.RoomReservations?.[0];
     const room = roomRes?.Room;
     const theme = room?.RoomTheme;
 
     if (theme?.showcaseImage) {
-      return theme.showcaseImage.startsWith("http")
-        ? theme.showcaseImage
-        : `${API_BASE_URL}${theme.showcaseImage}`;
+      return resolveAssetUrl(theme.showcaseImage);
     }
 
     if (room?.image) {
-      return room.image.startsWith("http") ? room.image : `${API_BASE_URL}${room.image}`;
+      return resolveAssetUrl(room.image);
     }
 
     if (theme?.images?.[0]?.imageUrl) {
-      return theme.images[0].imageUrl.startsWith("http")
-        ? theme.images[0].imageUrl
-        : `${API_BASE_URL}${theme.images[0].imageUrl}`;
+      return resolveAssetUrl(theme.images[0].imageUrl);
     }
 
-    return "https://via.placeholder.com/300x200?text=No+Image";
+    const info = getReservationInfo(reservation);
+    return getCityFallbackImage(`${info.city} ${info.roomName}`);
   };
 
   return (
@@ -302,6 +325,7 @@ export default function AllReservations() {
               {filteredReservations.map((reservation) => {
                 const info = getReservationInfo(reservation);
                 const image = getReservationImage(reservation);
+                const fallbackImage = getCityFallbackImage(`${info.city} ${info.roomName}`);
                 const reservationId = getReservationId(reservation);
                 const guests = reservation.guests || reservation.nrPeople || 1;
                 const initials = getGuestInitials();
@@ -309,7 +333,16 @@ export default function AllReservations() {
                 return (
                   <article key={reservationId} className="reservation-card">
                     <div className="card-image-container">
-                      <img src={image} alt={info.roomName} className="card-image" />
+                      <img
+                        src={image}
+                        alt={info.roomName}
+                        className="card-image"
+                        onError={(event) => {
+                          if (event.currentTarget.src !== fallbackImage) {
+                            event.currentTarget.src = fallbackImage;
+                          }
+                        }}
+                      />
                       <span className="status-badge">{getStatusBadge(reservation)}</span>
                     </div>
 
