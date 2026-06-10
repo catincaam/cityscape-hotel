@@ -384,15 +384,17 @@
   padding: 0;
   margin: 0;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: 10px 12px;
   margin-top: 0;
 }
 
 .amenity-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
   align-items: flex-start;
-  gap: 12px;
+  gap: 10px;
+  min-width: 0;
   padding: 11px 12px;
   background: #fafaf8;
   border-radius: 9px;
@@ -416,6 +418,9 @@
   color: #475569;
   font-weight: 500;
   line-height: 1.5;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 .amenity-item:hover {
