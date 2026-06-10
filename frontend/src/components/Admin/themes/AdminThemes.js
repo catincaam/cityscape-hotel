@@ -592,7 +592,7 @@ export default function AdminThemes() {
       <div className="existing-inventory">
         <div className="inventory-header">
           <h2>Active Room Themes</h2>
-          <p>Manage and curate your room theme catalog</p>
+          <p>Review and update the themed rooms shown to guests.</p>
         </div>
 
         {/* SEARCH */}
