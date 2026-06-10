@@ -1079,3 +1079,145 @@
   box-shadow: 0 10px 22px rgba(15, 20, 25, 0.18);
   transform: translateY(-1px);
 }
+
+/* Keep checkout summary aligned with the earlier booking steps. */
+.booking-summary-card .sidebar-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 18px;
+}
+
+.booking-summary-card .booking-info,
+.booking-summary-card .guest-summary,
+.booking-summary-card .cost-breakdown,
+.booking-summary-card .amount-to-pay {
+  margin: 0;
+}
+
+.booking-summary-card .booking-info {
+  display: flex;
+  flex-direction: column;
+  order: 1;
+  padding: 0;
+}
+
+.booking-summary-card .booking-info .info-row,
+.booking-summary-card .guest-summary,
+.booking-summary-card .breakdown-row {
+  align-items: center;
+  border-bottom: 1px solid #eee6dc;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 0;
+  padding: 10px 0;
+}
+
+.booking-summary-card .booking-info .info-row:nth-child(3) {
+  grid-column: auto;
+  grid-row: auto;
+}
+
+.booking-summary-card .guest-summary {
+  flex-direction: row;
+  order: 2;
+  text-align: left;
+}
+
+.booking-summary-card .info-label,
+.booking-summary-card .guest-count,
+.booking-summary-card .summary-line-label,
+.booking-summary-card .pay-label {
+  color: #7a8494;
+  display: block;
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.booking-summary-card .info-value,
+.booking-summary-card .guest-breakdown,
+.booking-summary-card .breakdown-row span:last-child {
+  color: #1f2937;
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: right;
+}
+
+.booking-summary-card .cost-breakdown {
+  order: 3;
+  padding: 6px 0 0;
+}
+
+.booking-summary-card .breakdown-row {
+  align-items: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+}
+
+.booking-summary-card .breakdown-row::before {
+  content: none !important;
+}
+
+.booking-summary-card .breakdown-row span:first-child {
+  color: #1f2937;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+  min-width: 0;
+}
+
+.booking-summary-card .summary-line-label {
+  margin: 0 0 6px;
+}
+
+.booking-summary-card .breakdown-row span:first-child small {
+  color: #64748b;
+  display: block;
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.35;
+  margin-top: 5px;
+}
+
+.booking-summary-card .amount-to-pay {
+  align-items: center;
+  background: transparent;
+  border: 1px solid #eee6dc;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  order: 4;
+  padding: 12px;
+  text-align: left;
+}
+
+.booking-summary-card .amount-to-pay .pay-label {
+  margin: 0;
+}
+
+.booking-summary-card .total-amount {
+  color: #c9a86a;
+  font-family: Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.checkout-summary-actions {
+  background: #fffdf9;
+  margin: 0 -18px -18px;
+  padding: 12px 18px;
+}

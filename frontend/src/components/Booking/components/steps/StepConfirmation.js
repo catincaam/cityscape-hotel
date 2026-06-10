@@ -169,7 +169,6 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
 
   const partialAmount = (totalAmount * 0.2).toFixed(2);
   const amountToPay = paymentType === "partial" ? partialAmount : totalAmount.toFixed(2);
-  const guestCount = (bookingData.adults || 0) + (bookingData.children || 0);
   const roomNightlyRate = Number(bookingData.room?.basePrice || 0);
 
   // Disable partial payment if check-in is today or tomorrow
@@ -411,7 +410,7 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
           <div className="sidebar-header">Booking Summary</div>
           <div className="sidebar-body">
             <div className="guest-summary">
-              <div className="guest-count">{guestCount} {guestCount === 1 ? 'Guest' : 'Guests'}</div>
+              <div className="guest-count">Guests</div>
               <div className="guest-breakdown">{bookingData.adults} Adult{bookingData.adults !== 1 ? 's' : ''}{bookingData.children > 0 && `, ${bookingData.children} Child${bookingData.children !== 1 ? 'ren' : ''}`}</div>
             </div>
 
@@ -427,7 +426,7 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
                 <span className="info-value">{bookingData.checkOut}</span>
               </div>
               <div className="info-row">
-                <span className="info-label">Duration</span>
+                <span className="info-label">Nights</span>
                 <span className="info-value">{nights} Night{nights !== 1 ? 's' : ''}</span>
               </div>
             </div>
@@ -437,6 +436,7 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
             <div className="cost-breakdown">
               <div className="breakdown-row">
                 <span>
+                  <em className="summary-line-label">Room</em>
                   {bookingData.room?.name || 'Room'}
                   <small>{roomNightlyRate.toFixed(2)} x {nights} {nights === 1 ? "night" : "nights"}</small>
                 </span>
@@ -445,6 +445,7 @@ export default function StepConfirmation({ bookingData, onBack, onComplete }) {
               {selectedServiceDetails.map((service) => (
                 <div className="breakdown-row" key={service.ServiceId}>
                   <span>
+                    <em className="summary-line-label">Selected services</em>
                     {service.name}
                     <small>{service.quantity} {service.quantity === 1 ? "item" : "items"}</small>
                   </span>
