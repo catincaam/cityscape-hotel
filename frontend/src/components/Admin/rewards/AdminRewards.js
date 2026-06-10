@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import "./AdminRewards.css";
 import { getAllRewards, createReward, updateReward, deleteReward } from "../../../services/rewardService";
+import { API_BASE_URL } from "../../../config/runtimeUrls";
 
 // CONFIG CONSTANTS
 const CONFIG = {
-  API_BASE_URL: "http://localhost:9001",
+  API_BASE_URL,
   UPLOAD_ENDPOINT: "/api/upload/multiple",
   NOTIFICATION_TIMERS: {
     SUCCESS: 3000,
@@ -13,6 +14,12 @@ const CONFIG = {
   DEFAULT_CATEGORY: "Dining",
   DEFAULT_REWARD_TYPE: "per_booking"
 };
+
+function resolveAssetUrl(path) {
+  if (!path) return null;
+  if (/^(https?:)?\/\//i.test(path) || path.startsWith("data:")) return path;
+  return `${CONFIG.API_BASE_URL}${path.startsWith("/") ? "" : "/"}${path}`;
+}
 
 const INITIAL_FORM_STATE = { 
   id: null, 
@@ -247,7 +254,7 @@ export default function AdminRewards() {
     setError("");
   }
 
-  const previewImage = previews.length > 0 ? previews[0] : (form.image ? `${CONFIG.API_BASE_URL}${form.image}` : null);
+  const previewImage = previews.length > 0 ? previews[0] : resolveAssetUrl(form.image);
   const categoryLabel = form.category;
 
   return (
@@ -480,7 +487,7 @@ export default function AdminRewards() {
               <div key={r.RewardId} className="reward-card">
                 <div className="reward-card-image">
                   {r.image ? (
-                    <img src={`http://localhost:9001${r.image}`} alt={r.title} />
+                    <img src={resolveAssetUrl(r.image)} alt={r.title} />
                   ) : (
                     <div className="no-image">[No Image]</div>
                   )}

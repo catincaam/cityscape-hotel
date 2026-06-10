@@ -1,6 +1,7 @@
 import axios from "axios";
+import { API_BASE_URL } from "../config/runtimeUrls";
 
-const API = "http://localhost:9001/api/reservation-services";
+const API = `${API_BASE_URL}/api/reservation-services`;
 
 // Adaugă un serviciu la rezervare
 export async function addServiceToReservation(data) {

@@ -3,6 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { BedDouble, ChevronRight, Sparkles, Waves } from "lucide-react";
 import { getDashboardData } from "../../services/dashboardService";
 import Navbar from "./Navbar";
+import kyotoImage from "../../assets/cities/kyoto.jpg";
+import marrakechImage from "../../assets/cities/marrakech.jpg";
+import romeImage from "../../assets/cities/rome.jpg";
+import seoulImage from "../../assets/cities/seoul.jpg";
+import shanghaiImage from "../../assets/cities/shanghai.jpg";
+import tokyoImage from "../../assets/cities/tokyo.jpg";
 import "./Dashboard.css";
 
 const formatShortDate = (value) => {
@@ -23,6 +29,25 @@ const getClientFirstName = (client) => {
   if (storedName && storedName.trim()) return storedName.trim().split(" ")[0];
 
   return "Guest";
+};
+
+const cityFallbackImages = {
+  kyoto: kyotoImage,
+  marrakech: marrakechImage,
+  rome: romeImage,
+  seoul: seoulImage,
+  shanghai: shanghaiImage,
+  tokyo: tokyoImage
+};
+
+const getCityFallbackImage = (city) => {
+  const key = String(city || "").trim().toLowerCase();
+  return Object.entries(cityFallbackImages).find(([name]) => key.includes(name))?.[1] || shanghaiImage;
+};
+
+const getLayeredBackground = (image, city) => {
+  const fallback = getCityFallbackImage(city);
+  return image ? `url("${image}"), url("${fallback}")` : `url("${fallback}")`;
 };
 
 export default function Dashboard() {
@@ -159,8 +184,8 @@ export default function Dashboard() {
             {featuredStay ? (
               <article className="featured-stay">
                 <div
-                  className={`featured-image ${featuredStay.image ? "" : "empty"}`}
-                  style={featuredStay.image ? { backgroundImage: `url(${featuredStay.image})` } : undefined}
+                  className="featured-image"
+                  style={{ backgroundImage: getLayeredBackground(featuredStay.image, featuredStay.city) }}
                 >
                   <span className="status-chip">Confirmed</span>
                 </div>
@@ -219,8 +244,8 @@ export default function Dashboard() {
               ]).map((room, index) => (
                 <article
                   key={`${room.reservationId || room.room}-${index}`}
-                  className={`collection-card ${room.image ? "" : "fallback"}`}
-                  style={room.image ? { backgroundImage: `url(${room.image})` } : undefined}
+                  className="collection-card"
+                  style={{ backgroundImage: getLayeredBackground(room.image, `${room.city || ""} ${room.room || ""}`) }}
                 >
                   <div>
                     <p>{room.city || "Cityscape"}</p>

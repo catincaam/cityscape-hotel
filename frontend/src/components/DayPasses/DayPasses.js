@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "../Dashboard/Navbar";
+import { API_BASE_URL } from "../../config/runtimeUrls";
 import "./DayPasses.css";
+
+function resolveAssetUrl(path) {
+  if (!path) return null;
+  if (/^(https?:)?\/\//i.test(path) || path.startsWith("data:")) return path;
+  return `${API_BASE_URL}${path.startsWith("/") ? "" : "/"}${path}`;
+}
 
 const DayPasses = () => {
   const [selectedDate, setSelectedDate] = useState("2025-12-25");
@@ -13,7 +20,7 @@ const DayPasses = () => {
   useEffect(() => {
     async function loadServices() {
       try {
-        const res = await fetch("http://localhost:9001/api/services");
+        const res = await fetch(`${API_BASE_URL}/api/services`);
         const data = await res.json();
         
         // Filtrăm doar serviciile active și rezervabile online
@@ -30,11 +37,7 @@ const DayPasses = () => {
           category: service.category,
           time: service.duration || "Disponibil",
           includes: service.additionalInfo || "Detalii disponibile",
-          image: service.image 
-            ? (service.image.startsWith('/uploads') 
-                ? `http://localhost:9001${service.image}` 
-                : service.image)
-            : null,
+          image: resolveAssetUrl(service.image),
           badge: service.category,
           badgeColor: getCategoryColor(service.category)
         }));

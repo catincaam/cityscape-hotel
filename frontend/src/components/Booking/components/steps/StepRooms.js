@@ -71,7 +71,7 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack, onNext })
         // Calculez total oaspeți
 
         // Apelez /available/search cu date și numărul de oaspeți
-        const url = new URL("http://localhost:9001/api/rooms/available/search");
+        const url = new URL(`${API_BASE_URL}/api/rooms/available/search`);
         url.searchParams.append("checkIn", bookingData.checkIn);
         url.searchParams.append("checkOut", bookingData.checkOut);
         url.searchParams.append("adults", bookingData.adults);

@@ -1,8 +1,15 @@
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Wifi, Wind, Tv, Wine, Lock, UtensilsCrossed, Coffee, Bath, Armchair, Lightbulb } from "lucide-react";
+import { API_BASE_URL } from "../../config/runtimeUrls";
 import Navbar from "../Dashboard/Navbar";
 import "./RoomDetailsNew.css";
+
+function resolveAssetUrl(path) {
+  if (!path) return "";
+  if (/^(https?:)?\/\//i.test(path) || path.startsWith("data:")) return path;
+  return `${API_BASE_URL}${path.startsWith("/") ? "" : "/"}${path}`;
+}
 
 export default function RoomDetails() {
   const { id } = useParams();
@@ -19,7 +26,7 @@ export default function RoomDetails() {
   useEffect(() => {
     async function loadRoom() {
       try {
-        const res = await fetch(`http://localhost:9001/api/room-themes/${id}`);
+        const res = await fetch(`${API_BASE_URL}/api/room-themes/${id}`);
         const data = await res.json();
         setRoom(data);
       } catch (err) {
@@ -79,8 +86,8 @@ export default function RoomDetails() {
           name: room.name,
           basePrice: room.basePrice,
           image: room.images && room.images.length > 0 
-            ? `http://localhost:9001${room.images[0]}` 
-            : `http://localhost:9001${room.image}`,
+            ? resolveAssetUrl(room.images[0])
+            : resolveAssetUrl(room.image),
           city: room.city,
           theme: room.theme
         },
@@ -93,9 +100,9 @@ export default function RoomDetails() {
   }
 
   const images = room.images && room.images.length > 0 
-    ? room.images.map(img => `http://localhost:9001${img}`)
+    ? room.images.map(resolveAssetUrl)
     : room.image 
-    ? [`http://localhost:9001${room.image}`]
+    ? [resolveAssetUrl(room.image)]
     : [];
 
   const amenitiesList = typeof room.amenities === 'string' 

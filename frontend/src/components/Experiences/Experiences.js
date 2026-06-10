@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../../config/runtimeUrls";
 import Navbar from "../Dashboard/Navbar";
 import "../Rewards/Rewards.css";
+
+function resolveAssetUrl(path) {
+  if (!path) return null;
+  if (/^(https?:)?\/\//i.test(path) || path.startsWith("data:")) return path;
+  return `${API_BASE_URL}${path.startsWith("/") ? "" : "/"}${path}`;
+}
 
 export default function Experiences() {
   const [experiences, setExperiences] = useState([]);
@@ -10,7 +17,7 @@ export default function Experiences() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch("http://localhost:9001/api/services?category=Experiences")
+    fetch(`${API_BASE_URL}/api/services?category=Experiences`)
       .then(res => res.json())
       .then(data => {
         setExperiences(Array.isArray(data) ? data : []);
@@ -54,7 +61,10 @@ export default function Experiences() {
               ) : (
                 experiences.slice(carouselIndex, carouselIndex + visibleCards).map(exp => (
                   <div className="reward-card" key={exp.ServiceId}>
-                    <div className="reward-card-image" style={{backgroundImage: `url(http://localhost:9001${exp.image || '/default.jpg'})`}}></div>
+                    <div
+                      className="reward-card-image"
+                      style={resolveAssetUrl(exp.image) ? { backgroundImage: `url(${resolveAssetUrl(exp.image)})` } : undefined}
+                    ></div>
                     <div className="reward-card-content">
                       <div className="reward-card-label" style={{background:'#e0e7ef', color:'#1f2937'}}>EXPERIENCE</div>
                       <div className="reward-card-title">{exp.serviceName}</div>
