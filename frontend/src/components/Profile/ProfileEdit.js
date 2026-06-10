@@ -37,6 +37,7 @@ export default function ProfileEdit() {
   const [profilePic, setProfilePic] = useState(defaultProfilePic);
   const [selectedFile, setSelectedFile] = useState(null);
   const [hasBlockingReservations, setHasBlockingReservations] = useState(false);
+  const [memberTier, setMemberTier] = useState("Standard");
 
   const resolveImage = useCallback((image) => {
     if (!image) return defaultProfilePic;
@@ -83,6 +84,9 @@ export default function ProfileEdit() {
             headers: { Authorization: `Bearer ${token}` }
           });
           dashboard = dashboardResponse.ok ? await dashboardResponse.json() : null;
+          if (dashboard?.clientTier?.tip || dashboard?.client?.TypeClientTip) {
+            setMemberTier(dashboard.clientTier?.tip || dashboard.client.TypeClientTip);
+          }
         } catch (dashboardErr) {
           console.warn("Could not load dashboard reservations for profile lock:", dashboardErr.message);
         }
@@ -319,7 +323,7 @@ export default function ProfileEdit() {
             </div>
             <div>
               <h2>{firstName || "User"} {lastName}</h2>
-              <span>Explorer Member</span>
+              <span>{memberTier} Member</span>
             </div>
           </section>
 
