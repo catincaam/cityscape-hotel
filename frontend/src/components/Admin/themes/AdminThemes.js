@@ -521,24 +521,6 @@ export default function AdminThemes() {
                     >
                       {idx === 0 && <span className="primary-image-badge">Main</span>}
                       <img src={preview} alt={`theme-${idx}`} />
-                      <div className="thumbnail-order-controls">
-                        <button
-                          type="button"
-                          onClick={() => moveGalleryImage(idx, idx - 1)}
-                          disabled={idx === 0}
-                          aria-label="Move image left"
-                        >
-                          &lt;
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => moveGalleryImage(idx, idx + 1)}
-                          disabled={idx === themePreviews.length - 1}
-                          aria-label="Move image right"
-                        >
-                          &gt;
-                        </button>
-                      </div>
                       {themeImages.length > 0 && (
                         <button
                           type="button"
