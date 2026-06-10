@@ -44,11 +44,6 @@ function imageUrl(path) {
   return value.startsWith("http") ? value : `${API_BASE_URL}${value}`;
 }
 
-function getThemeImageUrls(theme) {
-  if (!Array.isArray(theme?.images)) return [];
-  return theme.images.map(imageUrl).filter(Boolean);
-}
-
 function getAmenities(theme) {
   if (Array.isArray(theme.amenities)) return theme.amenities;
   if (typeof theme.amenities !== "string") return [];
@@ -65,6 +60,9 @@ export default function AdminThemes() {
   const [themes, setThemes] = useState([]);
   const [themeImages, setThemeImages] = useState([]);
   const [themePreviews, setThemePreviews] = useState([]);
+  const [themeImagePaths, setThemeImagePaths] = useState([]);
+  const [galleryOrderChanged, setGalleryOrderChanged] = useState(false);
+  const [draggedImageIndex, setDraggedImageIndex] = useState(null);
   const [showcaseImage, setShowcaseImage] = useState(null);
   const [showcasePreview, setShowcasePreview] = useState("");
   const [showcaseRemoved, setShowcaseRemoved] = useState(false);
@@ -128,12 +126,39 @@ export default function AdminThemes() {
     if (files.length === 0) return;
     
     setThemeImages(files);
+    setThemeImagePaths([]);
     setThemePreviews(files.map(file => URL.createObjectURL(file)));
+    setGalleryOrderChanged(false);
   }
 
   function removeThemeImage(idx) {
     setThemeImages(prev => prev.filter((_, i) => i !== idx));
     setThemePreviews(prev => prev.filter((_, i) => i !== idx));
+    setThemeImagePaths(prev => prev.filter((_, i) => i !== idx));
+    setGalleryOrderChanged(true);
+  }
+
+  function moveGalleryImage(fromIndex, toIndex) {
+    if (toIndex < 0 || toIndex >= themePreviews.length || fromIndex === toIndex) return;
+
+    const reorder = (items) => {
+      if (!Array.isArray(items) || items.length === 0) return items;
+      const next = [...items];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      return next;
+    };
+
+    setThemePreviews(prev => reorder(prev));
+    setThemeImages(prev => reorder(prev));
+    setThemeImagePaths(prev => reorder(prev));
+    setGalleryOrderChanged(true);
+  }
+
+  function handleGalleryDrop(targetIndex) {
+    if (draggedImageIndex === null) return;
+    moveGalleryImage(draggedImageIndex, targetIndex);
+    setDraggedImageIndex(null);
   }
 
   function handleShowcaseImage(e) {
@@ -189,6 +214,8 @@ export default function AdminThemes() {
       if (themeImages.length > 0) {
         const uploadRes = await uploadMultipleImages(themeImages);
         imagePaths = uploadRes.imageUrls || [];
+      } else if (editingId && galleryOrderChanged && themeImagePaths.length > 0) {
+        imagePaths = themeImagePaths;
       }
 
       if (showcaseImage) {
@@ -223,6 +250,9 @@ export default function AdminThemes() {
       setEditingId(null);
       setThemeImages([]);
       setThemePreviews([]);
+      setThemeImagePaths([]);
+      setGalleryOrderChanged(false);
+      setDraggedImageIndex(null);
       setShowcaseImage(null);
       setShowcasePreview("");
       setShowcaseRemoved(false);
@@ -248,7 +278,13 @@ export default function AdminThemes() {
       amenities: getAmenities(theme)
     });
     setThemeImages([]);
-    setThemePreviews(getThemeImageUrls(theme));
+    const existingImagePaths = Array.isArray(theme.images)
+      ? theme.images.map(img => (typeof img === "string" ? img : img.imageUrl || img.ImageUrl || img.url || "")).filter(Boolean)
+      : [];
+    setThemeImagePaths(existingImagePaths);
+    setThemePreviews(existingImagePaths.map(imageUrl).filter(Boolean));
+    setGalleryOrderChanged(false);
+    setDraggedImageIndex(null);
     setShowcaseImage(null);
     setShowcasePreview(imageUrl(theme.showcaseImage));
     setShowcaseRemoved(false);
@@ -261,6 +297,9 @@ export default function AdminThemes() {
     setForm(INITIAL_FORM_STATE);
     setThemeImages([]);
     setThemePreviews([]);
+    setThemeImagePaths([]);
+    setGalleryOrderChanged(false);
+    setDraggedImageIndex(null);
     setShowcaseImage(null);
     setShowcasePreview("");
     setShowcaseRemoved(false);
@@ -471,8 +510,35 @@ export default function AdminThemes() {
               {themePreviews.length > 0 && (
                 <div className="preview-thumbnails">
                   {themePreviews.map((preview, idx) => (
-                    <div key={idx} className="thumbnail">
+                    <div
+                      key={`${preview}-${idx}`}
+                      className={`thumbnail gallery-thumbnail ${idx === 0 ? "primary-thumbnail" : ""}`}
+                      draggable
+                      onDragStart={() => setDraggedImageIndex(idx)}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => handleGalleryDrop(idx)}
+                      onDragEnd={() => setDraggedImageIndex(null)}
+                    >
+                      {idx === 0 && <span className="primary-image-badge">Main</span>}
                       <img src={preview} alt={`theme-${idx}`} />
+                      <div className="thumbnail-order-controls">
+                        <button
+                          type="button"
+                          onClick={() => moveGalleryImage(idx, idx - 1)}
+                          disabled={idx === 0}
+                          aria-label="Move image left"
+                        >
+                          &lt;
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveGalleryImage(idx, idx + 1)}
+                          disabled={idx === themePreviews.length - 1}
+                          aria-label="Move image right"
+                        >
+                          &gt;
+                        </button>
+                      </div>
                       {themeImages.length > 0 && (
                         <button
                           type="button"
