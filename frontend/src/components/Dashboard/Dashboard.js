@@ -103,7 +103,7 @@ export default function Dashboard() {
         <section className="dashboard-hero">
           <span className="hero-rule" />
           <h1>Welcome back, {firstName}!</h1>
-          <p>Your curated city sanctuary awaits.</p>
+          <p>Plan your next stay or manage your reservations.</p>
           <div className="hero-dots" aria-hidden="true">
             <span />
             <span />
