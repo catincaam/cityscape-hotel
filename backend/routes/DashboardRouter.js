@@ -17,9 +17,14 @@ const toMoney = (value) => Math.round(Number(value || 0) * 100) / 100;
 
 const getThemeImage = async (roomTheme) => {
   if (!roomTheme) return null;
+  const roomThemeId = roomTheme.RoomThemeId || roomTheme.dataValues?.RoomThemeId;
+
+  if (!roomThemeId) {
+    return roomTheme.image || roomTheme.showcaseImage || null;
+  }
 
   const galleryImage = await RoomImage.findOne({
-    where: { RoomThemeId: roomTheme.RoomThemeId },
+    where: { RoomThemeId: roomThemeId },
     order: [["isPrimary", "DESC"], ["orderIndex", "ASC"], ["RoomImageId", "ASC"]]
   });
 
@@ -72,7 +77,7 @@ router.get("/dashboard", authClient, async (req, res) => {
               include: [
                 {
                   model: RoomTheme,
-                  attributes: ['city', 'name', 'theme', 'image', 'showcaseImage', 'basePrice']
+                  attributes: ['RoomThemeId', 'city', 'name', 'theme', 'image', 'showcaseImage', 'basePrice']
                 }
               ]
             }
