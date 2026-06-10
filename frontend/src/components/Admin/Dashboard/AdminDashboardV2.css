@@ -290,12 +290,13 @@
 .heatmap-axis,
 .heatmap-grid {
   display: grid;
-  grid-template-columns: 48px repeat(7, 48px);
-  gap: 8px;
-  width: fit-content;
+  grid-template-columns: minmax(34px, 0.75fr) repeat(7, minmax(0, 1fr));
+  gap: clamp(5px, 1vw, 8px);
+  width: 100%;
   max-width: 100%;
   margin-left: auto;
   margin-right: auto;
+  justify-items: center;
 }
 
 .heatmap-month-grid {
@@ -328,7 +329,8 @@
 }
 
 .heat-cell {
-  width: 48px;
+  width: 100%;
+  max-width: 48px;
   height: 38px;
   min-height: 0;
   display: inline-flex;
@@ -451,16 +453,17 @@
 
 .service-usage-layout {
   display: grid;
-  grid-template-columns: minmax(220px, 0.9fr) minmax(260px, 1.1fr);
+  grid-template-columns: minmax(170px, 0.78fr) minmax(0, 1fr);
   align-items: center;
-  gap: clamp(30px, 4vw, 56px);
+  gap: clamp(20px, 2.4vw, 34px);
   min-height: 310px;
+  min-width: 0;
 }
 
 .donut {
   position: relative;
-  width: clamp(220px, 17vw, 270px);
-  height: clamp(220px, 17vw, 270px);
+  width: clamp(178px, 15vw, 238px);
+  height: clamp(178px, 15vw, 238px);
   justify-self: center;
 }
 
@@ -499,7 +502,9 @@
   flex-direction: column;
   gap: 14px;
   width: 100%;
-  max-width: 360px;
+  max-width: 340px;
+  min-width: 0;
+  justify-self: end;
   font-weight: 700;
 }
 
@@ -508,6 +513,7 @@
   border: 1px solid #eee4d5;
   border-radius: 16px;
   background: linear-gradient(180deg, #fffdf8, #f8f1e7);
+  min-width: 0;
 }
 
 .service-legend-top {
@@ -525,9 +531,11 @@
 
 .service-legend span {
   flex: 1;
+  min-width: 0;
   color: #2b2118;
   font-size: 13px;
   font-weight: 900;
+  overflow-wrap: anywhere;
 }
 
 .service-legend strong {
