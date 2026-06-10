@@ -289,8 +289,8 @@ export default function ProfileEdit() {
         <form className="profile-edit-shell" onSubmit={handleSave}>
           <header className="profile-edit-hero">
             <div>
-              <h1>Edit Identity</h1>
-              <span>Refine your presence within the sanctuary. Every detail matters.</span>
+              <h1>Edit Profile</h1>
+              <span>Update your personal details, profile photo, and account security.</span>
             </div>
             <div className="profile-edit-actions">
               <button type="button" className="profile-edit-secondary" onClick={() => navigate("/profile")}>
