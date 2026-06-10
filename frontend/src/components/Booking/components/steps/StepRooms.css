@@ -18,8 +18,8 @@
 
 .rooms-layout {
   display: grid;
-  grid-template-columns: 292px minmax(720px, 1fr) 320px;
-  gap: 34px;
+  grid-template-columns: 260px minmax(0, 1fr) 300px;
+  gap: 24px;
   width: 100%;
   max-width: none;
   margin: 0 auto;
@@ -736,9 +736,9 @@
    RESPONSIVE
 ========================= */
 
-@media (max-width: 1620px) {
+@media (max-width: 1180px) {
   .rooms-layout {
-    grid-template-columns: 292px minmax(0, 1fr);
+    grid-template-columns: 260px minmax(0, 1fr);
     max-width: none;
   }
 
