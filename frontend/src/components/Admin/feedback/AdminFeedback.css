@@ -60,7 +60,7 @@
 
 .admin-feedback-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
   gap: 24px;
 }
 
@@ -76,9 +76,13 @@
 
 .admin-feedback-card-top {
   display: grid;
-  grid-template-columns: 46px 1fr auto;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
   gap: 12px;
   align-items: center;
+}
+
+.admin-feedback-card-top > div:nth-child(2) {
+  min-width: 0;
 }
 
 .admin-feedback-avatar {
@@ -101,20 +105,27 @@
 .admin-feedback-card h3 {
   margin: 0 0 4px;
   font-size: 15px;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
 }
 
 .admin-feedback-card-top p {
   margin: 0;
   color: #80786c;
   font-size: 12px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .admin-feedback-score {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  align-self: start;
   color: #806329;
   font-weight: 900;
+  white-space: nowrap;
 }
 
 .admin-feedback-comment {
@@ -155,6 +166,11 @@
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.admin-feedback-card footer span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .admin-feedback-empty,
