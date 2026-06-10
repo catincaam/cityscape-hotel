@@ -4,6 +4,7 @@ import { getClientById } from "../dataAccess/ClientDA.js";
 import { getInvoiceByReservationId } from "../dataAccess/InvoiceDA.js";
 import Room from "../entities/Room.js";
 import RoomTheme from "../entities/RoomTheme.js";
+import RoomImage from "../entities/RoomImage.js";
 import RoomReservation from "../entities/RoomReservation.js";
 import Reservation from "../entities/Reservation.js";
 import { syncClientTier } from "../services/clientTierService.js";
@@ -13,6 +14,20 @@ import { publicAssetUrl } from "../utils/publicUrl.js";
 const router = express.Router();
 
 const toMoney = (value) => Math.round(Number(value || 0) * 100) / 100;
+
+const getThemeImage = async (roomTheme) => {
+  if (!roomTheme) return null;
+
+  const directImage = roomTheme.showcaseImage || roomTheme.image;
+  if (directImage) return directImage;
+
+  const galleryImage = await RoomImage.findOne({
+    where: { RoomThemeId: roomTheme.RoomThemeId },
+    order: [["isPrimary", "DESC"], ["orderIndex", "ASC"], ["RoomImageId", "ASC"]]
+  });
+
+  return galleryImage?.imageUrl || null;
+};
 
 const getReservationNights = (reservation) => {
   const checkin = new Date(reservation.requestedCheckin);
@@ -137,6 +152,20 @@ router.get("/dashboard", authClient, async (req, res) => {
     // Filtrează null-urile (rezervările neplătite)
     const paidReservations = recentReservations.filter(r => r !== null).slice(0, 5);
 
+    const collectionThemes = await RoomTheme.findAll({
+      order: [["RoomThemeId", "ASC"]],
+      limit: 6
+    });
+
+    const boutiqueCollections = await Promise.all(
+      collectionThemes.map(async (roomTheme) => ({
+        room: roomTheme.name || roomTheme.theme || "Signature Suite",
+        city: roomTheme.city || "Cityscape",
+        pricePerNight: Number(roomTheme.basePrice || 0),
+        image: publicAssetUrl(await getThemeImage(roomTheme))
+      }))
+    );
+
     // Toate rezervările (pentru Profile page)
     const allReservationsFormatted = await Promise.all(
       allReservations.map(async (reservation) => {
@@ -186,6 +215,7 @@ router.get("/dashboard", authClient, async (req, res) => {
       cityPoints,
       nextDestination,
       recentReservations: paidReservations,
+      boutiqueCollections,
       allReservations: allReservationsFormatted
     });
   } catch (err) {

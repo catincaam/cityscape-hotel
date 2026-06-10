@@ -63,7 +63,12 @@ export default function Dashboard() {
   }, [data?.allReservations, today]);
 
   const featuredStay = data?.nextDestination || upcomingStays[0] || null;
-  const collectionRooms = (data?.recentReservations?.length ? data.recentReservations : data?.allReservations || [])
+  const collectionSource = data?.recentReservations?.some((reservation) => reservation.image)
+    ? data.recentReservations
+    : data?.boutiqueCollections?.length
+      ? data.boutiqueCollections
+      : data?.allReservations || [];
+  const collectionRooms = collectionSource
     .filter((reservation) => reservation.image)
     .slice(0, 2);
 
