@@ -1,37 +1,38 @@
 import express from "express";
 import multer from "multer";
-import path from "path";
-import fs from "fs";
-import { fileURLToPath } from "url";
+import { v2 as cloudinary } from "cloudinary";
 
 const uploadRouter = express.Router();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const uploadDir = path.join(__dirname, "../uploads");
 const maxImageSizeMb = Number(process.env.UPLOAD_MAX_IMAGE_MB || 12);
+const cloudinaryFolder = process.env.CLOUDINARY_FOLDER || "cityscape-hotel";
 
-fs.mkdirSync(uploadDir, { recursive: true });
+const hasCloudinaryConfig = Boolean(
+  process.env.CLOUDINARY_URL ||
+  (
+    process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET
+  )
+);
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(file.originalname)}`;
-    cb(null, uniqueName);
-  }
-});
+if (hasCloudinaryConfig && !process.env.CLOUDINARY_URL) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+    secure: true
+  });
+}
 
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: maxImageSizeMb * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
 
-    if (extname && mimetype) {
+    if (mimetype) {
       return cb(null, true);
     }
 
@@ -69,30 +70,64 @@ function runUpload(middleware) {
   };
 }
 
-uploadRouter.post("/", runUpload(upload.single("image")), (req, res) => {
+function ensureCloudinaryConfigured(res) {
+  if (hasCloudinaryConfig) return true;
+
+  res.status(500).json({
+    message: "Cloudinary is not configured. Add CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET."
+  });
+  return false;
+}
+
+function uploadBufferToCloudinary(file) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: cloudinaryFolder,
+        resource_type: "image",
+        use_filename: true,
+        unique_filename: true,
+        overwrite: false
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }
+    );
+
+    stream.end(file.buffer);
+  });
+}
+
+uploadRouter.post("/", runUpload(upload.single("image")), async (req, res) => {
   try {
+    if (!ensureCloudinaryConfigured(res)) return;
+
     if (!req.file) {
       return res.status(400).json({ message: "No image was uploaded" });
     }
 
-    const imageUrl = `/uploads/${req.file.filename}`;
+    const result = await uploadBufferToCloudinary(req.file);
     res.status(200).json({
       message: "Image uploaded successfully",
-      imageUrl
+      imageUrl: result.secure_url
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Image upload failed" });
+    console.error("Cloudinary upload failed:", err);
+    res.status(500).json({ message: err.message || "Image upload failed" });
   }
 });
 
-uploadRouter.post("/multiple", runUpload(upload.array("images", 10)), (req, res) => {
+uploadRouter.post("/multiple", runUpload(upload.array("images", 10)), async (req, res) => {
   try {
+    if (!ensureCloudinaryConfigured(res)) return;
+
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ message: "No images were uploaded" });
     }
 
-    const imageUrls = req.files.map(file => `/uploads/${file.filename}`);
+    const results = await Promise.all(req.files.map(uploadBufferToCloudinary));
+    const imageUrls = results.map(result => result.secure_url);
     res.status(200).json({
       message: `${imageUrls.length} images uploaded successfully`,
       imageUrls
