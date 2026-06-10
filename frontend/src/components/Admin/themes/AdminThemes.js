@@ -37,7 +37,16 @@ const INITIAL_FORM_STATE = {
 
 function imageUrl(path) {
   if (!path) return "";
-  return path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
+  const value = typeof path === "string"
+    ? path
+    : path.imageUrl || path.ImageUrl || path.url || "";
+  if (!value) return "";
+  return value.startsWith("http") ? value : `${API_BASE_URL}${value}`;
+}
+
+function getThemeImageUrls(theme) {
+  if (!Array.isArray(theme?.images)) return [];
+  return theme.images.map(imageUrl).filter(Boolean);
 }
 
 function getAmenities(theme) {
@@ -239,7 +248,7 @@ export default function AdminThemes() {
       amenities: getAmenities(theme)
     });
     setThemeImages([]);
-    setThemePreviews([]);
+    setThemePreviews(getThemeImageUrls(theme));
     setShowcaseImage(null);
     setShowcasePreview(imageUrl(theme.showcaseImage));
     setShowcaseRemoved(false);
@@ -454,8 +463,8 @@ export default function AdminThemes() {
                 />
                 <div className="upload-content">
                   <div className="upload-icon">⬆</div>
-                  <p>Drop theme images here or browse</p>
-                  <small>Multiple images recommended</small>
+                  <p>{editingId ? "Replace gallery images or browse" : "Drop theme images here or browse"}</p>
+                  <small>{editingId ? "New images replace the current room gallery" : "Multiple images recommended"}</small>
                 </div>
               </label>
 
@@ -464,13 +473,15 @@ export default function AdminThemes() {
                   {themePreviews.map((preview, idx) => (
                     <div key={idx} className="thumbnail">
                       <img src={preview} alt={`theme-${idx}`} />
-                      <button
-                        type="button"
-                        className="thumbnail-remove"
-                        onClick={() => removeThemeImage(idx)}
-                      >
-                        ✕
-                      </button>
+                      {themeImages.length > 0 && (
+                        <button
+                          type="button"
+                          className="thumbnail-remove"
+                          onClick={() => removeThemeImage(idx)}
+                        >
+                          ✕
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>

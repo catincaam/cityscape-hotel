@@ -5,7 +5,12 @@ import crypto from "crypto";
 import { getClientByEmail, createClient } from "../dataAccess/ClientDA.js";
 import Client from "../entities/Client.js";
 import PasswordResetToken from "../entities/PasswordResetToken.js";
-import { sendAccountCreatedEmail, sendPasswordResetEmail } from "../services/emailService.js";
+import EmailVerificationToken from "../entities/EmailVerificationToken.js";
+import {
+  sendAccountCreatedEmail,
+  sendEmailVerificationEmail,
+  sendPasswordResetEmail
+} from "../services/emailService.js";
 import { ensureClientTypes } from "../services/clientTierService.js";
 import {
   isStrongPassword,
@@ -22,7 +27,46 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const authRouter = express.Router();
 const DEFAULT_PROFILE_PICTURE = "/assets/profilePicture.jpg";
 
-const hashResetToken = (token) => crypto.createHash("sha256").update(token).digest("hex");
+const hashToken = (token) => crypto.createHash("sha256").update(token).digest("hex");
+const hashResetToken = hashToken;
+
+async function createEmailVerification(client) {
+  const rawToken = crypto.randomBytes(32).toString("hex");
+  const tokenHash = hashToken(rawToken);
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+  await EmailVerificationToken.update(
+    { usedAt: new Date() },
+    {
+      where: {
+        ClientId: client.ClientId,
+        usedAt: null
+      }
+    }
+  );
+
+  await EmailVerificationToken.create({
+    ClientId: client.ClientId,
+    tokenHash,
+    expiresAt
+  });
+
+  return {
+    rawToken,
+    verificationUrl: `${process.env.APP_URL || "http://localhost:3000"}/verify-email?token=${rawToken}`
+  };
+}
+
+async function hasPendingEmailVerification(clientId) {
+  const token = await EmailVerificationToken.findOne({
+    where: {
+      ClientId: clientId,
+      usedAt: null
+    }
+  });
+
+  return Boolean(token);
+}
 
 /* =========================
    REGISTER CLIENT
@@ -50,34 +94,56 @@ authRouter.post("/register", async (req, res) => {
       return res.status(400).json({ message: "Password must have at least 8 characters, one uppercase letter and one number." });
     }
 
-    const existing = await getClientByEmail(normalizedEmail);
-    if (existing) {
+    let client = await getClientByEmail(normalizedEmail);
+    const existingNeedsVerification = client
+      ? await hasPendingEmailVerification(client.ClientId)
+      : false;
+
+    if (client && !existingNeedsVerification) {
       return res.status(409).json({ message: "Client already exists" });
     }
 
     const PasswordHash = await bcrypt.hash(password, 10);
 
-    const client = await createClient({
-      Email: normalizedEmail,
-      FirstName: firstName.trim(),
-      LastName: lastName.trim(),
-      Password: PasswordHash,
-      TypeClientTip: typeClientTip || "Standard",
-      profilePicture: DEFAULT_PROFILE_PICTURE
-    });
+    if (client && existingNeedsVerification) {
+      client = await client.update({
+        FirstName: firstName.trim(),
+        LastName: lastName.trim(),
+        Password: PasswordHash,
+        TypeClientTip: typeClientTip || "Standard",
+        profilePicture: client.profilePicture || DEFAULT_PROFILE_PICTURE
+      });
+    } else {
+      client = await createClient({
+        Email: normalizedEmail,
+        FirstName: firstName.trim(),
+        LastName: lastName.trim(),
+        Password: PasswordHash,
+        TypeClientTip: typeClientTip || "Standard",
+        profilePicture: DEFAULT_PROFILE_PICTURE
+      });
+    }
 
     const { Password: _, ...safeClient } = client.dataValues;
+    const { verificationUrl } = await createEmailVerification(client);
 
-    const emailResult = await sendAccountCreatedEmail({ client });
+    const emailResult = await sendEmailVerificationEmail({
+      client,
+      verificationUrl,
+      expiresInHours: 24
+    });
     if (!emailResult.success) {
-      console.warn("[ACCOUNT CREATED EMAIL] Not sent:", emailResult.error);
+      console.warn("[EMAIL VERIFICATION] Not sent:", emailResult.error);
+      return res.status(500).json({
+        message: "Could not send verification email. Please try again later."
+      });
     }
 
     res.status(201).json({
+      message: "Account created. Please verify your email before logging in.",
       client: safeClient,
       email: {
-        sent: Boolean(emailResult.success),
-        error: emailResult.success ? undefined : emailResult.error
+        sent: true
       }
     });
   } catch (err) {
@@ -108,6 +174,10 @@ authRouter.post("/login", async (req, res) => {
       return res.status(401).json({ message: "This account uses Google sign-in. Please continue with Google." });
     }
 
+    if (await hasPendingEmailVerification(client.ClientId)) {
+      return res.status(403).json({ message: "Please verify your email before logging in." });
+    }
+
     const ok = await bcrypt.compare(password, client.Password);
     if (!ok) {
       return res.status(401).json({ message: "Invalid credentials" });
@@ -127,6 +197,49 @@ authRouter.post("/login", async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* =========================
+   VERIFY EMAIL
+   POST /api/auth/verify-email
+========================= */
+authRouter.post("/verify-email", async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ message: "Verification token is required" });
+    }
+
+    const tokenHash = hashToken(token);
+    const verificationRecord = await EmailVerificationToken.findOne({
+      where: {
+        tokenHash,
+        usedAt: null
+      }
+    });
+
+    if (!verificationRecord || new Date(verificationRecord.expiresAt) < new Date()) {
+      return res.status(400).json({ message: "Verification link is invalid or expired" });
+    }
+
+    const client = await Client.findByPk(verificationRecord.ClientId);
+    if (!client) {
+      return res.status(400).json({ message: "Verification link is invalid or expired" });
+    }
+
+    await verificationRecord.update({ usedAt: new Date() });
+
+    const emailResult = await sendAccountCreatedEmail({ client });
+    if (!emailResult.success) {
+      console.warn("[ACCOUNT CREATED EMAIL] Not sent after verification:", emailResult.error);
+    }
+
+    return res.status(200).json({ message: "Email verified successfully. You can now log in." });
+  } catch (err) {
+    console.error("[VERIFY EMAIL ERROR]", err);
     res.status(500).json({ message: "Server error" });
   }
 });

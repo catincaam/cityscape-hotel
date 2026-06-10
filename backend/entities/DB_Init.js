@@ -23,6 +23,7 @@ import Reward from "./Reward.js";
 import RewardPoint from "./RewardPoint.js";
 import Admin from "./Admin.js";
 import PasswordResetToken from "./PasswordResetToken.js";
+import EmailVerificationToken from "./EmailVerificationToken.js";
 import Stay from "./Stay.js";
 
 function setupFKs() {
@@ -88,6 +89,9 @@ function setupFKs() {
 
   Client.hasMany(PasswordResetToken, { foreignKey: "ClientId", onDelete: "CASCADE" });
   PasswordResetToken.belongsTo(Client, { foreignKey: "ClientId" });
+
+  Client.hasMany(EmailVerificationToken, { foreignKey: "ClientId", onDelete: "CASCADE" });
+  EmailVerificationToken.belongsTo(Client, { foreignKey: "ClientId" });
 
   Client.hasMany(Stay, { foreignKey: "ClientId", onDelete: "CASCADE" });
   Stay.belongsTo(Client, { foreignKey: "ClientId" });

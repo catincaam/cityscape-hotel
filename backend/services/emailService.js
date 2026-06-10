@@ -365,6 +365,49 @@ export const sendAccountCreatedEmail = async ({ client }) => {
   });
 };
 
+export const sendEmailVerificationEmail = async ({ client, verificationUrl, expiresInHours = 24 }) => {
+  if (!client?.Email) {
+    return { success: false, error: "Client email is missing." };
+  }
+
+  const guestName = fullName(client);
+
+  const html = `
+    <div style="margin:0;padding:32px;background:#f6f2ec;font-family:Georgia,serif;color:#122033;">
+      <div style="max-width:620px;margin:0 auto;background:#fffaf4;border:1px solid #e4d5c2;border-radius:18px;overflow:hidden;">
+        <div style="padding:30px 34px;border-bottom:1px solid #eadfce;">
+          <div style="font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#b8894a;font-weight:700;">Cityscape Hotel</div>
+          <h1 style="margin:12px 0 8px;font-size:32px;line-height:1.1;color:#111827;">Verify your email</h1>
+          <p style="margin:0;color:#5d6a7a;font-size:15px;">Hello ${guestName}, confirm your email address to activate your Cityscape account.</p>
+        </div>
+        <div style="padding:28px 34px;">
+          <p style="margin:0 0 18px;color:#26364a;font-size:16px;line-height:1.5;">
+            Use the button below to verify your email. You will be able to sign in after verification.
+          </p>
+          <a href="${verificationUrl}" style="display:block;margin:24px 0;padding:14px 18px;border-radius:999px;background:#111827;color:#fff;text-align:center;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Verify email</a>
+          <p style="margin:0;color:#6b7280;font-size:13px;line-height:1.5;">
+            This link expires in ${expiresInHours} hours. If you did not create this account, you can ignore this email.
+          </p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const text = [
+    `Hello ${guestName}, verify your Cityscape Hotel email address.`,
+    `Open this link within ${expiresInHours} hours:`,
+    verificationUrl,
+    "If you did not create this account, ignore this email."
+  ].join("\n");
+
+  return sendMail({
+    to: client.Email,
+    subject: "Verify your Cityscape Hotel email",
+    html,
+    text
+  });
+};
+
 export const sendAccountDeletedEmail = async ({ client }) => {
   if (!client?.Email) {
     return { success: false, error: "Client email is missing." };

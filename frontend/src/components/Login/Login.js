@@ -86,9 +86,7 @@ export default function Login() {
           typeClientTip: "Standard",
         });
 
-        alert(result?.email?.sent
-          ? "Account created! A confirmation email has been sent. You can now log in."
-          : "Account created! You can now log in.");
+        alert(result?.message || "Account created. Please verify your email before logging in.");
         setMode("login");
       }
     } catch (err) {

@@ -68,6 +68,22 @@ export async function register(payload) {
   return r.json();
 }
 
+export async function verifyEmail(token) {
+  const r = await fetch(`${API}/auth/verify-email`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token }),
+  });
+
+  const data = await r.json().catch(() => ({}));
+
+  if (!r.ok) {
+    throw new Error(data.message || "Could not verify email");
+  }
+
+  return data;
+}
+
 export async function requestPasswordReset(email) {
   const r = await fetch(`${API}/auth/forgot-password`, {
     method: "POST",
