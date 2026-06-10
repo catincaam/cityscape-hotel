@@ -34,6 +34,15 @@ export default function Dashboard() {
     async function load() {
       try {
         const result = await getDashboardData();
+        const client = result?.client || {};
+        const firstName = client.FirstName || client.firstName || "";
+        const lastName = client.LastName || client.lastName || "";
+        const userName = `${firstName} ${lastName}`.trim();
+        const userId = client.ClientId || client.clientId || client.id;
+        const userEmail = client.Email || client.email;
+        if (userName) localStorage.setItem("userName", userName);
+        if (userId) localStorage.setItem("userId", String(userId));
+        if (userEmail) localStorage.setItem("userEmail", userEmail);
         setData(result);
       } catch (err) {
         console.error(err);

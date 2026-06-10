@@ -2,6 +2,29 @@ import { API_BASE_URL } from "../config/runtimeUrls";
 
 const API = `${API_BASE_URL}/api`;
 
+function clearStoredSession() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("userName");
+  localStorage.removeItem("userId");
+  localStorage.removeItem("userEmail");
+}
+
+function storeClientSession(data) {
+  clearStoredSession();
+  localStorage.setItem("token", data.token);
+
+  if (data.client) {
+    const firstName = data.client.FirstName || data.client.firstName || "";
+    const lastName = data.client.LastName || data.client.lastName || "";
+    const userName = `${firstName} ${lastName}`.trim();
+    const userId = data.client.ClientId || data.client.clientId || data.client.id;
+    const userEmail = data.client.Email || data.client.email || "";
+    if (userName) localStorage.setItem("userName", userName);
+    if (userId) localStorage.setItem("userId", userId);
+    if (userEmail) localStorage.setItem("userEmail", userEmail);
+  }
+}
+
 export async function login(email, password) {
   const r = await fetch(`${API}/auth/login`, {
     method: "POST",
@@ -15,17 +38,7 @@ export async function login(email, password) {
   }
 
   const data = await r.json();
-  localStorage.setItem("token", data.token);
-  
-  // Store user info
-  if (data.client) {
-    const firstName = data.client.FirstName || data.client.firstName || "";
-    const lastName = data.client.LastName || data.client.lastName || "";
-    const userName = `${firstName} ${lastName}`.trim();
-    const userId = data.client.ClientId || data.client.clientId || data.client.id;
-    localStorage.setItem("userName", userName);
-    if (userId) localStorage.setItem("userId", userId);
-  }
+  storeClientSession(data);
   
   return data;
 }
@@ -43,11 +56,13 @@ export async function adminLogin(email, password) {
   }
 
   const data = await r.json();
+  clearStoredSession();
   localStorage.setItem("token", data.token);
 
   if (data.admin) {
     localStorage.setItem("userName", data.admin.name || "Admin");
     localStorage.setItem("userId", data.admin.AdminId);
+    localStorage.setItem("userEmail", data.admin.email || email);
   }
 
   return data;
@@ -117,7 +132,5 @@ export async function resetPassword(token, password) {
 }
 
 export function logout() {
-  localStorage.removeItem("token");
-  localStorage.removeItem("userName");
-  localStorage.removeItem("userId");
+  clearStoredSession();
 }
