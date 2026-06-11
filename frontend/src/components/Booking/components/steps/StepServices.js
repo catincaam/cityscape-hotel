@@ -4,6 +4,11 @@ import "./StepServices.css";
 
 const ACTIVE_SERVICE_STATUSES = ["activ", "active", "available", "disponibil"];
 
+function resolveServiceImage(value) {
+  if (!value) return "";
+  return value.startsWith("http") ? value : `${API_BASE_URL}${value.startsWith("/") ? "" : "/"}${value}`;
+}
+
 function isServiceAvailable(service) {
   const status = String(service.status || "activ").trim().toLowerCase();
   const bookableOnline =
@@ -163,7 +168,7 @@ export default function StepServices({
                 <div className="service-image-wrapper">
                   {service.image ? (
                     <img
-                      src={`${API_BASE_URL}${service.image}`}
+                      src={resolveServiceImage(service.image)}
                       alt={service.name}
                       className="service-image"
                     />
