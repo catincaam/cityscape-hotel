@@ -9,7 +9,7 @@ import {
 import Room from "../entities/Room.js";
 import RoomImage from "../entities/RoomImage.js";
 import { normalizeTextValues } from "../utils/normalizeText.js";
-import { getRoomDisplayImage, normalizeThemeImages } from "../utils/themeImage.js";
+import { normalizeThemeImages } from "../utils/themeImage.js";
 
 const roomThemeRouter = express.Router();
 
@@ -74,11 +74,9 @@ roomThemeRouter.get("/", async (req, res) => {
         const availableCount = rooms.length;
         const themeJson = theme.toJSON();
         const imageUrls = normalizeThemeImages(themeJson, images).map(img => img.imageUrl || img);
-        const displayImage = getRoomDisplayImage(themeJson, imageUrls);
         
         return {
           ...themeJson,
-          showcaseImage: displayImage,
           availableCount,
           floors,
           images: imageUrls
@@ -107,11 +105,9 @@ roomThemeRouter.get("/:id", async (req, res) => {
     
     const themeJson = theme.toJSON();
     const imageUrls = normalizeThemeImages(themeJson, images).map(img => img.imageUrl || img);
-    const displayImage = getRoomDisplayImage(themeJson, imageUrls);
 
     res.status(200).json({
       ...themeJson,
-      showcaseImage: displayImage,
       images: imageUrls
     });
   } catch (err) {
