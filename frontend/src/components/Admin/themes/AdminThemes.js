@@ -57,26 +57,22 @@ function getAmenities(theme) {
 }
 
 function ThemeCardImage({ theme }) {
-  const candidates = [
-    theme.showcaseImage,
-    ...(Array.isArray(theme.images) ? theme.images : [])
-  ].map(imageUrl).filter(Boolean);
-  const [imageIndex, setImageIndex] = useState(0);
-  const currentImage = candidates[imageIndex];
+  const showcaseUrl = imageUrl(theme.showcaseImage);
+  const [imageFailed, setImageFailed] = useState(false);
 
   useEffect(() => {
-    setImageIndex(0);
-  }, [theme.RoomThemeId, theme.showcaseImage, theme.images]);
+    setImageFailed(false);
+  }, [theme.RoomThemeId, theme.showcaseImage]);
 
-  if (!currentImage) {
-    return <div className="no-image">[No Image]</div>;
+  if (!showcaseUrl || imageFailed) {
+    return <div className="no-image">Showcase missing</div>;
   }
 
   return (
     <img
-      src={currentImage}
+      src={showcaseUrl}
       alt={theme.name}
-      onError={() => setImageIndex(prev => prev + 1)}
+      onError={() => setImageFailed(true)}
     />
   );
 }
