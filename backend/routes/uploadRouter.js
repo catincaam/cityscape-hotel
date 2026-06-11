@@ -1,40 +1,13 @@
 import express from "express";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
 import jwt from "jsonwebtoken";
-import RoomTheme from "../entities/RoomTheme.js";
-import RoomImage from "../entities/RoomImage.js";
-import Service from "../entities/Service.js";
-import Reward from "../entities/Reward.js";
+import { hasCloudinaryConfig, migrateLocalImagesToCloudinary } from "../services/cloudinaryMigrationService.js";
 
 const uploadRouter = express.Router();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const uploadDir = path.join(__dirname, "../uploads");
 const maxImageSizeMb = Number(process.env.UPLOAD_MAX_IMAGE_MB || 25);
 const cloudinaryFolder = process.env.CLOUDINARY_FOLDER || "cityscape-hotel";
-
-const hasCloudinaryConfig = Boolean(
-  process.env.CLOUDINARY_URL ||
-  (
-    process.env.CLOUDINARY_CLOUD_NAME &&
-    process.env.CLOUDINARY_API_KEY &&
-    process.env.CLOUDINARY_API_SECRET
-  )
-);
-
-if (hasCloudinaryConfig && !process.env.CLOUDINARY_URL) {
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-    secure: true
-  });
-}
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -130,54 +103,6 @@ function uploadBufferToCloudinary(file) {
   });
 }
 
-function isLocalUploadUrl(value) {
-  return typeof value === "string" && value.startsWith("/uploads/");
-}
-
-function localUploadPath(value) {
-  const filename = path.basename(value);
-  return path.join(uploadDir, filename);
-}
-
-async function migrateLocalUpload(value, cache, report) {
-  if (!isLocalUploadUrl(value)) return value;
-  if (cache.has(value)) return cache.get(value);
-
-  const filePath = localUploadPath(value);
-  if (!fs.existsSync(filePath)) {
-    report.missing.push(value);
-    cache.set(value, value);
-    return value;
-  }
-
-  const result = await cloudinary.uploader.upload(filePath, {
-    folder: cloudinaryFolder,
-    resource_type: "image",
-    use_filename: true,
-    unique_filename: true,
-    overwrite: false
-  });
-
-  cache.set(value, result.secure_url);
-  report.uploaded.push({ from: value, to: result.secure_url });
-  return result.secure_url;
-}
-
-async function migrateModelField(Model, field, label, cache, report) {
-  const rows = await Model.findAll();
-  for (const row of rows) {
-    const currentValue = row[field];
-    if (!isLocalUploadUrl(currentValue)) continue;
-
-    const migratedValue = await migrateLocalUpload(currentValue, cache, report);
-    if (migratedValue !== currentValue) {
-      row[field] = migratedValue;
-      await row.save();
-      report.updated.push({ type: label, id: row[Model.primaryKeyAttribute], field });
-    }
-  }
-}
-
 uploadRouter.post("/", runUpload(upload.single("image")), async (req, res) => {
   try {
     if (!ensureCloudinaryConfigured(res)) return;
@@ -221,24 +146,10 @@ uploadRouter.post("/migrate-local-images", requireAdmin, async (req, res) => {
   try {
     if (!ensureCloudinaryConfigured(res)) return;
 
-    const cache = new Map();
-    const report = {
-      uploaded: [],
-      updated: [],
-      missing: []
-    };
-
-    await migrateModelField(RoomTheme, "showcaseImage", "RoomTheme", cache, report);
-    await migrateModelField(RoomTheme, "image", "RoomTheme", cache, report);
-    await migrateModelField(RoomImage, "imageUrl", "RoomImage", cache, report);
-    await migrateModelField(Service, "image", "Service", cache, report);
-    await migrateModelField(Reward, "image", "Reward", cache, report);
+    const report = await migrateLocalImagesToCloudinary();
 
     res.status(200).json({
       message: "Local upload image migration completed",
-      uploadedCount: report.uploaded.length,
-      updatedCount: report.updated.length,
-      missingCount: report.missing.length,
       ...report
     });
   } catch (err) {

@@ -66,16 +66,3 @@ export async function uploadMultipleImages(files) {
     throwApiError(err, "Image upload failed");
   }
 }
-
-export async function migrateLocalImagesToCloudinary() {
-  const token = localStorage.getItem("token");
-  try {
-    const res = await axios.post(`${UPLOAD_API}/migrate-local-images`, {}, {
-      withCredentials: true,
-      headers: token ? { Authorization: `Bearer ${token}` } : {}
-    });
-    return res.data;
-  } catch (err) {
-    throwApiError(err, "Cloudinary migration failed");
-  }
-}

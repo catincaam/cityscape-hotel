@@ -10,6 +10,7 @@ import { normalizeTextValues } from "./utils/normalizeText.js";
 import "./entities/Reservation.js";
 import { seedAdmin } from "./seedAdmin.js";
 import { repairRoomThemeText } from "./services/roomThemeTextRepairService.js";
+import { migrateLocalImagesToCloudinary } from "./services/cloudinaryMigrationService.js";
 
 // Routes
 import authRouter from "./routes/authRouter.js";
@@ -146,6 +147,14 @@ DB_Init()
     const repairedThemes = await repairRoomThemeText();
     if (repairedThemes > 0) {
       console.log(`Normalized text encoding for ${repairedThemes} room theme(s).`);
+    }
+    const imageMigration = await migrateLocalImagesToCloudinary();
+    if (imageMigration.skipped) {
+      console.log(`[Cloudinary] Migration skipped: ${imageMigration.reason}`);
+    } else {
+      console.log(
+        `[Cloudinary] Migrated ${imageMigration.updatedCount} image reference(s); ${imageMigration.missingCount} missing local file(s).`
+      );
     }
   })
   .catch((err) => console.error("DB init failed:", err));

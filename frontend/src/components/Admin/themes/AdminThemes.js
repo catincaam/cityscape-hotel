@@ -4,8 +4,7 @@ import {
   createRoomTheme,
   updateRoomTheme,
   uploadMultipleImages,
-  deleteRoomTheme,
-  migrateLocalImagesToCloudinary
+  deleteRoomTheme
 } from "../../../services/roomThemeService";
 import { API_BASE_URL } from "../../../config/runtimeUrls";
 import "./AdminThemes.css";
@@ -90,7 +89,6 @@ export default function AdminThemes() {
   const [showcaseRemoved, setShowcaseRemoved] = useState(false);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
-  const [migratingImages, setMigratingImages] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [editingId, setEditingId] = useState(null);
@@ -142,24 +140,6 @@ export default function AdminThemes() {
       setError("Error loading themes");
     }
     setLoading(false);
-  }
-
-  async function handleMigrateImages() {
-    setMigratingImages(true);
-    setError("");
-    setSuccess("");
-
-    try {
-      const result = await migrateLocalImagesToCloudinary();
-      setSuccess(
-        `Cloudinary migration completed: ${result.updatedCount || 0} records updated, ${result.missingCount || 0} missing files.`
-      );
-      await fetchThemes();
-    } catch (err) {
-      setError(err.message || "Cloudinary migration failed");
-    } finally {
-      setMigratingImages(false);
-    }
   }
 
   function handleThemeImages(e) {
@@ -692,18 +672,8 @@ export default function AdminThemes() {
       {/* EXISTING THEMES */}
       <div className="existing-inventory">
         <div className="inventory-header">
-          <div>
-            <h2>Active Room Themes</h2>
-            <p>Review and update the themed rooms shown to guests.</p>
-          </div>
-          <button
-            type="button"
-            className="migration-btn"
-            onClick={handleMigrateImages}
-            disabled={migratingImages}
-          >
-            {migratingImages ? "Migrating..." : "Migrate Uploads"}
-          </button>
+          <h2>Active Room Themes</h2>
+          <p>Review and update the themed rooms shown to guests.</p>
         </div>
 
         {/* SEARCH */}
