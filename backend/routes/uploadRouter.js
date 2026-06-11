@@ -4,7 +4,7 @@ import { v2 as cloudinary } from "cloudinary";
 
 const uploadRouter = express.Router();
 
-const maxImageSizeMb = Number(process.env.UPLOAD_MAX_IMAGE_MB || 12);
+const maxImageSizeMb = Number(process.env.UPLOAD_MAX_IMAGE_MB || 25);
 const cloudinaryFolder = process.env.CLOUDINARY_FOLDER || "cityscape-hotel";
 
 const hasCloudinaryConfig = Boolean(
