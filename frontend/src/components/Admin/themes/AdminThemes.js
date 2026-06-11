@@ -56,6 +56,31 @@ function getAmenities(theme) {
   }
 }
 
+function ThemeCardImage({ theme }) {
+  const candidates = [
+    theme.showcaseImage,
+    ...(Array.isArray(theme.images) ? theme.images : [])
+  ].map(imageUrl).filter(Boolean);
+  const [imageIndex, setImageIndex] = useState(0);
+  const currentImage = candidates[imageIndex];
+
+  useEffect(() => {
+    setImageIndex(0);
+  }, [theme.RoomThemeId, theme.showcaseImage, theme.images]);
+
+  if (!currentImage) {
+    return <div className="no-image">[No Image]</div>;
+  }
+
+  return (
+    <img
+      src={currentImage}
+      alt={theme.name}
+      onError={() => setImageIndex(prev => prev + 1)}
+    />
+  );
+}
+
 export default function AdminThemes() {
   const [themes, setThemes] = useState([]);
   const [themeImages, setThemeImages] = useState([]);
@@ -697,13 +722,7 @@ export default function AdminThemes() {
             {filteredThemes.map(t => (
               <div key={t.RoomThemeId} className="reward-card">
                 <div className="reward-card-image">
-                  {t.showcaseImage ? (
-                    <img src={imageUrl(t.showcaseImage)} alt={t.name} />
-                  ) : t.images && t.images.length > 0 ? (
-                    <img src={imageUrl(t.images[0])} alt={t.name} />
-                  ) : (
-                    <div className="no-image">[No Image]</div>
-                  )}
+                  <ThemeCardImage theme={t} />
                   <div className="reward-card-badge">{t.basePrice} EUR</div>
                 </div>
 
