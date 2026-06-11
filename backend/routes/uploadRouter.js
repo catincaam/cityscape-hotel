@@ -1,9 +1,20 @@
 import express from "express";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import jwt from "jsonwebtoken";
+import RoomTheme from "../entities/RoomTheme.js";
+import RoomImage from "../entities/RoomImage.js";
+import Service from "../entities/Service.js";
+import Reward from "../entities/Reward.js";
 
 const uploadRouter = express.Router();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadDir = path.join(__dirname, "../uploads");
 const maxImageSizeMb = Number(process.env.UPLOAD_MAX_IMAGE_MB || 25);
 const cloudinaryFolder = process.env.CLOUDINARY_FOLDER || "cityscape-hotel";
 
@@ -70,6 +81,26 @@ function runUpload(middleware) {
   };
 }
 
+function requireAdmin(req, res, next) {
+  const authHeader = req.headers.authorization;
+  const [type, token] = String(authHeader || "").split(" ");
+
+  if (type !== "Bearer" || !token) {
+    return res.status(401).json({ message: "Missing admin token" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.role !== "admin") {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    req.admin = decoded;
+    next();
+  } catch {
+    return res.status(401).json({ message: "Invalid admin token" });
+  }
+}
+
 function ensureCloudinaryConfigured(res) {
   if (hasCloudinaryConfig) return true;
 
@@ -97,6 +128,54 @@ function uploadBufferToCloudinary(file) {
 
     stream.end(file.buffer);
   });
+}
+
+function isLocalUploadUrl(value) {
+  return typeof value === "string" && value.startsWith("/uploads/");
+}
+
+function localUploadPath(value) {
+  const filename = path.basename(value);
+  return path.join(uploadDir, filename);
+}
+
+async function migrateLocalUpload(value, cache, report) {
+  if (!isLocalUploadUrl(value)) return value;
+  if (cache.has(value)) return cache.get(value);
+
+  const filePath = localUploadPath(value);
+  if (!fs.existsSync(filePath)) {
+    report.missing.push(value);
+    cache.set(value, value);
+    return value;
+  }
+
+  const result = await cloudinary.uploader.upload(filePath, {
+    folder: cloudinaryFolder,
+    resource_type: "image",
+    use_filename: true,
+    unique_filename: true,
+    overwrite: false
+  });
+
+  cache.set(value, result.secure_url);
+  report.uploaded.push({ from: value, to: result.secure_url });
+  return result.secure_url;
+}
+
+async function migrateModelField(Model, field, label, cache, report) {
+  const rows = await Model.findAll();
+  for (const row of rows) {
+    const currentValue = row[field];
+    if (!isLocalUploadUrl(currentValue)) continue;
+
+    const migratedValue = await migrateLocalUpload(currentValue, cache, report);
+    if (migratedValue !== currentValue) {
+      row[field] = migratedValue;
+      await row.save();
+      report.updated.push({ type: label, id: row[Model.primaryKeyAttribute], field });
+    }
+  }
 }
 
 uploadRouter.post("/", runUpload(upload.single("image")), async (req, res) => {
@@ -135,6 +214,36 @@ uploadRouter.post("/multiple", runUpload(upload.array("images", 10)), async (req
   } catch (err) {
     console.error("Error uploading multiple images:", err);
     res.status(500).json({ message: err.message || "Image upload failed" });
+  }
+});
+
+uploadRouter.post("/migrate-local-images", requireAdmin, async (req, res) => {
+  try {
+    if (!ensureCloudinaryConfigured(res)) return;
+
+    const cache = new Map();
+    const report = {
+      uploaded: [],
+      updated: [],
+      missing: []
+    };
+
+    await migrateModelField(RoomTheme, "showcaseImage", "RoomTheme", cache, report);
+    await migrateModelField(RoomTheme, "image", "RoomTheme", cache, report);
+    await migrateModelField(RoomImage, "imageUrl", "RoomImage", cache, report);
+    await migrateModelField(Service, "image", "Service", cache, report);
+    await migrateModelField(Reward, "image", "Reward", cache, report);
+
+    res.status(200).json({
+      message: "Local upload image migration completed",
+      uploadedCount: report.uploaded.length,
+      updatedCount: report.updated.length,
+      missingCount: report.missing.length,
+      ...report
+    });
+  } catch (err) {
+    console.error("Cloudinary migration failed:", err);
+    res.status(500).json({ message: err.message || "Cloudinary migration failed" });
   }
 });
 

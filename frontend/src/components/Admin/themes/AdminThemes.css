@@ -29,6 +29,32 @@
   height: 16px;
 }
 
+.inventory-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.migration-btn {
+  border: 1px solid rgba(154, 120, 72, 0.42);
+  border-radius: 999px;
+  background: #fff;
+  color: #8b6b43;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  padding: 9px 15px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.migration-btn:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
 /* PREVIEW THUMBNAILS */
 .preview-thumbnails {
   display: flex;
