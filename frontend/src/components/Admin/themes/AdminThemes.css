@@ -54,6 +54,11 @@
   cursor: grabbing;
 }
 
+.dragging-thumbnail {
+  opacity: 0.72;
+  transform: scale(0.98);
+}
+
 .primary-thumbnail {
   border-color: #9a7848;
   box-shadow: 0 10px 22px rgba(154, 120, 72, 0.2);

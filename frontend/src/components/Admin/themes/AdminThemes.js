@@ -155,9 +155,20 @@ export default function AdminThemes() {
     setGalleryOrderChanged(true);
   }
 
-  function handleGalleryDrop(targetIndex) {
+  function handleGalleryDragStart(e, index) {
+    setDraggedImageIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(index));
+  }
+
+  function handleGalleryDragEnter(targetIndex) {
     if (draggedImageIndex === null) return;
+    if (draggedImageIndex === targetIndex) return;
     moveGalleryImage(draggedImageIndex, targetIndex);
+    setDraggedImageIndex(targetIndex);
+  }
+
+  function handleGalleryDrop() {
     setDraggedImageIndex(null);
   }
 
@@ -512,11 +523,12 @@ export default function AdminThemes() {
                   {themePreviews.map((preview, idx) => (
                     <div
                       key={`${preview}-${idx}`}
-                      className={`thumbnail gallery-thumbnail ${idx === 0 ? "primary-thumbnail" : ""}`}
+                      className={`thumbnail gallery-thumbnail ${idx === 0 ? "primary-thumbnail" : ""} ${draggedImageIndex === idx ? "dragging-thumbnail" : ""}`}
                       draggable
-                      onDragStart={() => setDraggedImageIndex(idx)}
+                      onDragStart={(e) => handleGalleryDragStart(e, idx)}
+                      onDragEnter={() => handleGalleryDragEnter(idx)}
                       onDragOver={(e) => e.preventDefault()}
-                      onDrop={() => handleGalleryDrop(idx)}
+                      onDrop={handleGalleryDrop}
                       onDragEnd={() => setDraggedImageIndex(null)}
                     >
                       {idx === 0 && <span className="primary-image-badge">Main</span>}
