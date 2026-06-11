@@ -34,13 +34,14 @@ const formatReservationRef = (id) => `BK-${String(id || "").padStart(4, "0")}`;
 export default function ServiceBooking() {
   const navigate = useNavigate();
   const location = useLocation();
-  const service = location.state?.service || (() => {
+  const initialService = location.state?.service || (() => {
     try {
       return JSON.parse(sessionStorage.getItem("selectedService") || "null");
     } catch {
       return null;
     }
   })();
+  const [service, setService] = useState(initialService);
   const isPerPerson = service?.priceType === "per_person";
 
   const [upcomingStays, setUpcomingStays] = useState([]);
@@ -94,6 +95,32 @@ export default function ServiceBooking() {
 
     fetchStays();
   }, []);
+
+  useEffect(() => {
+    const serviceId = initialService?.ServiceId || initialService?.serviceId || initialService?.id;
+    if (!serviceId) return;
+
+    async function refreshSelectedService() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/services`);
+        if (!res.ok) return;
+
+        const data = await res.json();
+        const freshService = Array.isArray(data)
+          ? data.find((item) => String(item.ServiceId ?? item.serviceId ?? item.id) === String(serviceId))
+          : null;
+
+        if (freshService) {
+          setService(freshService);
+          sessionStorage.setItem("selectedService", JSON.stringify(freshService));
+        }
+      } catch (err) {
+        console.warn("Could not refresh selected service:", err.message);
+      }
+    }
+
+    refreshSelectedService();
+  }, [initialService]);
 
   if (!service) {
     return (
