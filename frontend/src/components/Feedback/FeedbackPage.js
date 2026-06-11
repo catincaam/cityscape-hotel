@@ -183,7 +183,6 @@ const FeedbackPage = () => {
               </button>
               {error && <p style={{ textAlign: 'center', fontSize: 13, color: '#e53935', marginTop: 16 }}>{error}</p>}
               {success && <p style={{ textAlign: 'center', fontSize: 13, color: '#43a047', marginTop: 16 }}>Thank you for your feedback!</p>}
-              <p style={{ textAlign: 'center', fontSize: 12, color: '#617589', marginTop: 16 }}>By submitting, you agree to the terms and review policy.</p>
             </section>
           </form>
           {/* Featured Image / Brand Asset */}
@@ -196,11 +195,6 @@ const FeedbackPage = () => {
           </div>
           {/* Footer Navigation */}
           <footer style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '32px 0', color: '#617589', fontSize: 14 }}>
-            <div style={{ display: 'flex', gap: 32 }}>
-              <button style={{ color: 'var(--primary)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 14 }} onClick={() => alert('Privacy Policy coming soon!')}>Privacy Policy</button>
-              <button style={{ color: 'var(--primary)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 14 }} onClick={() => alert('Terms of Use coming soon!')}>Terms of Use</button>
-              <button style={{ color: 'var(--primary)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 14 }} onClick={() => window.location.href = 'http://localhost:3000/explore'}>Hotel Info</button>
-            </div>
             <p style={{ margin: 0 }}>{'\u00a9'} 2026 Cityscape Hotel Group. All rights reserved.</p>
           </footer>
         </div>
