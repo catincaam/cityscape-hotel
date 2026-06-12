@@ -156,8 +156,7 @@ router.get("/dashboard", authClient, async (req, res) => {
     const paidReservations = recentReservations.filter(r => r !== null).slice(0, 5);
 
     const collectionThemes = await RoomTheme.findAll({
-      order: [["RoomThemeId", "ASC"]],
-      limit: 6
+      order: [["RoomThemeId", "ASC"]]
     });
 
     const boutiqueCollections = await Promise.all(
