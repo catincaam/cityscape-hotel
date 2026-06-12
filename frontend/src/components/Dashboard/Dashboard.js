@@ -92,13 +92,20 @@ export default function Dashboard() {
   }, [data?.allReservations, today]);
 
   const featuredStay = data?.nextDestination || upcomingStays[0] || null;
-  const collectionSource = data?.recentReservations?.some((reservation) => reservation.image)
-    ? data.recentReservations
-    : data?.boutiqueCollections?.length
-      ? data.boutiqueCollections
+  const collectionSource = data?.boutiqueCollections?.length
+    ? data.boutiqueCollections
+    : data?.recentReservations?.length
+      ? data.recentReservations
       : data?.allReservations || [];
+  const featuredRoomKey = `${featuredStay?.room || ""}|${featuredStay?.city || ""}`.toLowerCase();
   const collectionRooms = collectionSource
-    .filter((reservation) => reservation.image)
+    .filter((room) => room.image)
+    .filter((room) => `${room.room || ""}|${room.city || ""}`.toLowerCase() !== featuredRoomKey)
+    .sort((a, b) => {
+      const aIsMadeira = /madeira/i.test(`${a.room || ""} ${a.city || ""}`);
+      const bIsMadeira = /madeira/i.test(`${b.room || ""} ${b.city || ""}`);
+      return Number(bIsMadeira) - Number(aIsMadeira);
+    })
     .slice(0, 2);
 
   if (loading) {
