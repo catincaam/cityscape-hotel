@@ -25,6 +25,26 @@ const getClientFirstName = (client) => {
   return "Guest";
 };
 
+const getTierProgress = (clientTier) => {
+  const completedStays = Number(clientTier?.completedStayCount || 0);
+  const currentTier = String(clientTier?.tip || clientTier?.name || "Standard").toLowerCase();
+
+  if (currentTier === "gold") {
+    return { percent: 100, label: "Gold tier" };
+  }
+
+  const currentThreshold = currentTier === "silver" ? 3 : 0;
+  const nextThreshold = currentTier === "silver" ? 6 : 3;
+  const progressInTier = Math.max(0, completedStays - currentThreshold);
+  const staysNeeded = Math.max(1, nextThreshold - currentThreshold);
+  const percent = Math.min(100, Math.round((progressInTier / staysNeeded) * 100));
+
+  return {
+    percent,
+    label: `${completedStays}/${nextThreshold} stays`
+  };
+};
+
 export default function Dashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -102,7 +122,7 @@ export default function Dashboard() {
   const firstName = getClientFirstName(data?.client);
   const points = Number(data?.cityPoints || 0);
   const tierName = getTierName(data?.clientTier);
-  const progress = Math.min(98, Math.max(12, Math.round((points % 10000) / 100)));
+  const tierProgress = getTierProgress(data?.clientTier);
 
   return (
     <>
@@ -127,14 +147,16 @@ export default function Dashboard() {
                 <span>City Points</span>
                 <small>{tierName}</small>
               </div>
-              <div className="points-number">{points.toLocaleString("en-US")}</div>
-              <div className="credits-label">credits</div>
+              <div className="points-balance">
+                <strong>{points.toLocaleString("en-US")}</strong>
+                <span>credits</span>
+              </div>
               <div className="tier-row">
                 <span>Tier progress</span>
-                <strong>{progress}%</strong>
+                <strong>{tierProgress.label}</strong>
               </div>
               <div className="tier-track">
-                <span style={{ width: `${progress}%` }} />
+                <span style={{ width: `${tierProgress.percent}%` }} />
               </div>
               <button type="button" className="outline-pill" onClick={() => navigate("/rewards")}>
                 Explore rewards

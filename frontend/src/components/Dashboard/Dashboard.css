@@ -102,7 +102,7 @@
 
 .points-panel {
   min-height: 270px;
-  padding: 34px 32px;
+  padding: 30px 28px;
   border-radius: 28px;
 }
 
@@ -128,21 +128,29 @@
   letter-spacing: 0.08em;
 }
 
-.points-number {
-  margin-top: 18px;
+.points-balance {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin: 22px 0 32px;
   color: #8a6a34;
-  font-size: 58px;
-  line-height: 0.9;
-  font-weight: 700;
 }
 
-.credits-label {
-  margin: -8px 0 34px 126px;
+.points-balance strong {
+  color: #8a6a34;
+  font-size: clamp(44px, 4vw, 56px);
+  line-height: 0.86;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.points-balance span {
+  padding-bottom: 5px;
   color: #a98a58;
   font-family: "Plus Jakarta Sans", Arial, sans-serif;
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
 }
 
@@ -537,12 +545,12 @@
     padding: 28px 24px;
   }
 
-  .points-number {
+  .points-balance strong {
     font-size: 46px;
   }
 
-  .credits-label {
-    margin-left: 100px;
+  .points-balance {
+    justify-content: center;
   }
 
   .stay-actions,
