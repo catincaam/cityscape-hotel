@@ -26,6 +26,7 @@ function resolveProfilePicture(value) {
 export default function AdminFeedback() {
   const [feedback, setFeedback] = useState([]);
   const [search, setSearch] = useState("");
+  const [ratingFilter, setRatingFilter] = useState("All");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -45,16 +46,22 @@ export default function AdminFeedback() {
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return feedback;
-
     return feedback.filter((item) => {
+      const rating = getRating(item);
       const name = getClientName(item).toLowerCase();
       const email = item.Client?.Email?.toLowerCase() || "";
       const comment = item.comment?.toLowerCase() || "";
       const reservation = String(item.ReservationId || item.Reservation?.ReservationId || "");
-      return name.includes(term) || email.includes(term) || comment.includes(term) || reservation.includes(term);
+      const matchesSearch = !term || name.includes(term) || email.includes(term) || comment.includes(term) || reservation.includes(term);
+      const matchesRating =
+        ratingFilter === "All" ||
+        (ratingFilter === "5 stars" && rating >= 5) ||
+        (ratingFilter === "4+ stars" && rating >= 4) ||
+        (ratingFilter === "Needs attention" && rating > 0 && rating < 4);
+
+      return matchesSearch && matchesRating;
     });
-  }, [feedback, search]);
+  }, [feedback, search, ratingFilter]);
 
   return (
     <div className="admin-feedback-page">
@@ -64,14 +71,30 @@ export default function AdminFeedback() {
           <h2>Feedback Archive</h2>
           <span>{feedback.length} reviews collected</span>
         </div>
+      </section>
+
+      <section className="admin-feedback-controls" aria-label="Feedback filters">
         <div className="admin-feedback-search">
           <Search size={16} />
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search feedback..."
+            placeholder="Search by guest, email, comment or reservation..."
           />
         </div>
+        <div className="admin-filter-pills">
+          {["All", "5 stars", "4+ stars", "Needs attention"].map((option) => (
+            <button
+              key={option}
+              type="button"
+              className={ratingFilter === option ? "active" : ""}
+              onClick={() => setRatingFilter(option)}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+        <span className="admin-results-count">{filtered.length} shown</span>
       </section>
 
       {error && <div className="admin-feedback-error">{error}</div>}

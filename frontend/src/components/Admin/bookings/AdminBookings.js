@@ -1,6 +1,4 @@
-import React, { useEffect, useState, useMemo, useRef } from "react";
-import { ReactComponent as FilterIcon } from '../../../assets/icons/filter.svg';
-import { ReactComponent as SortIcon } from '../../../assets/icons/sort.svg';
+import React, { useEffect, useState, useMemo } from "react";
 import { API_BASE_URL } from "../../../config/runtimeUrls";
 import defaultProfilePicture from "../../../assets/profilePicture.jpg";
 import "./AdminBookings.css";
@@ -13,10 +11,7 @@ export default function AdminBookings() {
   const [bookings, setBookings] = useState([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState('All');
-  const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
-  const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
-  const filterRef = useRef(null);
-  const sortRef = useRef(null);
+  const [sortOrder, setSortOrder] = useState("Newest");
     const [activeBookingsList, setActiveBookingsList] = useState([]);
     const [totalCashReceived, setTotalCashReceived] = useState(0);
     const [bookingStats, setBookingStats] = useState({
@@ -25,34 +20,6 @@ export default function AdminBookings() {
       projectedRevenue: 0,
       cashReceived: 0
     });
-      // Close sort dropdown on outside click
-      useEffect(() => {
-        function handleClickOutside(event) {
-          if (sortRef.current && !sortRef.current.contains(event.target)) {
-            setSortDropdownOpen(false);
-          }
-        }
-        if (sortDropdownOpen) {
-          document.addEventListener('mousedown', handleClickOutside);
-        } else {
-          document.removeEventListener('mousedown', handleClickOutside);
-        }
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-      }, [sortDropdownOpen]);
-    // Close dropdown on outside click
-    useEffect(() => {
-      function handleClickOutside(event) {
-        if (filterRef.current && !filterRef.current.contains(event.target)) {
-          setFilterDropdownOpen(false);
-        }
-      }
-      if (filterDropdownOpen) {
-        document.addEventListener('mousedown', handleClickOutside);
-      } else {
-        document.removeEventListener('mousedown', handleClickOutside);
-      }
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [filterDropdownOpen]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -161,16 +128,15 @@ export default function AdminBookings() {
       );
     }
     if (statusFilter !== 'All') {
-      if (['Active', 'Completed', 'Cancelled'].includes(statusFilter)) {
-        f = f.filter(b => b.status?.toLowerCase() === statusFilter.toLowerCase());
-      } else if (statusFilter === 'Recent') {
-        f = [...f].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      } else if (statusFilter === 'Oldest') {
-        f = [...f].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-      }
+      f = f.filter(b => b.status?.toLowerCase() === statusFilter.toLowerCase());
     }
+    f = [...f].sort((a, b) => {
+      const first = new Date(a.createdAt || a.checkin || 0);
+      const second = new Date(b.createdAt || b.checkin || 0);
+      return sortOrder === "Oldest" ? first - second : second - first;
+    });
     return f;
-  }, [search, statusFilter, bookings]);
+  }, [search, statusFilter, sortOrder, bookings]);
 
   // Pagination
   const pageCount = Math.ceil(filtered.length / PAGE_SIZE);
@@ -285,132 +251,46 @@ export default function AdminBookings() {
         </div>
 
         {/* SEARCH & FILTERS */}
-        <div className="inventory-controls">
-          <div className="search-box">
+        <div className="admin-clean-controls booking-clean-controls">
+          <div className="admin-clean-search">
             <input
               type="text"
-              placeholder="Filter bookings..."
+              placeholder="Search by guest, room or booking ID..."
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(1); }}
-              className="search-input"
             />
           </div>
-          <div className="booking-icon-controls">
-            <div style={{ position: 'relative', display: 'inline-block' }} ref={filterRef}>
+          <div className="admin-filter-pills">
+            {["All", "Active", "Completed", "Cancelled"].map((option) => (
               <button
-                className="icon-btn"
-                onClick={() => setFilterDropdownOpen(v => !v)}
+                key={option}
                 type="button"
-                title="Filter"
-                aria-haspopup="listbox"
-                aria-expanded={filterDropdownOpen}
+                className={statusFilter === option ? "active" : ""}
+                onClick={() => {
+                  setStatusFilter(option);
+                  setPage(1);
+                }}
               >
-                <FilterIcon style={{ width: 20, height: 20, marginRight: 4, verticalAlign: 'middle' }} />
-                <span style={{ fontWeight: statusFilter !== 'All' ? 600 : 400, color: '#444' }}>Filter</span>
+                {option}
               </button>
-              {filterDropdownOpen && (
-                <ul className="filter-dropdown" style={{
-                  position: 'absolute',
-                  top: '110%',
-                  left: 0,
-                  minWidth: 120,
-                  background: '#fff',
-                  border: '1px solid #eee',
-                  borderRadius: 8,
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.07)',
-                  zIndex: 10,
-                  padding: 0,
-                  margin: 0,
-                  listStyle: 'none',
-                  fontSize: 15
-                }}>
-                  {['All', 'Active', 'Completed', 'Cancelled'].map(opt => (
-                    <li key={opt}>
-                      <button
-                        className="dropdown-item"
-                        style={{
-                          width: '100%',
-                          textAlign: 'left',
-                          padding: '8px 16px',
-                          background: statusFilter === opt ? '#f3f4f6' : 'transparent',
-                          border: 'none',
-                          fontWeight: statusFilter === opt ? 600 : 400,
-                          color: '#222',
-                          cursor: 'pointer',
-                          borderRadius: 6
-                        }}
-                        onClick={() => {
-                          setStatusFilter(opt);
-                          setPage(1);
-                          setFilterDropdownOpen(false);
-                        }}
-                        type="button"
-                      >
-                        {opt}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            <div style={{ position: 'relative', display: 'inline-block' }} ref={sortRef}>
-              <button
-                className="icon-btn"
-                onClick={() => setSortDropdownOpen(v => !v)}
-                type="button"
-                title="Sort"
-                aria-haspopup="listbox"
-                aria-expanded={sortDropdownOpen}
-              >
-                <SortIcon style={{ width: 20, height: 20, marginRight: 4, verticalAlign: 'middle' }} />
-                <span style={{ fontWeight: ['Recent', 'Oldest'].includes(statusFilter) ? 600 : 400, color: '#444' }}>Sort</span>
-              </button>
-              {sortDropdownOpen && (
-                <ul className="filter-dropdown" style={{
-                  position: 'absolute',
-                  top: '110%',
-                  left: 0,
-                  minWidth: 120,
-                  background: '#fff',
-                  border: '1px solid #eee',
-                  borderRadius: 8,
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.07)',
-                  zIndex: 10,
-                  padding: 0,
-                  margin: 0,
-                  listStyle: 'none',
-                  fontSize: 15
-                }}>
-                  {['Recent', 'Oldest'].map(opt => (
-                    <li key={opt}>
-                      <button
-                        className="dropdown-item"
-                        style={{
-                          width: '100%',
-                          textAlign: 'left',
-                          padding: '8px 16px',
-                          background: statusFilter === opt ? '#f3f4f6' : 'transparent',
-                          border: 'none',
-                          fontWeight: statusFilter === opt ? 600 : 400,
-                          color: '#222',
-                          cursor: 'pointer',
-                          borderRadius: 6
-                        }}
-                        onClick={() => {
-                          setStatusFilter(opt);
-                          setPage(1);
-                          setSortDropdownOpen(false);
-                        }}
-                        type="button"
-                      >
-                        {opt}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            ))}
           </div>
+          <div className="admin-sort-pills" aria-label="Sort bookings">
+            {["Newest", "Oldest"].map((option) => (
+              <button
+                key={option}
+                type="button"
+                className={sortOrder === option ? "active" : ""}
+                onClick={() => {
+                  setSortOrder(option);
+                  setPage(1);
+                }}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+          <span className="admin-results-count">{filtered.length} bookings</span>
         </div>
 
         {/* BOOKINGS GRID */}

@@ -13,6 +13,8 @@ export default function AdminRooms() {
   const [rooms, setRooms] = useState([]);
   const [themes, setThemes] = useState([]);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [themeFilter, setThemeFilter] = useState("All");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -111,8 +113,7 @@ export default function AdminRooms() {
     return rooms.filter(r => {
       const theme = themes.find(t => t.RoomThemeId === r.RoomThemeId);
       const searchLower = search.toLowerCase();
-      
-      return (
+      const matchesSearch =
         String(r.RoomId).includes(search) ||
         String(r.floor).includes(search) ||
         r.status.toLowerCase().includes(searchLower) ||
@@ -120,10 +121,13 @@ export default function AdminRooms() {
           (
             theme.name?.toLowerCase().includes(searchLower) ||
             theme.city?.toLowerCase().includes(searchLower)
-          ))
-      );
+          ));
+      const matchesStatus = statusFilter === "All" || r.status.toLowerCase() === statusFilter.toLowerCase();
+      const matchesTheme = themeFilter === "All" || String(r.RoomThemeId) === String(themeFilter);
+
+      return matchesSearch && matchesStatus && matchesTheme;
     });
-  }, [rooms, themes, search]);
+  }, [rooms, themes, search, statusFilter, themeFilter]);
 
   function handleDelete(roomId) {
     const room = rooms.find(r => r.RoomId === roomId);
@@ -315,16 +319,41 @@ export default function AdminRooms() {
         </div>
 
         {/* SEARCH */}
-        <div className="inventory-controls">
-          <div className="search-box">
+        <div className="admin-clean-controls">
+          <div className="admin-clean-search">
             <input
               type="text"
-              placeholder="Search rooms..."
+              placeholder="Search by room, floor, status or city..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="search-input"
             />
           </div>
+          <div className="admin-filter-pills">
+            {["All", "Available", "Occupied", "Maintenance"].map((option) => (
+              <button
+                key={option}
+                type="button"
+                className={statusFilter === option ? "active" : ""}
+                onClick={() => setStatusFilter(option)}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+          <select
+            className="admin-clean-select"
+            value={themeFilter}
+            onChange={(event) => setThemeFilter(event.target.value)}
+            aria-label="Filter rooms by theme"
+          >
+            <option value="All">All themes</option>
+            {themes.map((theme) => (
+              <option key={theme.RoomThemeId} value={theme.RoomThemeId}>
+                {theme.name}
+              </option>
+            ))}
+          </select>
+          <span className="admin-results-count">{filteredRooms.length} rooms</span>
         </div>
 
         {/* ROOMS GRID */}

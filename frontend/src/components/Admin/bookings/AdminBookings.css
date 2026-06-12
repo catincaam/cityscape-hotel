@@ -1,51 +1,92 @@
-.booking-icon-controls {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.icon-btn {
-  background: #fff;
-  border: 1px solid #ebe2d7;
-  outline: none;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: #444;
-  padding: 8px 13px;
-  border-radius: 999px;
-  box-shadow: 0 8px 22px rgba(43, 35, 29, 0.04);
-  transition: box-shadow 0.15s, background 0.15s;
-  cursor: pointer;
-}
-.icon-btn:hover, .icon-btn:focus {
-  background: #f8f7f4;
-  box-shadow: 0 2px 8px rgba(168,140,105,0.08);
-}
-
-.filter-dropdown {
-  animation: fadeIn 0.18s;
-  box-shadow: 0 8px 24px rgba(168,140,105,0.10);
-}
-
-.dropdown-item:hover, .dropdown-item:focus {
-  background: #f5e9d7 !important;
-  color: #a88c69 !important;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: none; }
-}
-
-.dropdown-item[aria-selected="true"] {
-  background: #f3f4f6;
-  color: #a88c69;
-  font-weight: 600;
-}
 /* ADMIN BOOKINGS - ELEGANT REDESIGN */
 /* Uses the same styling as AdminRewards via import */
+
+.admin-clean-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 30px;
+  padding: 16px;
+  background: #fbfaf8;
+  border: 1px solid #ede8df;
+  border-radius: 12px;
+  box-shadow: 0 10px 28px rgba(31, 28, 22, 0.035);
+}
+
+.booking-clean-controls {
+  align-items: center;
+}
+
+.admin-clean-search {
+  flex: 1 1 300px;
+  min-width: min(330px, 100%);
+}
+
+.admin-clean-search input {
+  width: 100%;
+  height: 42px;
+  padding: 0 18px;
+  border: 1px solid #e4ddd2;
+  border-radius: 999px;
+  background: #fffdfa;
+  color: #221d18;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.admin-clean-search input:focus {
+  border-color: #c7a66e;
+  box-shadow: 0 0 0 3px rgba(198, 169, 105, 0.12);
+}
+
+.admin-filter-pills,
+.admin-sort-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-sort-pills {
+  padding-left: 12px;
+  border-left: 1px solid #e4ddd2;
+}
+
+.admin-filter-pills button,
+.admin-sort-pills button {
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid #e4ddd2;
+  border-radius: 999px;
+  background: #fff;
+  color: #776b5d;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.admin-filter-pills button:hover,
+.admin-filter-pills button.active,
+.admin-sort-pills button:hover,
+.admin-sort-pills button.active {
+  background: #141414;
+  border-color: #141414;
+  color: #fff;
+}
+
+.admin-results-count {
+  margin-left: auto;
+  color: #806329;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
 
 /* BOOKING STATS SECTION */
 .booking-stats-section {
@@ -1266,13 +1307,19 @@
     grid-column: 2;
   }
   
-  .booking-filter-controls {
-    flex-direction: column;
-    width: 100%;
+  .admin-clean-controls {
+    align-items: stretch;
   }
-  
-  .export-btn {
-    width: 100%;
+
+  .admin-sort-pills {
+    padding-left: 0;
+    border-left: 0;
+    padding-top: 8px;
+    border-top: 1px solid #e4ddd2;
+  }
+
+  .admin-results-count {
+    margin-left: 0;
   }
   
   .booking-pagination {

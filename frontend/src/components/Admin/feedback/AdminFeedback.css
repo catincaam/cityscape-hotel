@@ -8,7 +8,7 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 24px;
-  margin-bottom: 30px;
+  margin-bottom: 18px;
   padding: 34px 38px;
   background: #fff;
   border: 1px solid #ede8df;
@@ -40,13 +40,14 @@
 }
 
 .admin-feedback-search {
-  min-width: 320px;
+  min-width: min(420px, 100%);
+  flex: 1;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 14px;
+  padding: 0 16px;
   border: 1px solid #e4ddd2;
-  background: #fbfaf8;
+  background: #fffdfa;
 }
 
 .admin-feedback-search input {
@@ -56,6 +57,56 @@
   outline: 0;
   background: transparent;
   font: inherit;
+}
+
+.admin-feedback-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+  padding: 16px;
+  background: #fbfaf8;
+  border: 1px solid #ede8df;
+  box-shadow: 0 10px 28px rgba(31, 28, 22, 0.035);
+}
+
+.admin-filter-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-filter-pills button {
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid #e4ddd2;
+  border-radius: 999px;
+  background: #fff;
+  color: #776b5d;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.admin-filter-pills button:hover,
+.admin-filter-pills button.active {
+  background: #141414;
+  border-color: #141414;
+  color: #fff;
+}
+
+.admin-results-count {
+  margin-left: auto;
+  color: #806329;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .admin-feedback-grid {
@@ -199,8 +250,16 @@
     align-items: stretch;
   }
 
+  .admin-feedback-controls {
+    align-items: stretch;
+  }
+
   .admin-feedback-search {
     min-width: 0;
+  }
+
+  .admin-results-count {
+    margin-left: 0;
   }
 
   .admin-feedback-grid {
