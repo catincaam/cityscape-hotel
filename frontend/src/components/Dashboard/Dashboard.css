@@ -132,19 +132,22 @@
   display: flex;
   align-items: flex-end;
   gap: 10px;
+  flex-wrap: wrap;
   margin: 22px 0 32px;
   color: #8a6a34;
 }
 
 .points-balance strong {
+  min-width: 0;
   color: #8a6a34;
-  font-size: clamp(44px, 4vw, 56px);
+  font-size: clamp(40px, 3.6vw, 52px);
   line-height: 0.86;
   font-weight: 700;
   letter-spacing: 0;
 }
 
 .points-balance span {
+  max-width: 100%;
   padding-bottom: 5px;
   color: #a98a58;
   font-family: "Plus Jakarta Sans", Arial, sans-serif;
@@ -546,11 +549,11 @@
   }
 
   .points-balance strong {
-    font-size: 46px;
+    font-size: 44px;
   }
 
   .points-balance {
-    justify-content: center;
+    justify-content: flex-start;
   }
 
   .stay-actions,
