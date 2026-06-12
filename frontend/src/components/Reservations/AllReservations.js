@@ -95,7 +95,7 @@ export default function AllReservations() {
     if (Number.isNaN(checkIn.getTime())) return false;
 
     const hoursUntilCheckin = (checkIn.getTime() - Date.now()) / (1000 * 60 * 60);
-    return hoursUntilCheckin < 24;
+    return hoursUntilCheckin >= 0 && hoursUntilCheckin < 24;
   };
 
   const getTimelineStatus = (reservation) => {
