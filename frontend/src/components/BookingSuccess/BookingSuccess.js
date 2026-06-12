@@ -10,6 +10,8 @@ const resolveAssetUrl = (url) => {
   return `${API_BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
 };
 
+const formatMoney = (value) => `${Number(value || 0).toFixed(2)} EUR`;
+
 const normalizeSelectedServices = (rawServices) => {
   if (!rawServices) return [];
 
@@ -341,13 +343,13 @@ export default function BookingSuccess() {
                 {roomCost > 0 && (
                   <div className="payment-line">
                     <span>{room?.name || bookingDetails?.room?.name || "Room"} ({nights} {nights === 1 ? 'night' : 'nights'})</span>
-                    <span className="amount">â‚¬{roomCost.toFixed(2)}</span>
+                    <span className="amount">{formatMoney(roomCost)}</span>
                   </div>
                 )}
                 {servicesCost > 0 && (
                   <div className="payment-line">
                     <span>Services due at hotel</span>
-                    <span className="amount">â‚¬{servicesCost.toFixed(2)}</span>
+                    <span className="amount">{formatMoney(servicesCost)}</span>
                   </div>
                 )}
                 {selectedServiceRows.length > 0 && (
@@ -380,16 +382,16 @@ export default function BookingSuccess() {
                 {taxFees > 0 && (
                   <div className="payment-line">
                     <span>Taxes & Fees</span>
-                    <span className="amount">â‚¬{taxFees.toFixed(2)}</span>
+                    <span className="amount">{formatMoney(taxFees)}</span>
                   </div>
                 )}
                 <div className="payment-line total">
                   <span>Total Amount</span>
-                  <span className="amount">â‚¬{Number(invoice?.totalAmount).toFixed(2)}</span>
+                  <span className="amount">{formatMoney(invoice?.totalAmount)}</span>
                 </div>
                 <div className="payment-line paid">
                   <span>Paid</span>
-                  <span className="amount paid-amount">â‚¬{Number(payment?.amount).toFixed(2)}</span>
+                  <span className="amount paid-amount">{formatMoney(payment?.amount)}</span>
                 </div>
               </div>
               <button
