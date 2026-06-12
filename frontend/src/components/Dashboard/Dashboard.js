@@ -97,14 +97,17 @@ export default function Dashboard() {
     : data?.recentReservations?.length
       ? data.recentReservations
       : data?.allReservations || [];
-  const featuredRoomKey = `${featuredStay?.room || ""}|${featuredStay?.city || ""}`.toLowerCase();
+  const preferredCollectionOrder = ["shanghai", "madeira"];
   const collectionRooms = collectionSource
     .filter((room) => room.image)
-    .filter((room) => `${room.room || ""}|${room.city || ""}`.toLowerCase() !== featuredRoomKey)
     .sort((a, b) => {
-      const aIsMadeira = /madeira/i.test(`${a.room || ""} ${a.city || ""}`);
-      const bIsMadeira = /madeira/i.test(`${b.room || ""} ${b.city || ""}`);
-      return Number(bIsMadeira) - Number(aIsMadeira);
+      const getPreference = (room) => {
+        const text = `${room.room || ""} ${room.city || ""}`.toLowerCase();
+        const index = preferredCollectionOrder.findIndex((city) => text.includes(city));
+        return index === -1 ? preferredCollectionOrder.length : index;
+      };
+
+      return getPreference(a) - getPreference(b);
     })
     .slice(0, 2);
 
