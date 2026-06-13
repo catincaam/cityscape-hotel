@@ -127,8 +127,8 @@
 
 .admin-feedback-card-top {
   display: grid;
-  grid-template-columns: 46px minmax(0, 1fr) auto;
-  gap: 12px;
+  grid-template-columns: 54px minmax(0, 1fr) auto;
+  gap: 14px;
   align-items: center;
 }
 
@@ -137,12 +137,12 @@
 }
 
 .admin-feedback-avatar {
-  width: 46px;
-  height: 46px;
+  width: 54px;
+  height: 54px;
   display: grid;
   place-items: center;
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: 12px;
   color: #806329;
   background: #f1eee8;
 }
@@ -150,7 +150,8 @@
 .admin-feedback-avatar img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  padding: 2px;
 }
 
 .admin-feedback-card h3 {
