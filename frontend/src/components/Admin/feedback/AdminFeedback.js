@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { Search, Star } from "lucide-react";
 import { API_BASE_URL } from "../../../config/runtimeUrls";
@@ -6,13 +6,29 @@ import defaultProfilePicture from "../../../assets/profilePicture.jpg";
 import "./AdminFeedback.css";
 
 function getClientName(feedback) {
-  const client = feedback.Client;
+  const client = feedback.Client || feedback.client || {};
   if (!client) return "Guest";
   return `${client.FirstName || ""} ${client.LastName || ""}`.trim() || "Guest";
 }
 
+function getClientEmail(feedback) {
+  const client = feedback.Client || feedback.client || {};
+  return client.Email || client.email || feedback.email || "";
+}
+
 function getRating(feedback) {
   return Number(feedback.overall || feedback.service || feedback.cleanliness || feedback.theme || 0);
+}
+
+function getClientProfilePicture(feedback) {
+  const client = feedback.Client || feedback.client || {};
+  return (
+    client.profilePicture ||
+    client.ProfilePicture ||
+    feedback.profilePicture ||
+    feedback.guestAvatar ||
+    ""
+  );
 }
 
 function resolveProfilePicture(value) {
@@ -30,9 +46,8 @@ export default function AdminFeedback() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    setLoading(true);
-    axios.get("/api/feedback")
+  const loadFeedback = useCallback(() => {
+    return axios.get("/api/feedback")
       .then((res) => {
         setFeedback(Array.isArray(res.data) ? res.data : []);
         setError("");
@@ -44,12 +59,19 @@ export default function AdminFeedback() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    setLoading(true);
+    loadFeedback();
+    const interval = setInterval(loadFeedback, 30000);
+    return () => clearInterval(interval);
+  }, [loadFeedback]);
+
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     return feedback.filter((item) => {
       const rating = getRating(item);
       const name = getClientName(item).toLowerCase();
-      const email = item.Client?.Email?.toLowerCase() || "";
+      const email = getClientEmail(item).toLowerCase();
       const comment = item.comment?.toLowerCase() || "";
       const reservation = String(item.ReservationId || item.Reservation?.ReservationId || "");
       const matchesSearch = !term || name.includes(term) || email.includes(term) || comment.includes(term) || reservation.includes(term);
@@ -106,7 +128,8 @@ export default function AdminFeedback() {
           {filtered.map((item) => {
             const rating = getRating(item);
             const clientName = getClientName(item);
-            const profilePicture = resolveProfilePicture(item.Client?.profilePicture);
+            const email = getClientEmail(item);
+            const profilePicture = resolveProfilePicture(getClientProfilePicture(item));
             const reservationId = item.ReservationId || item.Reservation?.ReservationId;
             const date = item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "N/A";
 
@@ -122,7 +145,7 @@ export default function AdminFeedback() {
                   </div>
                   <div>
                     <h3>{clientName}</h3>
-                    <p>{item.Client?.Email || "No email"}</p>
+                    <p>{email || "No email"}</p>
                   </div>
                   <div className="admin-feedback-score">
                     <Star size={15} />
