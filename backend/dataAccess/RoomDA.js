@@ -230,11 +230,61 @@ async function getAvailableRooms({ checkIn, checkOut, guests }) {
   return Object.values(grouped);
 }
 
+function parseDateOnly(value) {
+  const [year, month, day] = String(value || "").split("-").map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
+function formatDateOnly(date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function addDays(date, days) {
+  const next = new Date(date);
+  next.setUTCDate(next.getUTCDate() + days);
+  return next;
+}
+
+async function getAvailabilitySuggestions({ checkIn, checkOut, guests, limit = 3, searchDays = 30 }) {
+  const start = parseDateOnly(checkIn);
+  const end = parseDateOnly(checkOut);
+  if (!start || !end || start >= end) return [];
+
+  const stayLengthDays = Math.max(1, Math.round((end - start) / (1000 * 60 * 60 * 24)));
+  const suggestions = [];
+
+  for (let offset = 1; offset <= searchDays && suggestions.length < limit; offset += 1) {
+    const suggestedStart = addDays(start, offset);
+    const suggestedEnd = addDays(suggestedStart, stayLengthDays);
+    const suggestedCheckIn = formatDateOnly(suggestedStart);
+    const suggestedCheckOut = formatDateOnly(suggestedEnd);
+    const availableRooms = await getAvailableRooms({
+      checkIn: suggestedCheckIn,
+      checkOut: suggestedCheckOut,
+      guests
+    });
+    const totalRooms = availableRooms.reduce((sum, room) => sum + Number(room.availableCount || 0), 0);
+
+    if (totalRooms > 0) {
+      suggestions.push({
+        checkIn: suggestedCheckIn,
+        checkOut: suggestedCheckOut,
+        availableThemes: availableRooms.length,
+        totalRooms
+      });
+    }
+  }
+
+  return suggestions;
+}
+
 export {
   createRoom,
   getRoomById,
   getRooms,
   updateRoom,
   deleteRoom,
-  getAvailableRooms
+  getAvailableRooms,
+  getAvailabilitySuggestions
 };

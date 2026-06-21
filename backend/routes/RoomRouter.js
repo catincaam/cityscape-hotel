@@ -5,7 +5,8 @@ import {
   getRooms,
   updateRoom,
   deleteRoom,
-  getAvailableRooms
+  getAvailableRooms,
+  getAvailabilitySuggestions
 } from "../dataAccess/RoomDA.js";
 import { isPositiveInteger, isValidDateRange } from "../utils/validators.js";
 
@@ -58,6 +59,36 @@ roomRouter.get("/available/search", async (req, res) => {
     });
 
     res.status(200).json(rooms);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "server error" });
+  }
+});
+
+roomRouter.get("/available/suggestions", async (req, res) => {
+  try {
+    const { checkIn, checkOut, adults, children } = req.query;
+
+    if (!checkIn || !checkOut) {
+      return res.status(400).json({ message: "Missing check-in or check-out" });
+    }
+
+    const guests = Number(adults || 0) + Number(children || 0);
+    if (!isValidDateRange(checkIn, checkOut)) {
+      return res.status(400).json({ message: "Check-in must be before check-out." });
+    }
+
+    if (!isPositiveInteger(guests)) {
+      return res.status(400).json({ message: "Guests must be a positive number." });
+    }
+
+    const suggestions = await getAvailabilitySuggestions({
+      checkIn,
+      checkOut,
+      guests
+    });
+
+    res.status(200).json(suggestions);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "server error" });

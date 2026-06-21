@@ -48,9 +48,11 @@ function getCityFallbackImage(city) {
   return cityFallbackImages[String(city || "").trim().toLowerCase()] || "https://via.placeholder.com/520x320?text=No+Image";
 }
 
-export default function StepRooms({ bookingData, onSelectRoom, onBack, onNext }) {
+export default function StepRooms({ bookingData, onSelectRoom, onChangeDates, onBack, onNext }) {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [suggestions, setSuggestions] = useState([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [selectedRoomId, setSelectedRoomId] = useState(bookingData.room?.id || null);
   const [priceBounds, setPriceBounds] = useState({ min: 50, max: 300 });
   const navigate = useNavigate();
@@ -68,6 +70,8 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack, onNext })
   useEffect(() => {
     async function fetchRooms() {
       try {
+        setLoading(true);
+        setSuggestions([]);
         // Calculez total oaspeți
 
         // Apelez /available/search cu date și numărul de oaspeți
@@ -79,8 +83,9 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack, onNext })
 
         const res = await fetch(url.toString());
         const data = await res.json();
+        const availableData = Array.isArray(data) ? data : [];
 
-        const mapped = data.map((r) => {
+        const mapped = availableData.map((r) => {
           return {
             id: r.RoomTheme?.RoomThemeId || r.RoomThemeId,
             roomId: r.RoomId,
@@ -99,6 +104,26 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack, onNext })
         });
 
         setRooms(mapped);
+
+        if (mapped.length === 0) {
+          setLoading(false);
+          setLoadingSuggestions(true);
+          try {
+            const suggestionUrl = new URL(`${API_BASE_URL}/api/rooms/available/suggestions`);
+            suggestionUrl.searchParams.append("checkIn", bookingData.checkIn);
+            suggestionUrl.searchParams.append("checkOut", bookingData.checkOut);
+            suggestionUrl.searchParams.append("adults", bookingData.adults);
+            suggestionUrl.searchParams.append("children", bookingData.children);
+            const suggestionResponse = await fetch(suggestionUrl.toString());
+            const suggestionData = await suggestionResponse.json();
+            setSuggestions(Array.isArray(suggestionData) ? suggestionData : []);
+          } catch (suggestionError) {
+            console.error("Error fetching availability suggestions:", suggestionError);
+            setSuggestions([]);
+          } finally {
+            setLoadingSuggestions(false);
+          }
+        }
 
         if (mapped.length) {
           const prices = mapped.map((room) => Number(room.basePrice || 0)).filter((price) => Number.isFinite(price));
@@ -177,6 +202,15 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack, onNext })
     }));
   }
 
+  function resetFilters() {
+    setFilters({
+      amenities: [],
+      theme: "All",
+      minPrice: priceBounds.min,
+      maxPrice: priceBounds.max
+    });
+  }
+
   // Calcul număr nopți
   function calculateNights() {
     if (!bookingData.checkIn || !bookingData.checkOut) return 0;
@@ -199,7 +233,7 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack, onNext })
         <div className="filters-card">
           <div className="filters-header">
             <h3 className="filters-title">Refine your stay</h3>
-            <button className="reset-btn" onClick={() => setFilters({ amenities: [], theme: "All", minPrice: priceBounds.min, maxPrice: priceBounds.max })}>
+            <button className="reset-btn" onClick={resetFilters}>
               Reset
             </button>
           </div>
@@ -272,8 +306,50 @@ export default function StepRooms({ bookingData, onSelectRoom, onBack, onNext })
 
         {!loading && filteredRooms.length === 0 && (
           <div className="no-rooms-message">
-            <p>No rooms available for this combination.</p>
-            <p>Try different dates or a different guest configuration.</p>
+            {rooms.length > 0 ? (
+              <>
+                <p>Rooms are available for these dates, but not with the current filters.</p>
+                <button type="button" className="suggestion-reset-btn" onClick={resetFilters}>
+                  Reset filters
+                </button>
+              </>
+            ) : (
+              <>
+                <p>No rooms are available for these dates.</p>
+                <p>Here are the closest date options with real availability.</p>
+
+                {loadingSuggestions && (
+                  <span className="suggestions-loading">Checking nearby dates...</span>
+                )}
+
+                {!loadingSuggestions && suggestions.length > 0 && (
+                  <div className="date-suggestions">
+                    {suggestions.map((suggestion) => (
+                      <button
+                        type="button"
+                        className="date-suggestion-card"
+                        key={`${suggestion.checkIn}-${suggestion.checkOut}`}
+                        onClick={() => onChangeDates?.(suggestion.checkIn, suggestion.checkOut)}
+                      >
+                        <span>{suggestion.checkIn} - {suggestion.checkOut}</span>
+                        <strong>
+                          {suggestion.totalRooms} {suggestion.totalRooms === 1 ? "room" : "rooms"} available
+                        </strong>
+                        <small>
+                          {suggestion.availableThemes} {suggestion.availableThemes === 1 ? "theme" : "themes"}
+                        </small>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {!loadingSuggestions && suggestions.length === 0 && (
+                  <span className="suggestions-loading">
+                    No nearby alternatives found yet. Try a wider date range or fewer guests.
+                  </span>
+                )}
+              </>
+            )}
           </div>
         )}
 

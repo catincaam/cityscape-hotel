@@ -67,6 +67,16 @@ export default function Booking() {
     setBookingData({ ...bookingData, room });
   }
 
+  function updateStayDates(checkIn, checkOut) {
+    setBookingData((current) => ({
+      ...current,
+      checkIn,
+      checkOut,
+      room: null,
+      services: {}
+    }));
+  }
+
   function handleStepClick(newStep) {
     if (newStep <= step) {
       setStep(newStep);
@@ -116,6 +126,7 @@ export default function Booking() {
             <StepRooms
               bookingData={bookingData}
               onSelectRoom={selectRoom}
+              onChangeDates={updateStayDates}
               onBack={() => setStep(1)}
               onNext={() => {
                 if (!bookingData.room) {

@@ -345,6 +345,70 @@
   color: #94a3b8;
 }
 
+.suggestions-loading {
+  display: block;
+  margin-top: 18px;
+  color: #7b8794;
+  font-size: 13px;
+}
+
+.date-suggestions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.date-suggestion-card,
+.suggestion-reset-btn {
+  border: 1px solid #dfcfbd;
+  background: #fffdf9;
+  color: #182434;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.date-suggestion-card {
+  min-height: 108px;
+  padding: 16px 14px;
+  display: grid;
+  gap: 7px;
+  text-align: left;
+}
+
+.date-suggestion-card:hover,
+.suggestion-reset-btn:hover {
+  border-color: #b58c55;
+  box-shadow: 0 12px 26px rgba(17, 24, 39, 0.08);
+  transform: translateY(-1px);
+}
+
+.date-suggestion-card span,
+.date-suggestion-card small {
+  color: #7a8796;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.date-suggestion-card strong {
+  color: #9a6f36;
+  font-size: 16px;
+  font-family: Georgia, serif;
+  line-height: 1.2;
+}
+
+.suggestion-reset-btn {
+  margin-top: 16px;
+  padding: 12px 24px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 /* =========================
    CARD CAMERĂ - NOU DESIGN
 ========================= */
@@ -833,6 +897,14 @@
     font-size: 14px;
     line-height: 1.5;
     margin-bottom: 20px;
+  }
+
+  .no-rooms-message {
+    padding: 34px 18px;
+  }
+
+  .date-suggestions {
+    grid-template-columns: 1fr;
   }
 
   .room-card {
