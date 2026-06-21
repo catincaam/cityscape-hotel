@@ -6,6 +6,35 @@ const hasSmtpConfig = () => Boolean(process.env.EMAIL_USER && process.env.EMAIL_
 const hasBrevoConfig = () => Boolean(process.env.BREVO_API_KEY);
 const hasResendConfig = () => Boolean(process.env.RESEND_API_KEY);
 
+const configuredEmailProviders = () => {
+  const providers = [];
+  if (hasResendConfig()) providers.push({ name: "Resend", send: sendWithResend });
+  if (hasBrevoConfig()) providers.push({ name: "Brevo", send: sendWithBrevo });
+  if (hasSmtpConfig()) {
+    providers.push({
+      name: "SMTP",
+      send: async (mailOptions) => {
+        const transporter = createTransporter();
+        const info = await transporter.sendMail({
+          from: `"${process.env.EMAIL_FROM_NAME || "Cityscape Hotel"}" <${process.env.EMAIL_FROM_ADDRESS || process.env.EMAIL_USER}>`,
+          ...mailOptions
+        });
+
+        return { success: true, messageId: info.messageId };
+      }
+    });
+  }
+
+  const preferredProvider = String(process.env.EMAIL_PROVIDER || "").trim().toLowerCase();
+  if (!preferredProvider) return providers;
+
+  return providers.sort((first, second) => {
+    const firstPreferred = first.name.toLowerCase() === preferredProvider;
+    const secondPreferred = second.name.toLowerCase() === preferredProvider;
+    return Number(secondPreferred) - Number(firstPreferred);
+  });
+};
+
 const normalizeRecipients = (to) => {
   const recipients = Array.isArray(to) ? to : [to];
   return recipients
@@ -148,33 +177,35 @@ const roomName = (room) => {
 };
 
 const sendMail = async (mailOptions) => {
-  if (!hasResendConfig() && !hasBrevoConfig() && !hasSmtpConfig()) {
+  const providers = configuredEmailProviders();
+
+  if (!providers.length) {
     return {
       success: false,
       error: "Email credentials are not configured. Add RESEND_API_KEY, BREVO_API_KEY or EMAIL_USER and EMAIL_PASSWORD."
     };
   }
 
-  try {
-    if (hasResendConfig()) {
-      return await sendWithResend(mailOptions);
+  const failures = [];
+
+  for (const provider of providers) {
+    try {
+      const result = await provider.send(mailOptions);
+      if (result?.success === false) {
+        throw new Error(result.error || `${provider.name} email sending failed.`);
+      }
+      return { ...result, provider: provider.name };
+    } catch (error) {
+      const message = error?.message || String(error);
+      failures.push(`${provider.name}: ${message}`);
+      console.error(`[EMAIL ERROR] ${provider.name}`, error);
     }
-
-    if (hasBrevoConfig()) {
-      return await sendWithBrevo(mailOptions);
-    }
-
-    const transporter = createTransporter();
-    const info = await transporter.sendMail({
-      from: `"${process.env.EMAIL_FROM_NAME || "Cityscape Hotel"}" <${process.env.EMAIL_FROM_ADDRESS || process.env.EMAIL_USER}>`,
-      ...mailOptions
-    });
-
-    return { success: true, messageId: info.messageId };
-  } catch (error) {
-    console.error("[EMAIL ERROR]", error);
-    return { success: false, error: error.message };
   }
+
+  return {
+    success: false,
+    error: failures.join(" | ") || "Email sending failed."
+  };
 };
 
 export const sendReservationConfirmation = async ({
