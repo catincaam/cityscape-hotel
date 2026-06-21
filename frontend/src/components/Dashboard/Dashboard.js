@@ -225,7 +225,7 @@ export default function Dashboard() {
                   </div>
                   <div className="stay-actions">
                     <button type="button" className="solid-pill" onClick={() => navigate("/services")}>
-                      Concierge desk
+                      Manage stay
                     </button>
                     <button
                       type="button"
