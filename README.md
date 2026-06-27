@@ -114,16 +114,6 @@ This feature makes the platform more realistic because the hotel offer can be up
 
 ---
 
-### Service Management
-
-The platform also allows the administrator to manage hotel services.
-
-![Service Management](docs/screenshots/service-management.png)
-
-This helps extend the hotel experience beyond rooms and gives the business more flexibility in presenting its available facilities.
-
----
-
 ### Customer Data
 
 The admin dashboard includes a section for customer-related information, helping hotel staff better understand users and reservations.
