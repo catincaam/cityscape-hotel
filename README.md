@@ -1,4 +1,4 @@
-# 🏨 Cityscape Hotel
+# Cityscape Hotel
 
 **Cityscape Hotel** is a full-stack hotel booking and management platform designed for both guests and hotel administrators.
 
@@ -8,13 +8,13 @@ The project simulates a realistic digital experience for a modern hotel, combini
 
 ---
 
-## 🌐 Live Demo
+## Live Demo
 
-🔗 **Website:** https://cityscape-hotel-2lr8.vercel.app
+ **Website:** https://cityscape-hotel-2lr8.vercel.app
 
 ---
 
-## 🔐 Demo Access
+##  Demo Access
 
 You can test the guest experience using the demo account:
 
@@ -27,7 +27,7 @@ The demo account can be used to explore the platform, browse rooms, create booki
 
 ---
 
-## ✨ Project Overview
+##  Project Overview
 
 Cityscape Hotel was created as a complete digital solution for a hotel business.
 
@@ -42,7 +42,7 @@ The application is not only focused on the visual side of a hotel website, but a
 
 ---
 
-## 📸 Application Preview
+##  Application Preview
 
 ### Homepage
 
@@ -92,7 +92,7 @@ This section gives users control over their booking history and simulates a real
 
 ---
 
-## 🧑‍💼 Admin Dashboard
+##  Admin Dashboard
 
 The platform also includes a dedicated admin dashboard designed for hotel owners and staff members.
 
@@ -144,7 +144,7 @@ These insights transform the project from a simple booking website into a more c
 
 ---
 
-## 🤖 Machine Learning Forecasts
+##  Machine Learning Forecasts
 
 One of the most important features of the project is the integration of a machine learning service for forecasting.
 
@@ -156,7 +156,7 @@ This can help the hotel owner better understand future demand and support decisi
 
 ---
 
-## 👤 Guest User Flow
+##  Guest User Flow
 
 ```txt
 Visit website
@@ -176,7 +176,7 @@ The guest flow was designed to be clear, simple, and familiar, similar to real h
 
 ---
 
-## 🧑‍💼 Admin User Flow
+##  Admin User Flow
 
 ```txt
 Log in as admin
@@ -196,7 +196,7 @@ The admin side gives the application a more complete structure, showing both the
 
 ---
 
-## 🚀 Main Features
+##  Main Features
 
 ### Guest Features
 
@@ -223,7 +223,7 @@ The admin side gives the application a more complete structure, showing both the
 
 ---
 
-## 🧱 Tech Stack
+##  Tech Stack
 
 ### Frontend
 
@@ -254,7 +254,7 @@ The admin side gives the application a more complete structure, showing both the
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```txt
 cityscape-hotel/
@@ -279,7 +279,7 @@ cityscape-hotel/
 
 ---
 
-## 🧪 How to Test the Platform
+##  How to Test the Platform
 
 1. Open the live website:
 
@@ -306,7 +306,7 @@ The admin dashboard is also implemented, but access credentials are not publicly
 
 ---
 
-## 🎯 Purpose of the Project
+##  Purpose of the Project
 
 The purpose of Cityscape Hotel is to demonstrate how a full-stack web application can support both customer interaction and business administration.
 
@@ -325,7 +325,7 @@ By including both a guest interface and an admin interface, the project offers a
 
 ---
 
-## 🔮 Future Improvements
+##  Future Improvements
 
 Possible future improvements include:
 
@@ -342,7 +342,7 @@ Possible future improvements include:
 
 ---
 
-## 👩‍💻 Author
+##  Author
 
 Created by **Catinca Marinescu**.
 
