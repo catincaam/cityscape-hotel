@@ -39,7 +39,7 @@ export default function GuestSentiment({ data, loading, onViewAll }) {
   return (
     <section className="dashboard-card guest-sentiment">
       <div className="dashboard-card-heading sentiment-heading">
-        <h3>Guest Sentiment</h3>
+        <h3>Recent Feedback</h3>
         <button type="button" onClick={onViewAll}>View all feedback</button>
       </div>
       {loading ? (
