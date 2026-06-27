@@ -47,10 +47,6 @@ export default function AdminDashboardV2({ onViewAllFeedback }) {
   return (
     <div className="dashboard-v2-container">
       <div className="dashboard-v2-header">
-        <div>
-          <h2>Reports & Analytics</h2>
-          <p>Performance insights and forecasts</p>
-        </div>
         <div className="dashboard-period-tabs">
           {periodOptions.map((option) => (
             <button
