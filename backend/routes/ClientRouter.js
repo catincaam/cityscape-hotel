@@ -88,13 +88,13 @@ clientRouter.put("/me", authMiddleware, async (req, res) => {
     const updates = {};
     if (typeof firstName === "string" && firstName.trim()) {
       if (!isValidPersonName(firstName)) {
-        return res.status(400).json({ message: "First name must have at least 3 letters and cannot contain numbers or special symbols." });
+        return res.status(400).json({ message: "First name must have at least 2 letters and cannot contain numbers or special symbols." });
       }
       updates.FirstName = firstName.trim();
     }
     if (typeof lastName === "string" && lastName.trim()) {
       if (!isValidPersonName(lastName)) {
-        return res.status(400).json({ message: "Last name must have at least 3 letters and cannot contain numbers or special symbols." });
+        return res.status(400).json({ message: "Last name must have at least 2 letters and cannot contain numbers or special symbols." });
       }
       updates.LastName = lastName.trim();
     }
@@ -208,10 +208,10 @@ clientRouter.put("/:id", authMiddleware, async (req, res) => {
     const lastName = updates.LastName || updates.lastName;
     const email = updates.Email || updates.email;
     if (firstName && !isValidPersonName(firstName)) {
-      return res.status(400).json({ message: "First name must have at least 3 letters and cannot contain numbers or special symbols." });
+      return res.status(400).json({ message: "First name must have at least 2 letters and cannot contain numbers or special symbols." });
     }
     if (lastName && !isValidPersonName(lastName)) {
-      return res.status(400).json({ message: "Last name must have at least 3 letters and cannot contain numbers or special symbols." });
+      return res.status(400).json({ message: "Last name must have at least 2 letters and cannot contain numbers or special symbols." });
     }
     if (email) {
       const normalizedEmail = normalizeEmail(email);

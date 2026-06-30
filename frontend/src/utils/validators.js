@@ -1,4 +1,4 @@
-const NAME_REGEX = /^[A-Za-zÀ-ž' -]{3,}$/;
+const NAME_REGEX = /^[A-Za-zÀ-ž' -]{2,}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function isValidPersonName(value) {

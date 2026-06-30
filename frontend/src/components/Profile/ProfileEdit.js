@@ -156,7 +156,7 @@ export default function ProfileEdit() {
     setMessage("");
 
     if (!isValidPersonName(firstName) || !isValidPersonName(lastName)) {
-      setError("First and last name must have at least 3 letters and cannot contain numbers or special symbols.");
+      setError("First and last name must have at least 2 letters and cannot contain numbers or special symbols.");
       return;
     }
 

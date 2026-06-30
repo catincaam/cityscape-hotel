@@ -59,7 +59,7 @@ export default function Login() {
       } 
       else {
         if (!isValidPersonName(form.prenume) || !isValidPersonName(form.nume)) {
-          alert("First and last name must have at least 3 letters and cannot contain numbers or special symbols.");
+          alert("First and last name must have at least 2 letters and cannot contain numbers or special symbols.");
           return;
         }
 

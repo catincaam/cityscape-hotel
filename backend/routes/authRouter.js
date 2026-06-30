@@ -83,7 +83,7 @@ authRouter.post("/register", async (req, res) => {
     }
 
     if (!isValidPersonName(firstName) || !isValidPersonName(lastName)) {
-      return res.status(400).json({ message: "Names must have at least 3 letters and cannot contain numbers or special symbols." });
+      return res.status(400).json({ message: "Names must have at least 2 letters and cannot contain numbers or special symbols." });
     }
 
     if (!isValidEmail(normalizedEmail)) {
