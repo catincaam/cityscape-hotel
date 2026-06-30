@@ -23,10 +23,41 @@ function parseValidDate(value) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+function parseDateOnly(value) {
+  const match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return parseValidDate(value);
+  return new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+}
+
+function getTodayUtcDate() {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+}
+
+function getBookingWindowMaxUtcDate() {
+  const maxDate = getTodayUtcDate();
+  maxDate.setUTCFullYear(maxDate.getUTCFullYear() + 1);
+  return maxDate;
+}
+
+function getBookingWindowMaxDate() {
+  return getBookingWindowMaxUtcDate().toISOString().slice(0, 10);
+}
+
 function isValidDateRange(checkIn, checkOut) {
-  const start = parseValidDate(checkIn);
-  const end = parseValidDate(checkOut);
+  const start = parseDateOnly(checkIn);
+  const end = parseDateOnly(checkOut);
   return Boolean(start && end && start < end);
+}
+
+function isWithinBookingWindow(checkIn, checkOut) {
+  const start = parseDateOnly(checkIn);
+  const end = parseDateOnly(checkOut);
+  if (!start || !end) return false;
+
+  const today = getTodayUtcDate();
+  const maxDate = getBookingWindowMaxUtcDate();
+  return start >= today && end >= today && start <= maxDate && end <= maxDate;
 }
 
 function isPositiveInteger(value) {
@@ -71,6 +102,8 @@ export {
   isValidEmail,
   isStrongPassword,
   isValidDateRange,
+  isWithinBookingWindow,
+  getBookingWindowMaxDate,
   isPositiveInteger,
   isPositiveNumber,
   isValidRating,

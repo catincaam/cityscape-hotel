@@ -22,12 +22,14 @@ import { sendReservationConfirmation } from "../services/emailService.js";
 import { publicAssetUrl } from "../utils/publicUrl.js";
 import { getRoomDisplayImage } from "../utils/themeImage.js";
 import {
+  getBookingWindowMaxDate,
   isFutureExpiry,
   isPositiveInteger,
   isPositiveNumber,
   isValidCardNumber,
   isValidCvc,
-  isValidDateRange
+  isValidDateRange,
+  isWithinBookingWindow
 } from "../utils/validators.js";
 
 const bookingRouter = express.Router();
@@ -359,6 +361,12 @@ bookingRouter.post("/complete", async (req, res) => {
 
     if (!isValidDateRange(requestedCheckin, requestedCheckout)) {
       return res.status(400).json({ message: "Check-in must be before check-out." });
+    }
+
+    if (!isWithinBookingWindow(requestedCheckin, requestedCheckout)) {
+      return res.status(400).json({
+        message: `Bookings are available up to ${getBookingWindowMaxDate()}.`
+      });
     }
 
     if (!isPositiveInteger(nrPeople)) {

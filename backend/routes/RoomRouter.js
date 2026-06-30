@@ -8,7 +8,12 @@ import {
   getAvailableRooms,
   getAvailabilitySuggestions
 } from "../dataAccess/RoomDA.js";
-import { isPositiveInteger, isValidDateRange } from "../utils/validators.js";
+import {
+  getBookingWindowMaxDate,
+  isPositiveInteger,
+  isValidDateRange,
+  isWithinBookingWindow
+} from "../utils/validators.js";
 
 const roomRouter = express.Router();
 
@@ -48,6 +53,12 @@ roomRouter.get("/available/search", async (req, res) => {
       return res.status(400).json({ message: "Check-in must be before check-out." });
     }
 
+    if (!isWithinBookingWindow(checkIn, checkOut)) {
+      return res.status(400).json({
+        message: `Bookings are available up to ${getBookingWindowMaxDate()}.`
+      });
+    }
+
     if (!isPositiveInteger(guests)) {
       return res.status(400).json({ message: "Guests must be a positive number." });
     }
@@ -76,6 +87,12 @@ roomRouter.get("/available/suggestions", async (req, res) => {
     const guests = Number(adults || 0) + Number(children || 0);
     if (!isValidDateRange(checkIn, checkOut)) {
       return res.status(400).json({ message: "Check-in must be before check-out." });
+    }
+
+    if (!isWithinBookingWindow(checkIn, checkOut)) {
+      return res.status(400).json({
+        message: `Bookings are available up to ${getBookingWindowMaxDate()}.`
+      });
     }
 
     if (!isPositiveInteger(guests)) {

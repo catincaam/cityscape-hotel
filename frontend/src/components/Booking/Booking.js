@@ -6,7 +6,7 @@ import StepRooms from "./components/steps/StepRooms";
 import StepServices from "./components/steps/StepServices";
 import StepConfirmation from "./components/steps/StepConfirmation";
 import BookingStepper from "./components/BookingStepper";
-import { isValidDateRange } from "../../utils/validators";
+import { getBookingWindowMaxDate, isValidDateRange, isWithinBookingWindow } from "../../utils/validators";
 import "./Booking.css";
 
 export default function Booking() {
@@ -52,6 +52,11 @@ export default function Booking() {
 
     if (!isValidDateRange(bookingData.checkIn, bookingData.checkOut)) {
       setBookingError("Check-in must be before check-out.");
+      return;
+    }
+
+    if (!isWithinBookingWindow(bookingData.checkIn, bookingData.checkOut)) {
+      setBookingError(`Bookings are available up to ${getBookingWindowMaxDate()}.`);
       return;
     }
 

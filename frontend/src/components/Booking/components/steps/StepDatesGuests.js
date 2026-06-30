@@ -1,10 +1,13 @@
 import "./StepDatesGuests.css";
+import { getBookingWindowMaxDate, getTodayDateInputValue } from "../../../../utils/validators";
 
 export default function StepDatesGuests({ data, setData, onContinue, error }) {
   const update = (field, value) => {
     setData({ ...data, [field]: value });
   };
 
+  const today = getTodayDateInputValue();
+  const maxBookingDate = getBookingWindowMaxDate();
   const nights = calculateNights(data.checkIn, data.checkOut);
   const guestLabel = [
     `${data.adults} ${data.adults === 1 ? "Adult" : "Adults"}`,
@@ -38,13 +41,15 @@ export default function StepDatesGuests({ data, setData, onContinue, error }) {
                 label="Check-in"
                 value={data.checkIn}
                 onChange={(v) => update("checkIn", v)}
-                min={new Date().toISOString().split('T')[0]}
+                min={today}
+                max={maxBookingDate}
               />
               <DateField
                 label="Check-out"
                 value={data.checkOut}
                 onChange={(v) => update("checkOut", v)}
-                min={data.checkIn || new Date().toISOString().split('T')[0]}
+                min={data.checkIn || today}
+                max={maxBookingDate}
               />
             </div>
           </section>
@@ -123,7 +128,7 @@ function calculateNights(checkIn, checkOut) {
   return Math.ceil((end - start) / (1000 * 60 * 60 * 24));
 }
 
-function DateField({ label, value, onChange, min }) {
+function DateField({ label, value, onChange, min, max }) {
   return (
     <div className="date-field">
       <label>{label}</label>
@@ -132,6 +137,7 @@ function DateField({ label, value, onChange, min }) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         min={min}
+        max={max}
       />
     </div>
   );
