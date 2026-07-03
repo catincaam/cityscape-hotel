@@ -18,7 +18,7 @@
 
 .rooms-layout {
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr) 300px;
+  grid-template-columns: 260px minmax(620px, 800px) 300px;
   gap: 24px;
   width: 100%;
   max-width: none;
@@ -26,6 +26,7 @@
   padding: 0 8px 140px;
   background: #f7f4ef;
   align-items: start;
+  justify-content: start;
 }
 
 /* =========================
@@ -800,7 +801,7 @@
    RESPONSIVE
 ========================= */
 
-@media (max-width: 1180px) {
+@media (max-width: 1280px) {
   .rooms-layout {
     grid-template-columns: 260px minmax(0, 1fr);
     max-width: none;
