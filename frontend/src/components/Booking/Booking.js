@@ -97,7 +97,6 @@ export default function Booking() {
       <Navbar />
 
       <div className="booking-hero-premium">
-        <div className="booking-hero-overlay"></div>
         <div className="booking-hero-content">
           <h1>Find Your Perfect Stay</h1>
           <p>Explore our curated collection of themed rooms and create unforgettable memories</p>

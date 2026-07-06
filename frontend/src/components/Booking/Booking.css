@@ -19,16 +19,6 @@
   overflow: hidden;
 }
 
-.booking-hero-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: none;
-  pointer-events: none;
-}
-
 .booking-hero-content {
   position: relative;
   z-index: 10;
@@ -120,10 +110,6 @@
     font-size: clamp(32px, 10vw, 42px);
   }
 
-  .final-step {
-    padding: 22px 16px;
-    border-radius: 16px;
-  }
 }
 
 /* =========================
@@ -150,10 +136,6 @@
 }
 
 /* ❌ scoatem gradientul albastru */
-.booking-hero-text h1 span {
-  color: #1f2937;
-}
-
 .booking-hero-text p {
   font-family: "Plus Jakarta Sans", Arial, sans-serif;
   font-size: 14px;
@@ -164,69 +146,6 @@
 
 /* =========================
    SUMAR REZERVARE (STICKY & PREMIUM)
-========================= */
-
-.booking-summary {
-  background: white;
-  padding: 28px;
-  border-radius: 16px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  min-width: 300px;
-  position: sticky;
-  top: 100px;
-  color: #1f2937;
-  transition: all 0.3s ease;
-}
-
-.booking-summary:hover {
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
-}
-
-.booking-summary h4 {
-  margin: 0 0 22px;
-  font-size: 0.75rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  text-align: center;
-  padding: 14px;
-  background: #f8f6f2;
-  color: #1f2937;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-}
-
-/* =========================
-   GRID DATE
-========================= */
-
-.summary-grid {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  row-gap: 16px;
-  column-gap: 16px;
-  margin-bottom: 24px;
-}
-
-.summary-grid span {
-  font-size: 0.8rem;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 500;
-}
-
-.summary-grid strong {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #1f2937;
-  text-align: right;
-}
-
-/* =========================
-   TOTAL ESTIMAT
 ========================= */
 
 .summary-total {
@@ -250,13 +169,6 @@
   font-weight: 800;
   color: #c6a969;
   letter-spacing: -0.5px;
-}
-
-.final-step {
-  padding: 40px;
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.08);
 }
 
 /* =========================

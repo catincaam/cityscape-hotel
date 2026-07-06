@@ -23,41 +23,6 @@ const formatDate = (value) => {
 
 const money = (value) => `${Number(value || 0).toFixed(2)}\u00A0EUR`;
 
-const drawLabel = (doc, label, value, x, y, width = 140, options = {}) => {
-  doc.fontSize(options.labelSize || 6.8).font("Helvetica-Bold").fillColor(options.labelColor || "#a67f54")
-    .text(label.toUpperCase(), x, y, { width, characterSpacing: options.spacing || 1.35 });
-  doc.fontSize(options.valueSize || 10).font(options.valueFont || "Helvetica-Bold").fillColor(options.valueColor || "#101827")
-    .text(value || "-", x, y + (options.valueOffset || 13), { width, lineGap: 2 });
-};
-
-const drawLineItem = (doc, y, description, meta, amount, options = {}) => {
-  const height = options.height || 54;
-  doc.roundedRect(60, y, 476, height, 12).fill(options.fill || "#fffdfa");
-  doc.roundedRect(60, y, 4, height, 2).fill(options.accent || "#d7b98c");
-  doc.strokeColor(options.border || "#efe4d5").lineWidth(0.8)
-    .roundedRect(60, y, 476, height, 12).stroke();
-
-  doc.fontSize(10.5).font("Helvetica-Bold").fillColor("#101827")
-    .text(description, 82, y + 13, { width: 290, lineGap: 2 });
-  if (meta) {
-    doc.fontSize(8).font("Helvetica").fillColor("#7c6d5e")
-      .text(meta, 82, y + 31, { width: 290, lineGap: 2 });
-  }
-  doc.roundedRect(404, y + 15, 106, 26, 8).fill(options.amountFill || "#f8f1e8");
-  doc.fontSize(10).font("Helvetica-Bold").fillColor(options.amountColor || "#9a6f36")
-    .text(money(amount), 414, y + 23, { width: 86, align: "right" });
-};
-
-const drawMetricCard = (doc, label, value, x, y, width) => {
-  doc.roundedRect(x, y, width, 68, 12).fill("#fbf8f3");
-  doc.strokeColor("#f0e5d6").lineWidth(0.7).roundedRect(x, y, width, 68, 12).stroke();
-  drawLabel(doc, label, value, x + 18, y + 18, width - 36, {
-    labelColor: "#b08455",
-    valueSize: 10.5,
-    valueOffset: 15
-  });
-};
-
 const drawInvoiceTableRow = (doc, y, description, meta, quantity, unitPrice, amount, options = {}) => {
   if (options.fill) {
     doc.rect(54, y - 10, 488, 42).fill(options.fill);

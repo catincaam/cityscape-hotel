@@ -539,10 +539,6 @@
   overflow: hidden;
 }
 
-.recommended-badge {
-  display: none;
-}
-
 .available-note {
   display: inline-block;
   font-size: 9px;
