@@ -291,30 +291,30 @@ export default function BookingSuccess() {
                     {selectedServiceRows.length} {selectedServiceRows.length === 1 ? "service" : "services"}
                   </span>
                 </div>
-                <div className="experiences-grid">
+                <div className="success-experiences-list">
                   {selectedServiceRows.map((service) => (
                     <article
                       key={service.id}
-                      className={`experience-item ${service.image ? "with-image" : ""}`}
+                      className={`success-experience-item ${service.image ? "with-image" : ""}`}
                     >
                       {service.image && (
                         <img
                           src={service.image}
                           alt={service.name}
-                          className="experience-image"
+                          className="success-experience-image"
                         />
                       )}
-                      <div className="experience-copy">
-                        <div className="experience-topline">
+                      <div className="success-experience-copy">
+                        <div className="success-experience-topline">
                           <span>{service.category}</span>
                           <span>{service.priceType === "per_person" ? "Per person" : "Per stay"}</span>
                         </div>
-                        <span className="experience-name">{service.name}</span>
+                        <span className="success-experience-name">{service.name}</span>
                         {service.description && (
-                          <span className="experience-description">{service.description}</span>
+                          <span className="success-experience-description">{service.description}</span>
                         )}
-                        <div className="experience-footer">
-                          <span className="experience-meta">
+                        <div className="success-experience-footer">
+                          <span className="success-experience-meta">
                             {service.quantity}{" "}
                             {service.priceType === "per_person"
                               ? service.quantity === 1 ? "person" : "people"
@@ -323,7 +323,7 @@ export default function BookingSuccess() {
                         </div>
                       </div>
                       {service.total > 0 && (
-                        <span className="experience-total">
+                        <span className="success-experience-total">
                           {service.total.toFixed(2)} EUR
                           <small>Pay at hotel</small>
                         </span>
