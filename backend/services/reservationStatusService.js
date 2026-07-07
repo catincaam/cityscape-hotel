@@ -77,6 +77,8 @@ export async function syncReservationStatus(reservation, now = new Date()) {
 }
 
 export async function syncReservationStatuses(reservations, now = new Date()) {
-  await Promise.all((reservations || []).map((reservation) => syncReservationStatus(reservation, now)));
+  for (const reservation of reservations || []) {
+    await syncReservationStatus(reservation, now);
+  }
   return reservations;
 }
