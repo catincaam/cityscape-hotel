@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { MessageCircle, Send, X } from "lucide-react";
 import { API_BASE_URL } from "../../config/runtimeUrls";
 import "./ChatbotWidget.css";
 
 const ChatbotWidget = () => {
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [messages, setMessages] = useState([
@@ -21,7 +23,10 @@ const ChatbotWidget = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsLoggedIn(!!token);
-  }, []);
+    if (!token) {
+      setIsOpen(false);
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     const openChatbot = () => {
