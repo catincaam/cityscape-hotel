@@ -1,13 +1,55 @@
 import express from "express";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { getRooms } from "../dataAccess/RoomDA.js";
+import { getAvailableRooms, getRooms } from "../dataAccess/RoomDA.js";
 import { getServices } from "../dataAccess/ServiceDA.js";
+import {
+  getBookingWindowMaxDate,
+  isPositiveInteger,
+  isValidDateRange,
+  isWithinBookingWindow
+} from "../utils/validators.js";
 
 const chatbotRouter = express.Router();
 
 const fallbackAppUrl = (process.env.APP_URL || process.env.FRONTEND_URL || "http://localhost:3000").replace(/\/$/, "");
 
 const formatMoney = (value) => `${Number(value || 0).toFixed(2)} EUR`;
+const MONTHS = {
+  january: 0,
+  jan: 0,
+  ianuarie: 0,
+  february: 1,
+  feb: 1,
+  februarie: 1,
+  march: 2,
+  mar: 2,
+  martie: 2,
+  april: 3,
+  apr: 3,
+  aprilie: 3,
+  may: 4,
+  mai: 4,
+  june: 5,
+  jun: 5,
+  iunie: 5,
+  july: 6,
+  jul: 6,
+  iulie: 6,
+  august: 7,
+  aug: 7,
+  septembrie: 8,
+  september: 8,
+  sep: 8,
+  october: 9,
+  oct: 9,
+  octombrie: 9,
+  november: 10,
+  nov: 10,
+  noiembrie: 10,
+  december: 11,
+  dec: 11,
+  decembrie: 11
+};
 
 function getGeminiApiKey() {
   return process.env.GEMINI_API_KEY
@@ -102,6 +144,159 @@ function detectIntent(message = "") {
   if (/login|sign ?in|sign ?up|register|account|cont|parola|password|email/i.test(text)) return "account";
 
   return "general";
+}
+
+function padDatePart(value) {
+  return String(value).padStart(2, "0");
+}
+
+function formatDateOnly(date) {
+  return `${date.getUTCFullYear()}-${padDatePart(date.getUTCMonth() + 1)}-${padDatePart(date.getUTCDate())}`;
+}
+
+function getTodayUtcDate() {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+}
+
+function buildRequestedDate(startDay, endDay, monthIndex, explicitYear) {
+  if (!startDay || !endDay || monthIndex < 0 || monthIndex > 11) return null;
+
+  const today = getTodayUtcDate();
+  let year = explicitYear || today.getUTCFullYear();
+  let checkIn = new Date(Date.UTC(year, monthIndex, Number(startDay)));
+  let checkOut = new Date(Date.UTC(year, monthIndex, Number(endDay)));
+
+  if (!explicitYear && checkOut < today) {
+    year += 1;
+    checkIn = new Date(Date.UTC(year, monthIndex, Number(startDay)));
+    checkOut = new Date(Date.UTC(year, monthIndex, Number(endDay)));
+  }
+
+  const datesAreReal = checkIn.getUTCFullYear() === year
+    && checkIn.getUTCMonth() === monthIndex
+    && checkIn.getUTCDate() === Number(startDay)
+    && checkOut.getUTCFullYear() === year
+    && checkOut.getUTCMonth() === monthIndex
+    && checkOut.getUTCDate() === Number(endDay);
+
+  if (!datesAreReal) return null;
+
+  return {
+    checkIn: formatDateOnly(checkIn),
+    checkOut: formatDateOnly(checkOut)
+  };
+}
+
+function parseGuestCount(text) {
+  const patterns = [
+    /\b(?:for|pentru)\s+(\d{1,2})\b/i,
+    /\b(\d{1,2})\s*(?:people|persons|guests|adults|adulti|persoane|oaspeti)\b/i
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) return Number(match[1]);
+  }
+
+  return null;
+}
+
+function parseAvailabilityRequest(message = "") {
+  const text = normalizeMessage(message);
+  if (!/(available|availability|free|liber|disponibil|camera|room|rooms|rezerv|book|booking|check in|check out)/i.test(text)) {
+    return null;
+  }
+
+  const monthNames = Object.keys(MONTHS).join("|");
+  const numericRange = text.match(new RegExp(`\\b(\\d{1,2})\\s*[-/]\\s*(\\d{1,2})\\s+(${monthNames})(?:\\s+(\\d{4}))?\\b`, "i"));
+  const monthFirstRange = text.match(new RegExp(`\\b(${monthNames})\\s+(\\d{1,2})\\s*[-/]\\s*(\\d{1,2})(?:\\s+(\\d{4}))?\\b`, "i"));
+
+  let dates = null;
+  if (numericRange) {
+    dates = buildRequestedDate(
+      Number(numericRange[1]),
+      Number(numericRange[2]),
+      MONTHS[numericRange[3]],
+      numericRange[4] ? Number(numericRange[4]) : null
+    );
+  } else if (monthFirstRange) {
+    dates = buildRequestedDate(
+      Number(monthFirstRange[2]),
+      Number(monthFirstRange[3]),
+      MONTHS[monthFirstRange[1]],
+      monthFirstRange[4] ? Number(monthFirstRange[4]) : null
+    );
+  }
+
+  if (!dates) return null;
+
+  return {
+    ...dates,
+    guests: parseGuestCount(text) || 2
+  };
+}
+
+function formatHumanDateRange(checkIn, checkOut, language) {
+  const locale = language === "ro" ? "ro-RO" : "en-GB";
+  const options = { month: "long", day: "numeric" };
+  const start = new Intl.DateTimeFormat(locale, options).format(new Date(`${checkIn}T00:00:00Z`));
+  const end = new Intl.DateTimeFormat(locale, options).format(new Date(`${checkOut}T00:00:00Z`));
+  return `${start} - ${end}`;
+}
+
+function normalizeAvailableRoom(room) {
+  const theme = room.RoomTheme || {};
+  return {
+    name: theme.name || theme.theme || `Room ${room.RoomId}`,
+    city: theme.city,
+    price: theme.basePrice,
+    guests: theme.maxGuests || 2,
+    availableCount: Number(room.availableCount || 0)
+  };
+}
+
+function buildAvailabilityReply(message, request, availableRooms) {
+  const language = detectLanguage(message);
+  const dateRange = formatHumanDateRange(request.checkIn, request.checkOut, language);
+  const totalRooms = availableRooms.reduce((sum, room) => sum + Number(room.availableCount || 0), 0);
+  const topRooms = availableRooms.map(normalizeAvailableRoom).slice(0, 4);
+
+  if (!isPositiveInteger(request.guests)) {
+    return language === "ro"
+      ? "Spune-mi, te rog, pentru cate persoane vrei sa verific disponibilitatea."
+      : "Please tell me how many guests I should check availability for.";
+  }
+
+  if (!isValidDateRange(request.checkIn, request.checkOut)) {
+    return language === "ro"
+      ? "Perioada nu pare valida. Te rog sa imi scrii intervalul ca check-in si check-out, de exemplu 10-12 iulie."
+      : "That date range does not look valid. Please write it as check-in to check-out, for example July 10-12.";
+  }
+
+  if (!isWithinBookingWindow(request.checkIn, request.checkOut)) {
+    return language === "ro"
+      ? `Rezervarile sunt disponibile pana la ${getBookingWindowMaxDate()}. Alege, te rog, o perioada din acest interval.`
+      : `Bookings are available up to ${getBookingWindowMaxDate()}. Please choose dates inside that window.`;
+  }
+
+  if (!topRooms.length) {
+    return language === "ro"
+      ? `Pentru ${dateRange}, ${request.guests} persoane, nu am gasit camere disponibile in acest moment. Incearca o alta perioada sau mai putine persoane.`
+      : `For ${dateRange}, ${request.guests} guests, I could not find available rooms right now. Try a different date range or fewer guests.`;
+  }
+
+  if (language === "ro") {
+    const picks = topRooms
+      .map((room) => `${room.name}${room.city ? ` (${room.city})` : ""} - ${formatMoney(room.price)}/noapte, capacitate ${room.guests}, ${room.availableCount} camere libere`)
+      .join("; ");
+    return `Da. Pentru ${dateRange}, ${request.guests} persoane, am gasit ${totalRooms} camere disponibile. Cateva optiuni bune sunt: ${picks}. Poti continua din Book Room pentru rezervare.`;
+  }
+
+  const picks = topRooms
+    .map((room) => `${room.name}${room.city ? ` (${room.city})` : ""} - ${formatMoney(room.price)}/night, capacity ${room.guests}, ${room.availableCount} available`)
+    .join("; ");
+  return `Yes. For ${dateRange}, ${request.guests} guests, I found ${totalRooms} available rooms. Good options include: ${picks}. You can continue from Book Room to reserve one.`;
 }
 
 function getRequestedCity(message = "") {
@@ -327,6 +522,26 @@ chatbotRouter.post("/chat", async (req, res) => {
 
     const rooms = await getRooms();
     const services = await getServices();
+    const availabilityRequest = parseAvailabilityRequest(message);
+
+    if (availabilityRequest) {
+      const canSearchAvailability = isPositiveInteger(availabilityRequest.guests)
+        && isValidDateRange(availabilityRequest.checkIn, availabilityRequest.checkOut)
+        && isWithinBookingWindow(availabilityRequest.checkIn, availabilityRequest.checkOut);
+      const availableRooms = canSearchAvailability
+        ? await getAvailableRooms({
+            checkIn: availabilityRequest.checkIn,
+            checkOut: availabilityRequest.checkOut,
+            guests: availabilityRequest.guests
+          })
+        : [];
+
+      return res.json({
+        reply: buildAvailabilityReply(message, availabilityRequest, availableRooms),
+        source: "availability",
+        timestamp: new Date()
+      });
+    }
 
     if (!getGeminiApiKey()) {
       console.warn("[CHATBOT] Gemini key missing. Expected one of: GEMINI_API_KEY, GEMINI_KEY, GOOGLE_GEMINI_API_KEY, GOOGLE_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY. Using local fallback reply.");
